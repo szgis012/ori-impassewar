@@ -1,0 +1,914 @@
+# 绝地战争 (Jedi War) - Code Wiki
+
+> 二战策略SLG网页游戏 | 开发年代: 约2010年 | 作者: TopTong / ghleed
+
+---
+
+## 目录
+
+1. [项目概述](#1-项目概述)
+2. [整体架构](#2-整体架构)
+3. [技术栈](#3-技术栈)
+4. [项目目录结构](#4-项目目录结构)
+5. [后端模块详解](#5-后端模块详解)
+   - [5.1 公共基础层 (common)](#51-公共基础层-common)
+   - [5.2 常量定义层 (constant)](#52-常量定义层-constant)
+   - [5.3 领域模型层 (domain)](#53-领域模型层-domain)
+   - [5.4 数据访问层 (dao)](#54-数据访问层-dao)
+   - [5.5 业务逻辑层 (service)](#55-业务逻辑层-service)
+   - [5.6 Socket通信层 (socket)](#56-socket通信层-socket)
+   - [5.7 WebService层 (webservice)](#57-webservice层-webservice)
+   - [5.8 定时任务层 (quartz)](#58-定时任务层-quartz)
+   - [5.9 脚本引擎层 (script)](#59-脚本引擎层-script)
+   - [5.10 工具类层 (util)](#510-工具类层-util)
+   - [5.11 监听器与工厂 (listener/factory)](#511-监听器与工厂-listenerfactory)
+6. [前端模块详解](#6-前端模块详解)
+7. [数据库设计](#7-数据库设计)
+8. [依赖关系](#8-依赖关系)
+9. [项目运行方式](#9-项目运行方式)
+10. [本地运行指南](#10-本地运行指南)
+11. [关键配置说明](#11-关键配置说明)
+
+---
+
+## 1. 项目概述
+
+**绝地战争**是一款基于浏览器的二战题材策略类(SLG)网页游戏，采用Java后端 + Adobe Flex(Flash)前端的经典架构。玩家在游戏中扮演指挥官，管理城市、建设建筑、研发科技、招募军队、组建军团，进行野外征战、殖民扩张等玩法。
+
+### 核心玩法模块
+- **城市建设**: 建筑建造与升级（资源田、兵营、工厂、机场等）
+- **科技研发**: 兵种科技、资源科技、仓储科技
+- **军队系统**: 步兵/坦克/飞机三大兵种体系，军械配备
+- **指挥官系统**: 英雄招募、培养、技能、装备
+- **军团系统**: 军团创建、成员管理、军团科技、军团战
+- **世界地图**: 野外PVP/PVE、野怪、殖民、侦察
+- **任务系统**: 新手任务/日常任务/主线任务（基于Groovy脚本）
+- **交易系统**: 资源交易市场
+- **宝物系统**: 道具商城、宝物使用
+- **社交系统**: 聊天、好友、消息、战报
+
+---
+
+## 2. 整体架构
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    浏览器 (Browser)                           │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │              Adobe Flash Player                      │    │
+│  │  ┌──────────────────────────────────────────────┐    │    │
+│  │  │        Flex 前端 (War.swf)                    │    │    │
+│  │  │  Cairngorm MVC                                │    │    │
+│  │  │  - ModelLocator (数据模型)                      │    │    │
+│  │  │  - WarController (控制器)                      │    │    │
+│  │  │  - Delegate (远程调用代理)                       │    │    │
+│  │  │  - View (MXML + AS3 UI组件)                   │    │    │
+│  │  └──────────────────────────────────────────────┘    │    │
+│  └──────────────────────────────────────────────────────┘    │
+└───────────────┬──────────────────────────┬───────────────────┘
+                │ AMF (BlazeDS)            │ Socket (TCP)
+                │ :8080/War/messagebroker/ │ :19393/:29292
+                ▼                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│               Java Web 后端 (WarServer)                        │
+│                                                                │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │                    web.xml                            │    │
+│  │  ├─ MessageBrokerServlet → Flex BlazeDS (AMF通信)      │    │
+│  │  ├─ CXFServlet → Apache CXF (WebService)              │    │
+│  │  ├─ ContextLoaderListener → Spring IoC容器            │    │
+│  │  └─ InitSystemListener → 系统初始化入口                │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │  Service层   │  │  Socket层     │  │  Quartz层     │        │
+│  │  (业务逻辑)   │  │  (Mina NIO)  │  │  (定时任务)   │        │
+│  │              │  │  端口843     │  │  资源/战斗/    │        │
+│  │  I*Service   │  │  端口19393   │  │  队列/排名等  │        │
+│  │  + Impl      │  │  端口29292   │  │              │        │
+│  └──────┬───────┘  └──────────────┘  └──────────────┘        │
+│         │                                                      │
+│  ┌──────▼───────┐  ┌──────────────────────────────┐           │
+│  │   DAO层      │  │  Script引擎 (Groovy)          │           │
+│  │  (iBatis)    │  │  *.gy 任务脚本                │           │
+│  │  I*DAO+Impl  │  │  1001~1057 新手任务           │           │
+│  │  + sqlmap/*  │  │  2001~2140 日常任务           │           │
+│  └──────┬───────┘  │  3001~3015 主线任务           │           │
+│         │          │  4001~4017 特殊任务           │           │
+│         ▼          └──────────────────────────────┘           │
+│  ┌──────────────────────────────────────────────────┐        │
+│  │              MySQL 数据库 (war_0202)               │        │
+│  │  C3P0连接池 | iBatis ORM                          │        │
+│  └──────────────────────────────────────────────────┘        │
+│                                                                │
+│  ┌──────────────────────────────────────────────────┐        │
+│  │              缓存层 (OSCache)                      │        │
+│  │  - 建筑/科技/士兵/装备/宝物/军械/技能/任务等静态数据  │        │
+│  │  - 玩家ID↔名称、城市ID↔名称、军团ID↔名称映射        │        │
+│  └──────────────────────────────────────────────────┘        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. 技术栈
+
+### 后端
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Java | 1.5+ | 主语言 |
+| Spring Framework | 2.5 | IoC容器、事务管理 |
+| iBatis (MyBatis前身) | 2.3.4 | ORM / SQL映射 |
+| Apache CXF | 2.1.3 | WebService框架 (SOAP) |
+| Apache Mina | 2.0.0-M3 | NIO Socket通信框架 |
+| BlazeDS (Flex Messaging) | - | AMF协议通信 (Flex↔Java) |
+| Quartz | 1.7.0 | 定时任务调度 |
+| OSCache | 2.4.1 | 内存缓存 |
+| C3P0 | 0.9.1 | 数据库连接池 |
+| MySQL Connector | 5.1.5 | 数据库驱动 |
+| Groovy | 1.6.0 | 任务脚本引擎 |
+| FreeMarker | - | 战报/消息模板 |
+| Log4j | 1.2.9 | 日志框架 |
+
+### 前端
+| 技术 | 说明 |
+|------|------|
+| Adobe Flex SDK | 3.x / 4.x |
+| Cairngorm | Flex MVC框架 |
+| GreenSock TweenMax | 动画引擎 |
+| Adobe Flash Player | 9.0.28+ |
+
+### 开发工具
+| 工具 | 说明 |
+|------|------|
+| MyEclipse | Java IDE (项目为MyEclipse工程) |
+| Flex Builder | Flex IDE (项目为Flex Builder工程) |
+| MySQL | 数据库 |
+
+---
+
+## 4. 项目目录结构
+
+```
+绝地战争/
+├── FlexWorkSpaces/                   # Flex前端工程
+│   └── War/
+│       ├── src/
+│       │   ├── War.mxml              # 主入口MXML
+│       │   ├── City.mxml             # 城市面板
+│       │   ├── images/               # 图片资源
+│       │   └── com/hifong/war/       # 前端源码
+│       │       ├── business/         # Delegate层 (远程调用代理)
+│       │       ├── common/           # 公共数据模型
+│       │       ├── component/        # 自定义组件
+│       │       ├── constant/         # 常量
+│       │       ├── control/          # Cairngorm控制器
+│       │       ├── events/           # Cairngorm事件
+│       │       ├── model/            # ModelLocator
+│       │       ├── util/             # 工具类
+│       │       ├── view/             # 视图层
+│       │       │   ├── building/     # 建筑相关UI
+│       │       │   ├── chat/         # 聊天UI
+│       │       │   ├── colonization/ # 殖民UI
+│       │       │   ├── common/       # 公共UI组件
+│       │       │   ├── guild/        # 军团UI
+│       │       │   ├── loading/      # 加载UI
+│       │       │   ├── message/      # 消息UI
+│       │       │   ├── military/     # 军事UI
+│       │       │   ├── rank/         # 排行UI
+│       │       │   ├── report/       # 战报UI
+│       │       │   ├── stat/         # 统计UI
+│       │       │   ├── task/         # 任务UI
+│       │       │   ├── treasure/     # 宝物UI
+│       │       │   └── world/        # 世界地图UI
+│       │       └── vo/               # 值对象(VO)
+│       ├── libs/                     # Flex库
+│       └── bin-debug/                # 编译输出
+│
+├── WarServer/                        # Java后端工程
+│   ├── War/
+│   │   └── src/
+│   │       ├── com/war/
+│   │       │   ├── common/           # 公共基础服务
+│   │       │   ├── constant/         # 常量定义
+│   │       │   ├── dao/              # 数据访问层
+│   │       │   │   ├── impl/         # DAO实现
+│   │       │   │   └── sqlmap/       # iBatis SQL映射XML
+│   │       │   ├── domain/           # 领域模型(实体)
+│   │       │   ├── exception/        # 异常定义
+│   │       │   ├── factory/          # 工厂类
+│   │       │   ├── listener/         # 监听器
+│   │       │   ├── quartz/           # 定时任务
+│   │       │   ├── script/           # 脚本引擎接口
+│   │       │   ├── service/          # 业务逻辑层
+│   │       │   │   ├── building/     # 建筑功能服务
+│   │       │   │   └── impl/         # 服务实现
+│   │       │   ├── socket/           # Socket通信
+│   │       │   │   ├── battle/       # 战斗Socket
+│   │       │   │   └── game/         # 游戏Socket
+│   │       │   ├── test/             # 测试代码
+│   │       │   ├── util/             # 工具类
+│   │       │   └── webservice/       # WebService
+│   │       ├── script/task/          # 任务脚本(.gy文件)
+│   │       ├── config/               # 配置文件
+│   │       ├── sqlMapConfig.xml      # iBatis总配置
+│   │       ├── log4j.xml             # 日志配置
+│   │       ├── oscache.properties    # 缓存配置
+│   │       ├── quartz.properties     # 定时任务配置
+│   │       └── spy.properties        # SQL监控配置
+│   │
+│   └── WebRoot/
+│       ├── WEB-INF/
+│       │   ├── web.xml               # Web应用配置
+│       │   ├── applicationContext.xml # Spring配置
+│       │   ├── flex/                 # BlazeDS配置
+│       │   │   ├── services-config.xml
+│       │   │   ├── remoting-config.xml
+│       │   │   ├── messaging-config.xml
+│       │   │   └── proxy-config.xml
+│       │   ├── lib/                  # 依赖JAR包 (~130个)
+│       │   └── classes/              # 编译输出
+│       ├── config/config.xml         # 前端配置
+│       ├── War.html                  # 入口HTML页面
+│       ├── War.swf                   # Flex编译产物
+│       ├── images/                   # 图片资源
+│       │   ├── army/                 # 兵种图片
+│       │   └── face/                 # 头像图片
+│       └── crossdomain.xml           # Flash跨域策略
+│
+└── War.rar                           # 备份压缩包
+```
+
+---
+
+## 5. 后端模块详解
+
+### 5.1 公共基础层 (common)
+
+提供系统级的基础服务，被所有模块依赖。
+
+| 类名 | 职责 |
+|------|------|
+| `CacheService` | 基于OSCache的缓存服务，提供`putToCache`/`getFromCache`静态方法 |
+| `SpringService` | Spring Bean获取工具，封装`WebApplicationContext`，提供`getBean()` |
+| `ConfigurationService` | 读取`config/config.properties`配置文件 |
+| `GameConfig` | 游戏核心数值常量（资源产出、消耗、保护期等） |
+| `SystemConfig` | 系统运行时配置（过滤词、默认扩展信息等） |
+| `MD5Service` | MD5加密服务，用于WebService认证 |
+| `DateService` | 日期处理工具 |
+| `RandomService` / `RandomStringService` | 随机数/随机字符串生成 |
+| `ResourceService` | 资源计算相关服务 |
+| `TemplateService` | FreeMarker模板引擎封装，用于生成战报/消息内容 |
+| `MonsterConfigService` | 野怪配置读取 |
+
+### 5.2 常量定义层 (constant)
+
+约60+个常量类，定义游戏中的各种枚举值和魔法数字：
+
+| 分类 | 常量类 |
+|------|--------|
+| 军队 | `ArmyConstant`, `ArmyTypeConstant`, `MilitaryConstant` |
+| 建筑 | `BuildingConstant`, `BuildingPositionConstant`, `CityBuildingStateConstant` |
+| 城市 | `CityConstant`, `CityStateConstant`, `CityHeroStateConstant`, `CityMilitaryStateConstant` |
+| 战斗 | `BattleConstant` |
+| 科技 | `TechnologyConstant`, `TechnologyTypeConstant`, `CityTechnologyStateConstant` |
+| 军团 | `GuildConstant` |
+| 任务 | `TaskConstant`, `TaskTypeConstant` |
+| 宝物 | `TreasureConstant`, `TreasureTypeConstant`, `TreasureCategoryConstant`, `TreasureStateConstant` |
+| 交易 | `TradeConstant` |
+| 地图 | `MapConstant`, `MonsterConstant` |
+| 军衔 | `HonorConstant` |
+| 英雄 | `HeroConstant`, `HeroStarConstant`, `HeroMilitarySpiritConstant` |
+| 其他 | `GameConstant`, `GlobalConstant`, `CacheConstant`, `PagingConstant`, `ChatConstant`, `CountryConstant`, `DailyRewardConstant`, `ColonizationConstant`, `DefenseConstant`, `DepoyTypeConstant`, `FriendStateConstant`, `PlayerStateConstant`, `QueueTypeConstant`, `SpyConstant`, `SpyQueueStateConstant`, `ReportTypeConstant`, `ConstraintDependTypeConstant`, `OrdnanceConstant`, `OrdnanceTypeConstant`, `ProductionQueueTypeConstant`, `SuffixConstant`, `OperationLogConstant`, `WebServiceAuthenticationConstant`, `CityDefenseTypeConstant`, `CityWoundedArmyConstant`, `GameCardTypeConstant`, `UserStateConstant` |
+
+### 5.3 领域模型层 (domain)
+
+约80+个实体类，对应数据库表，核心实体如下：
+
+**玩家与城市**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Player` | `T_PLAYER` | 玩家主信息 |
+| `User` | `T_USER` | 用户登录信息 |
+| `City` | `T_CITY` | 城市基本信息 |
+| `CityInfo` | - | 城市聚合信息(VO) |
+| `CityExt` | `T_CITY_EXT` | 城市扩展属性(科技加成等) |
+| `CityResource` | `T_CITY_RESOURCE` | 城市资源(木材/钢铁/石油/食物/金钱) |
+| `CityBuilding` | `T_CITY_BUILDING` | 城市建筑 |
+| `CityDefense` | `T_CITY_DEFENSE` | 城市城防 |
+| `CityArmy` | `T_CITY_ARMY` | 城市驻军 |
+| `CityOrdnance` | `T_CITY_ORDNANCE` | 城市军械 |
+| `CityTechnology` | `T_CITY_TECHNOLOGY` | 城市科技 |
+| `CityMilitary` | `T_CITY_MILITARY` | 城市军事(出征部队) |
+| `CityMilitarySuccor` | `T_CITY_MILITARY_SUCCOR` | 城市军事增援 |
+| `CityHero` | `T_CITY_HERO` | 城市指挥官/英雄 |
+| `CityHeroExt` | `T_CITY_HERO_EXT` | 英雄扩展属性 |
+| `CityHeroLevelupLog` | `T_CITY_HERO_LEVELUP_LOG` | 英雄升级日志 |
+| `CityCandidacyHero` | `T_CITY_CANDIDACY_HERO` | 候选英雄 |
+| `CityWoundedArmy` | `T_CITY_WOUNDED_ARMY` | 城市伤兵 |
+| `CityRank` | `T_CITY_RANK` | 城市排名 |
+
+**军队与战斗**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Army` | `T_ARMY` | 兵种定义 |
+| `ArmyDepend` | `T_ARMY_DEPEND` | 兵种依赖关系 |
+| `Ordnance` | `T_ORDNANCE` | 军械定义 |
+| `Defense` | `T_DEFENSE` | 城防定义 |
+| `Battle` | `T_BATTLE` | 战斗记录 |
+| `BattleLog` | `T_BATTLE_LOG` | 战斗日志 |
+| `BattleDetail` | `T_BATTLE_DETAIL` | 战斗详情 |
+| `BattleArmy` | `T_BATTLE_ARMY` | 战斗参战部队 |
+| `BattleQueue` | `T_BATTLE_QUEUE` | 战斗队列 |
+| `BattleWait` | `T_BATTLE_WAIT` | 战斗等待 |
+| `BattleMilitary` | - | 战斗军事单位(VO) |
+| `DepoyQueue` | `T_DEPOY_QUEUE` | 出征队列 |
+| `MilitaryArmy` | - | 军事部队兵种(VO) |
+
+**军团**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Guild` | `T_GUILD` | 军团 |
+| `GuildPlayer` | `T_GUILD_PLAYER` | 军团成员 |
+| `GuildExt` | `T_GUILD_EXT` | 军团扩展属性 |
+| `GuildEvent` | `T_GUILD_EVENT` | 军团事件 |
+| `GuildAttack` | `T_GUILD_ATTACK` | 军团攻击 |
+| `GuildRelationship` | `T_GUILD_RELATIONSHIP` | 军团外交关系 |
+| `GuildPlaAppInv` | `T_GUILD_PLA_APP_INV` | 军团申请/邀请 |
+| `GuildTechnology` | `T_GUILD_TECHNOLOGY` | 军团科技 |
+| `GuildTechnologyGuild` | `T_GUILD_TECHNOLOGY_GUILD` | 军团科技关联 |
+| `GuildtechnologyCost` | `T_GUILD_TECHNOLOGY_COST` | 军团科技消耗 |
+| `GuildIncExpHistory` | `T_GUILD_INC_EXP_HISTORY` | 军团经验增加历史 |
+| `GuildRewardReceiveLog` | `T_GUILD_REWARD_RECEIVE_LOG` | 军团奖励领取日志 |
+| `GuildRank` | - | 军团排名(VO) |
+
+**任务与宝物**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Task` | `T_TASK` | 任务定义 |
+| `PlayerTask` | `T_PLAYER_TASK` | 玩家任务 |
+| `Treasure` | `T_TREASURE` | 宝物定义 |
+| `PlayerTreasure` | `T_PLAYER_TREASURE` | 玩家宝物 |
+| `TreasureHistory` | `T_TREASURE_HISTORY` | 宝物历史 |
+| `TreasureQueue` | `T_TREASURE_QUEUE` | 宝物队列 |
+| `Equipment` | `T_EQUIPMENT` | 装备定义 |
+| `PlayerEquipment` | `T_PLAYER_EQUIPMENT` | 玩家装备 |
+| `Skill` | `T_SKILL` | 技能定义 |
+| `HeroSkill` | `T_HERO_SKILL` | 英雄技能 |
+
+**社交与交互**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Message` | `T_MESSAGE` | 消息 |
+| `MessageInbox` | `T_MESSAGE_INBOX` | 收件箱 |
+| `MessageOutbox` | `T_MESSAGE_OUTBOX` | 发件箱 |
+| `Friend` | `T_FRIEND` | 好友 |
+| `ChatHistory` | `T_CHAT_HISTORY` | 聊天记录 |
+| `Report` | `T_REPORT` | 战报 |
+| `SystemNotice` | `T_SYSTEM_NOTICE` | 系统公告 |
+| `OperationLog` | `T_OPERATION_LOG` | 操作日志 |
+
+**其他**
+| 类名 | 对应表 | 说明 |
+|------|--------|------|
+| `Map` | `T_MAP` | 世界地图 |
+| `MapFavourite` | `T_MAP_FAVOURITE` | 地图收藏 |
+| `MapMonster` | `T_MAP_MONSTER` | 地图野怪 |
+| `Colonization` | `T_COLONIZATION` | 殖民关系 |
+| `DeclareWar` | `T_DECLARE_WAR` | 宣战 |
+| `ResTrade` | `T_RES_TRADE` | 资源交易 |
+| `ResTransportation` | `T_RES_TRANSPORTATION` | 资源运输 |
+| `TradeQueue` | `T_TRADE_QUEUE` | 交易队列 |
+| `ProductionQueue` | `T_PRODUCTION_QUEUE` | 生产队列 |
+| `ProcessQueue` | `T_PROCESS_QUEUE` | 进程队列(建筑/科技升级) |
+| `SpyQueue` | `T_SPY_QUEUE` | 侦察队列 |
+| `Building` | `T_BUILDING` | 建筑定义 |
+| `Shbuilding` | `T_SHBUILDING` | 要塞建筑 |
+| `Stronghold` | `T_STRONGHOLD` | 要塞 |
+| `StrongholdShbuilding` | `T_STRONGHOLD_SHBUILDING` | 要塞建筑关联 |
+| `Technology` | `T_TECHNOLOGY` | 科技定义 |
+| `ConstraintDepend` | `T_CONSTRAINT_DEPEND` | 约束依赖 |
+| `Honor` | `T_HONOR` | 军衔定义 |
+| `Name` | `T_NAME` | 随机名称库 |
+| `PayHistory` | `T_PAY_HISTORY` | 充值历史 |
+| `DataHistory` | `T_DATA_HISTORY` | 数据历史 |
+| `GameCard` | `T_GAME_CARD` | 游戏卡 |
+| `PlayerCard` | `T_PLAYER_CARD` | 玩家卡 |
+| `ReferenceAccount` | `T_REFERENCE_ACCOUNT` | 推荐账号 |
+| `PlayerRank` | - | 玩家排名(VO) |
+| `PreBuilding` | - | 预建筑(VO) |
+
+### 5.4 数据访问层 (dao)
+
+采用接口-实现分离模式，基于Spring + iBatis。
+
+**DAO接口** (dao/*.java)：约80+个接口，如 `IPlayerDAO`, `ICityDAO`, `IBattleDAO` 等。
+
+**DAO实现** (dao/impl/*.java)：对应接口的iBatis实现，继承 `SqlMapClientDaoSupport`。
+
+**SQL映射文件** (dao/sqlmap/*.xml)：约80+个iBatis SQL映射XML，定义CRUD操作SQL。
+
+### 5.5 业务逻辑层 (service)
+
+**通用服务接口与实现**
+
+| 接口 | 实现类 | 职责 |
+|------|--------|------|
+| `IPlayerService` | `PlayerService` | 玩家注册、登录、信息管理、每日奖励 |
+| `ICityService` | `CityService` | 城市管理、资源、搬迁 |
+| `IBuildingService` | `BuildingService` | 建筑建造、升级、取消 |
+| `ITechnologyService` | `TechnologyService` | 科技研发、升级、取消 |
+| `IArmyService` | `ArmyService` | 兵种招募、训练 |
+| `IBattleService` | `BattleService` | 战斗计算（核心战斗逻辑，含攻防计算、回合制战斗） |
+| `IOrdnanceService` | `OrdnanceService` | 军械管理 |
+| `IDefenseService` | `DefenseService` | 城防管理 |
+| `IHeroService` | `HeroService` | 英雄/指挥官管理 |
+| `IGuildService` | `GuildService` | 军团管理 |
+| `IMapService` | `MapService` | 世界地图生成、查询 |
+| `IMonsterService` | `MonsterService` | 野怪生成、战斗 |
+| `IMilitaryService` | `MilitaryService` | 军事出征、返回 |
+| `IDepoyQueueService` | `DepoyQueueService` | 出征队列管理 |
+| `ISpyQueueService` | `SpyQueueService` | 侦察队列管理 |
+| `ITradeQueueService` | `TradeQueueService` | 交易队列管理 |
+| `IProductionQueueService` | `ProductionQueueService` | 生产队列管理 |
+| `IProcessQueueService` | `ProcessQueueService` | 进程队列管理 |
+| `ITreasureService` | `TreasureService` | 宝物管理 |
+| `ITreasureQueueService` | `TreasureQueueService` | 宝物队列 |
+| `ITaskService` | `TaskService` | 任务系统 |
+| `IEquipmentService` | `EquipmentService` | 装备管理 |
+| `IMessageService` | `MessageService` | 消息系统 |
+| `IChatService` | `ChatService` | 聊天系统 |
+| `IReportService` | `ReportService` | 战报系统 |
+| `IRankService` | `RankService` | 排名系统 |
+| `IColonizationService` | `ColonizationService` | 殖民系统 |
+| `IDeclareWarService` | `DeclareWarService` | 宣战系统 |
+| `IHonorService` | `HonorService` | 军衔系统 |
+| `ISystemService` | `SystemService` | 系统公告 |
+| `IDataHistoryService` | `DataHistoryService` | 数据历史 |
+| `IGameScriptService` | `GameScriptService` | 游戏脚本服务 |
+| `IGameCardService` | `GameCardService` | 游戏卡服务 |
+| `IQuartzService` | `QuartzService` | 定时任务调度(核心调度器) |
+| `ITimeService` | `TimeService` | 时间服务 |
+| `INameService` | `NameService` | 随机名称服务 |
+| `IOperationLogService` | `OperationLogService` | 操作日志 |
+| `IStrongholdService` | `StrongholdService` | 要塞管理 |
+| `IShbuildingService` | `ShbuildingService` | 要塞建筑 |
+| `IConstraintDependService` | `ConstraintDependService` | 约束依赖 |
+
+**建筑功能服务** (service/building/)
+
+| 接口 | 实现类 | 对应的建筑功能 |
+|------|--------|---------------|
+| `ICityCenterService` | `CityCenterService` | 市政中心（市民招募、税率调控） |
+| `IBarracksService` | `BarracksService` | 兵营（步兵招募） |
+| `IHeavyFactoryService` | `HeavyFactoryService` | 重工厂（坦克制造） |
+| `IAirportService` | `AirportService` | 机场（飞机制造） |
+| `IArmoryService` | `ArmoryService` | 军械库（军械生产） |
+| `ICityDefenseService` | `CityDefenseService` | 城防工事（城防建造） |
+| `IMarketService` | `MarketService` | 交易市场（资源交易） |
+| `IResourcesTuneService` | `ResourcesTuneService` | 资源调配 |
+
+### 5.6 Socket通信层 (socket)
+
+基于Apache Mina NIO框架，提供三个独立的Socket服务：
+
+| 服务 | 类 | 端口 | 用途 |
+|------|-----|------|------|
+| Flash安全策略 | `FlashSecurityXMLSocketServer` | 843 | 响应Flash Player的`<policy-file-request/>`安全策略请求 |
+| 游戏Socket | `GameSocketServer` | 19393 | 聊天消息、在线状态、系统通知推送 |
+| 战斗Socket | `BattleSocketServer` | 29292 | 战斗实时数据推送 |
+
+**关键类：**
+- `CodecFactory` / `Encoder` / `Decoder`：自定义编解码器（Flash安全策略协议）
+- `GameSessionHandle`：游戏Socket会话处理器，处理聊天消息和会话管理
+- `GameSocketService`：游戏Socket服务，管理在线玩家会话映射
+- `BattleSessionHandle`：战斗Socket会话处理器
+- `BattleSocketService`：战斗Socket服务
+
+### 5.7 WebService层 (webservice)
+
+基于Apache CXF的SOAP WebService，用于后台管理系统调用：
+
+| 接口 | 实现类 | 方法 | 用途 |
+|------|--------|------|------|
+| `IWarWS` | `WarWS` | `getOnlinePlayerArray` | 获取在线玩家列表 |
+| | | `addSystemNotice` | 添加系统公告 |
+| | | `deleteSystemNotice` | 删除系统公告 |
+| | | `sendSystemNotice` | 发送系统公告 |
+| | | `initGameMap` | 初始化游戏地图 |
+| | | `initMapMonster` | 初始化地图野怪 |
+| `IPayWS` | `PayWS` | `isPlayerExisted` | 检查玩家是否存在 |
+| | | `addPlayerMoney` | 充值加金币 |
+
+WebService使用MD5验证机制，密钥配置在`config.properties`中。
+
+### 5.8 定时任务层 (quartz)
+
+基于Quartz框架，所有定时任务的调度由`QuartzService`统一协调：
+
+| 任务类 | 执行频率 | 功能 |
+|--------|---------|------|
+| `ResourceQuartz` | 每分钟(`0 * * * * ?`) | 计算城市资源产出与消耗 |
+| `BattleQuartz` | - | 处理战斗队列，执行战斗计算 |
+| `ProcessQueueQuartz` | - | 处理建筑/科技升级队列 |
+| `TradeQueueQuartz` | - | 处理资源交易队列 |
+| `ProductionQueueQuartz` | - | 处理兵种/军械生产队列 |
+| `DepoyQueueQuartz` | - | 处理出征/返回队列 |
+| `SpyQueueQuartz` | - | 处理侦察队列 |
+| `TenMinutesQuartz` | 每10分钟 | 10分钟周期事件 |
+| `HourQuartz` | 每小时 | 每小时事件 |
+| `DayQuartz` | 每天 | 每日事件(排名刷新等) |
+| `MonsterQuartz` | - | 野怪刷新 |
+| `SystemQuartz` | - | 数据历史记录 |
+| `SystemNoticeQuartz` | - | 系统公告定时推送 |
+| `SixHoursQuartz` | 每6小时 | 6小时周期事件 |
+
+所有定时任务在`InitSystemListener.contextInitialized()`中启动。
+
+### 5.9 脚本引擎层 (script)
+
+基于Groovy的脚本引擎，用于任务系统的灵活配置：
+
+- `IGameScriptEngine`：脚本引擎接口
+- `IGameScriptContext`：脚本上下文接口（提供操作数据库/玩家的能力）
+- `IGameScriptContextFactory`：脚本上下文工厂
+
+**任务脚本文件** (`.gy` = Groovy Script)：
+- `1001~1057.gy`：新手任务（57个）
+- `2001~2140.gy`：日常任务（140个）
+- `3001~3015.gy`：主线任务（15个）
+- `4001~4017.gy`：特殊任务（17个）
+
+脚本中通过`context`对象调用游戏API，如：
+- `context.getProcessType()`：获取处理类型
+- `context.rewardTreasure(id, count)`：奖励宝物
+- `context.getEncodingText(text)`：获取编码文本
+
+### 5.10 工具类层 (util)
+
+| 类名 | 功能 |
+|------|------|
+| `ResourceCalculateUtil` | 资源产出/消耗计算 |
+| `CostTimeCalculateUtil` | 建造/升级时间计算 |
+| `ConstraintDependUtil` | 建筑/科技前置依赖检查 |
+| `CfgFileUtil` | 配置文件读取 |
+| `ArrayUtil` | 数组操作 |
+| `ArmyUtil` | 军队相关计算 |
+| `GuildComparator` | 军团排序比较器 |
+
+### 5.11 监听器与工厂 (listener/factory)
+
+| 类名 | 功能 |
+|------|------|
+| `InitSystemListener` | **系统初始化入口**：实现`ServletContextListener`，在Web容器启动时执行所有初始化工作（缓存加载、定时任务启动、Socket服务启动） |
+| `FlexSpringFactory` | Flex与Spring集成工厂：使BlazeDS的RemoteObject能直接调用Spring管理的Bean |
+
+---
+
+## 6. 前端模块详解
+
+前端采用Adobe Flex的**Cairngorm MVC**架构：
+
+### 架构分层
+
+```
+┌─────────────────────────────────────────────┐
+│  View (MXML + AS3 UI组件)                    │
+│  - War.mxml (主入口)                         │
+│  - CityPanel, WorldPanel, StrongholdPanel    │
+│  - 各种弹窗 (Window)                          │
+├─────────────────────────────────────────────┤
+│  Events (CairngormEvent)                     │
+│  - 定义用户操作事件                           │
+├─────────────────────────────────────────────┤
+│  Controller (WarController)                  │
+│  - 注册事件与Command的映射                    │
+├─────────────────────────────────────────────┤
+│  Commands (ICommand实现)                     │
+│  - 调用Delegate执行业务逻辑                   │
+│  - 更新ModelLocator                          │
+├─────────────────────────────────────────────┤
+│  Delegate (远程调用代理)                      │
+│  - RemoteObject调用后端Service                │
+│  - 通过AMF协议通信                            │
+├─────────────────────────────────────────────┤
+│  Model (ModelLocator - 单例)                  │
+│  - 全局数据模型 [Bindable]                    │
+│  - playerInfo, cityInfo, guildInfo, ...      │
+└─────────────────────────────────────────────┘
+```
+
+### 核心类
+
+| 类 | 路径 | 职责 |
+|----|------|------|
+| `ModelLocator` | `model/ModelLocator.as` | 全局数据模型单例，存储所有游戏状态 |
+| `WarController` | `control/WarController.as` | Cairngorm前端控制器 |
+| `Services` | `business/Services.as` | RemoteObject服务定义 |
+| `ConfigUtil` | `util/ConfigUtil.as` | 读取前端配置文件 |
+| `WorldInfo` | `common/WorldInfo.as` | 世界地图数据管理 |
+| `CityInfo` | `common/CityInfo.as` | 城市数据管理 |
+| `GlobalTimer` | `common/GlobalTimer.as` | 全局定时器 |
+| `GameSocket.as` | `view/common/GameSocket.as` | 聊天Socket连接管理 |
+
+### 通信协议
+
+1. **AMF协议** (Adobe Message Format)：通过BlazeDS的`RemoteObject`与服务端交互，用于大部分游戏操作
+2. **Socket协议**：通过TCP连接进行实时聊天和战斗数据推送
+
+---
+
+## 7. 数据库设计
+
+### 数据库信息
+- 数据库名：`war_0202`
+- 字符集：UTF-8
+- 连接方式：`jdbc:mysql://127.0.0.1:3306/war_0202?useUnicode=true&characterEncoding=UTF-8`
+
+### 核心数据表（约80+张表，以`T_`为前缀）
+
+按功能模块分类：
+
+**玩家与账号**
+`T_USER`, `T_PLAYER`, `T_REFERENCE_ACCOUNT`, `T_PAY_HISTORY`, `T_DATA_HISTORY`
+
+**城市**
+`T_CITY`, `T_CITY_RESOURCE`, `T_CITY_EXT`, `T_CITY_BUILDING`, `T_CITY_DEFENSE`, `T_CITY_ARMY`, `T_CITY_ORDNANCE`, `T_CITY_TECHNOLOGY`, `T_CITY_MILITARY`, `T_CITY_MILITARY_SUCCOR`, `T_CITY_HERO`, `T_CITY_HERO_EXT`, `T_CITY_HERO_LEVELUP_LOG`, `T_CITY_CANDIDACY_HERO`, `T_CITY_WOUNDED_ARMY`, `T_CITY_RANK`
+
+**军队与战斗**
+`T_ARMY`, `T_ARMY_DEPEND`, `T_ORDNANCE`, `T_DEFENSE`, `T_BATTLE`, `T_BATTLE_LOG`, `T_BATTLE_DETAIL`, `T_BATTLE_ARMY`, `T_BATTLE_QUEUE`, `T_BATTLE_WAIT`, `T_DEPOY_QUEUE`, `T_SPY_QUEUE`
+
+**军团**
+`T_GUILD`, `T_GUILD_PLAYER`, `T_GUILD_EXT`, `T_GUILD_EVENT`, `T_GUILD_ATTACK`, `T_GUILD_RELATIONSHIP`, `T_GUILD_PLA_APP_INV`, `T_GUILD_TECHNOLOGY`, `T_GUILD_TECHNOLOGY_GUILD`, `T_GUILD_TECHNOLOGY_COST`, `T_GUILD_INC_EXP_HISTORY`, `T_GUILD_REWARD_RECEIVE_LOG`
+
+**静态数据**
+`T_BUILDING`, `T_TECHNOLOGY`, `T_CONSTRAINT_DEPEND`, `T_HONOR`, `T_TREASURE`, `T_EQUIPMENT`, `T_SKILL`, `T_TASK`, `T_NAME`, `T_GAME_CARD`, `T_SHBUILDING`, `T_STRONGHOLD`
+
+**社交与交互**
+`T_MESSAGE`, `T_MESSAGE_INBOX`, `T_MESSAGE_OUTBOX`, `T_FRIEND`, `T_CHAT_HISTORY`, `T_REPORT`, `T_SYSTEM_NOTICE`, `T_OPERATION_LOG`
+
+**玩家动态数据**
+`T_PLAYER_TASK`, `T_PLAYER_TREASURE`, `T_PLAYER_EQUIPMENT`, `T_PLAYER_CARD`, `T_HERO_SKILL`, `T_TREASURE_HISTORY`, `T_TREASURE_QUEUE`
+
+**队列**
+`T_PROCESS_QUEUE`, `T_PRODUCTION_QUEUE`, `T_TRADE_QUEUE`, `T_RES_TRADE`, `T_RES_TRANSPORTATION`
+
+**世界地图**
+`T_MAP`, `T_MAP_FAVOURITE`, `T_MAP_MONSTER`, `T_COLONIZATION`, `T_DECLARE_WAR`, `T_STRONGHOLD_SHBUILDING`
+
+---
+
+## 8. 依赖关系
+
+### 8.1 核心依赖JAR（关键）
+
+| JAR | 用途 |
+|-----|------|
+| `spring.jar` | Spring Framework核心 |
+| `ibatis-2.3.4.726.jar` | ORM框架 |
+| `cxf-2.1.3.jar` | SOAP WebService |
+| `mina-core-2.0.0-M3.jar` | NIO Socket |
+| `mysql-connector-java-5.1.5-bin.jar` | MySQL驱动 |
+| `c3p0-0.9.1.1.jar` | 数据库连接池 |
+| `quartz-1.7.0.jar` | 定时任务 |
+| `oscache-2.4.1.jar` | 缓存 |
+| `groovy-1.6.0.jar` | 脚本引擎 |
+| `flex-messaging-core.jar` | BlazeDS AMF通信 |
+| `log4j-1.2.9.jar` | 日志 |
+| `freemarker.jar` | 模板引擎 |
+| `json.jar` / `json-lib-2.2.2-jdk15.jar` | JSON处理 |
+
+### 8.2 模块依赖图
+
+```
+Web层
+  ├── web.xml → Spring ContextLoaderListener
+  │              └── applicationContext.xml (Spring Bean定义)
+  ├── InitSystemListener
+  │     ├── 初始化缓存 (CacheService)
+  │     ├── 启动所有Quartz定时任务
+  │     └── 启动Socket服务 (Game/Battle/FlashSecurity)
+  ├── MessageBrokerServlet → BlazeDS → FlexSpringFactory → Spring Beans
+  └── CXFServlet → WarWS / PayWS
+
+Service层 → DAO层 → iBatis SQL Maps → MySQL (C3P0连接池)
+
+Flex前端 → AMF(RemoteObject) → BlazeDS → FlexSpringFactory → Service层
+Flex前端 → TCP Socket → Mina SocketServer → GameSessionHandle/BattleSessionHandle
+```
+
+### 8.3 Spring Bean注入关系
+
+```
+applicationContext.xml
+  ├── dataSource (C3P0连接池)
+  │     └── sqlMapClient (iBatis)
+  │           └── 所有DAO Bean (通过sqlMapClient属性注入)
+  ├── transactionManager
+  ├── warWS → mapService, monsterService, systemService
+  ├── payWS → payHistoryDAO, playerService, transactionManager
+  └── 所有Service Bean → 通过setter注入对应的DAO
+```
+
+---
+
+## 9. 项目运行方式
+
+### 9.1 运行环境要求
+
+| 组件 | 版本要求 |
+|------|---------|
+| JDK | 1.5 或 1.6 (32位) |
+| MySQL | 5.1+ |
+| Servlet容器 | Tomcat 6.x 或同等容器 |
+| 浏览器 | 支持Flash Player 9.0.28+ |
+| IDE | MyEclipse (可选，项目为MyEclipse工程) |
+
+### 9.2 部署架构
+
+```
+┌─────────────────────────────────────────────────┐
+│  Tomcat 6.x (或其他Servlet容器)                   │
+│                                                  │
+│  webapps/War/                                    │
+│    ├── War.html (入口页面)                        │
+│    ├── War.swf (Flex客户端)                       │
+│    ├── WEB-INF/                                   │
+│    │   ├── web.xml                               │
+│    │   ├── applicationContext.xml (Spring配置)     │
+│    │   ├── lib/ (所有JAR依赖)                      │
+│    │   └── classes/ (编译后的Java类)               │
+│    └── config/config.xml (前端配置)                │
+│                                                  │
+│  端口: 8080 (HTTP)                                │
+│  端口: 843 (Flash安全策略)                         │
+│  端口: 19393 (游戏Socket)                          │
+│  端口: 29292 (战斗Socket)                          │
+└─────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  MySQL 5.1       │
+│  端口: 3306       │
+│  数据库: war_0202 │
+└─────────────────┘
+```
+
+---
+
+## 10. 本地运行指南
+
+### 前提条件
+
+1. **安装JDK 1.6** (推荐32位，兼容性最好)
+2. **安装MySQL 5.1+**
+3. **安装Tomcat 6.x**
+4. **安装Flash Player** (浏览器插件)
+
+### 步骤一：数据库准备
+
+1. 创建数据库：
+```sql
+CREATE DATABASE war_0202 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+```
+
+2. 导入数据库表结构和初始数据（需要从原始数据库导出SQL文件，目前源码中未包含完整建表SQL，仅有测试SQL片段 `test.sql`）
+
+> **注意**：源码中缺少完整的数据库建表SQL文件。需要根据`domain/`下的实体类和`dao/sqlmap/`下的SQL映射XML反向推导表结构，或从原有数据库导出。
+
+### 步骤二：配置修改
+
+1. **数据库连接配置** - `applicationContext.xml` 第34行：
+```xml
+<property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/war_0202?useUnicode=true&amp;characterEncoding=UTF-8" />
+<property name="user" value="root" />
+<property name="password" value="你的密码" />
+```
+
+2. **前端配置** - `WebRoot/config/config.xml`：
+```xml
+<SERVER_IP>127.0.0.1</SERVER_IP>
+<SERVER_ENDPOINT>http://127.0.0.1:8080/War/messagebroker/amf</SERVER_ENDPOINT>
+<LOGIN_WEBSERVICE_WSDL>http://127.0.0.1:8080/War/webservice/PayWS?wsdl</LOGIN_WEBSERVICE_WSDL>
+```
+
+3. **系统配置** - `src/config/config.properties`：
+   - `WarWebServiceKey`：WarWS的验证密钥
+   - `PayWebServiceKey`：PayWS的验证密钥
+   - `RegisterFilterWord`：注册过滤词
+   - `ChatFilterWord`：聊天过滤词
+
+### 步骤三：编译部署
+
+**方式一：使用MyEclipse**
+1. 导入`WarServer`为MyEclipse项目
+2. 确保所有JAR依赖在`WebRoot/WEB-INF/lib/`下
+3. 编译并部署到Tomcat
+
+**方式二：手动编译**
+1. 将`src/`下的Java源码编译到`WebRoot/WEB-INF/classes/`
+2. 将整个`WebRoot/`目录复制到Tomcat的`webapps/War/`
+
+**方式三：使用Ant/Maven**（需要自行创建构建脚本）
+
+### 步骤四：启动
+
+1. 启动MySQL
+2. 启动Tomcat
+3. 访问 `http://localhost:8080/War/War.html`
+
+### 前端编译
+
+Flex前端源码在`FlexWorkSpaces/War/`中，需要：
+1. Adobe Flex Builder 3/4 或 Apache Flex SDK
+2. 编译`src/War.mxml`生成`War.swf`
+3. 将编译产物放到`WebRoot/`目录下
+
+> 工程中已包含编译好的`War.swf`和`War.js`，可以直接使用。
+
+### 启动顺序
+
+1. 确保MySQL服务运行，数据库`war_0202`已创建并导入数据
+2. 部署WAR包到Tomcat并启动
+3. 系统启动后，`InitSystemListener`会依次：
+   - 初始化Spring上下文
+   - 加载所有缓存数据
+   - 启动所有定时任务
+   - 启动三个Socket服务(843/19393/29292)
+4. 浏览器访问`http://localhost:8080/War/War.html`
+
+---
+
+## 11. 关键配置说明
+
+### 11.1 Spring配置 (`applicationContext.xml`)
+
+- **数据源**：C3P0连接池，连接MySQL
+- **iBatis**：通过`SqlMapClientFactoryBean`配置，引用`sqlMapConfig.xml`
+- **事务管理**：`DataSourceTransactionManager`（事务配置已注释，采用手动管理）
+- **WebService**：通过CXF的`jaxws:endpoint`暴露`/webservice/WarWS`和`/webservice/PayWS`
+- **Bean注入**：所有DAO和Service通过Spring的setter注入
+
+### 11.2 Web配置 (`web.xml`)
+
+- `ContextLoaderListener`：加载Spring上下文
+- `InitSystemListener`：系统初始化入口
+- `HttpFlexSession`：BlazeDS Flex会话管理
+- `MessageBrokerServlet`：处理AMF请求（`/messagebroker/*`）
+- `CXFServlet`：处理WebService请求（`/webservice/*`）
+
+### 11.3 iBatis配置 (`sqlMapConfig.xml`)
+
+配置了约80+个SQL映射文件，覆盖所有数据表。使用`lazyLoadingEnabled="false"`（禁用懒加载）和`useStatementNamespaces="true"`（启用命名空间）。
+
+### 11.4 前端配置 (`config/config.xml`)
+
+配置了服务器IP、AMF端点、WebService地址、支付URL、注册URL、官方网站、帮助页面、论坛等链接。
+
+### 11.5 缓存配置 (`oscache.properties`)
+
+OSCache配置，用于缓存静态游戏数据（建筑、科技、兵种等定义数据）。
+
+### 11.6 定时任务配置 (`quartz.properties`)
+
+Quartz调度器配置，定义线程池等参数。
+
+---
+
+## 附录
+
+### A. 端口占用一览
+
+| 端口 | 协议 | 用途 |
+|------|------|------|
+| 8080 | HTTP | Tomcat Web服务 |
+| 3306 | TCP | MySQL数据库 |
+| 843 | TCP | Flash安全策略文件服务 |
+| 19393 | TCP | 游戏聊天Socket |
+| 29292 | TCP | 战斗数据Socket |
+
+### B. 关键URL路径
+
+| 路径 | 说明 |
+|------|------|
+| `/War/War.html` | 游戏入口页面 |
+| `/War/messagebroker/amf` | AMF通信端点 |
+| `/War/webservice/WarWS?wsdl` | 游戏管理WebService WSDL |
+| `/War/webservice/PayWS?wsdl` | 充值WebService WSDL |
+
+### C. 已知问题和注意事项
+
+1. **数据库建表SQL缺失**：源码中未包含完整的数据库建表语句，需要从实体类和SQL映射XML反向推导
+2. **Flex编译环境**：Adobe Flex已停止维护，需要Apache Flex SDK或旧版Flex Builder
+3. **Flash Player限制**：现代浏览器已逐步淘汰Flash Player，需要使用支持Flash的旧版浏览器或独立Flash Player
+4. **JDK版本**：建议使用JDK 1.6 32位，与项目开发年代一致
+5. **事务管理**：Spring事务配置已被注释掉，代码中使用手动事务管理
+6. **支付系统**：PayWS集成了第三方支付（易宝支付），本地运行需要修改或禁用
+7. **第三方统计**：War.html中嵌入了CNZZ统计代码，可移除
+8. **外部链接**：配置文件中引用了`jd.52wyyx.com`等外部URL，本地运行时需修改
+
+---
+
+> **文档版本**: 1.0  
+> **生成日期**: 2026-07-28  
+> **作者**: 基于源码分析生成
