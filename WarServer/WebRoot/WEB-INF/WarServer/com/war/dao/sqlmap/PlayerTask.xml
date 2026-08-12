@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="PlayerTask">
+	<typeAlias alias="PlayerTask" type="com.war.domain.PlayerTask" />
+	
+	<insert id="createPlayerTask" parameterClass="PlayerTask">
+		INSERT INTO T_PLAYER_TASK(PLAYER_ID, TASK_ID, TASK_TYPE, STATE, FLAG) VALUES(#playerID#, #taskID#, #taskType#, #state#, #flag#)
+		<selectKey resultClass="Integer" keyProperty="playerTaskID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateStateByPlayerTaskID" parameterClass="java.util.Map">
+		UPDATE T_PLAYER_TASK SET STATE=#state# WHERE PLAYER_TASK_ID=#playerTaskID#
+	</update>
+	
+	<update id="updateFlagByPlayerTaskID" parameterClass="java.util.Map">
+		UPDATE T_PLAYER_TASK SET FLAG=#flag# WHERE PLAYER_TASK_ID=#playerTaskID#
+	</update>
+	
+	<update id="updatePlayerTask" parameterClass="PlayerTask">
+		UPDATE T_PLAYER_TASK SET PLAYER_ID=#playerID#, TASK_ID=#taskID#, TASK_TYPE=#taskType#, STATE=#state#, FLAG=#flag# WHERE PLAYER_TASK_ID=#playerTaskID#
+	</update>
+	
+	<update id="refreshDailyTask">
+	 	 <![CDATA[ UPDATE T_PLAYER_TASK SET STATE=0, FLAG=0 WHERE TASK_TYPE=3 AND FLAG=1 ]]>
+	</update>
+	
+	<delete id="deletePlayerTaskByID" parameterClass="Integer">
+		DELETE FROM T_PLAYER_TASK WHERE PLAYER_TASK_ID=#playerTaskID#
+	</delete>
+	
+	<select id="getPlayerTaskByID" parameterClass="Integer" resultClass="PlayerTask">
+		SELECT PLAYER_TASK_ID AS playerTaskID, PLAYER_ID AS playerID, TASK_ID AS taskID, TASK_TYPE AS taskType, STATE AS State, FLAG AS flag FROM T_PLAYER_TASK WHERE PLAYER_TASK_ID=#playerTaskID#
+	</select>
+	
+	<select id="getPlayerTaskByPlayerIDAndTaskID" parameterClass="java.util.Map" resultClass="PlayerTask">
+		SELECT PLAYER_TASK_ID AS playerTaskID, PLAYER_ID AS playerID, TASK_ID AS taskID, TASK_TYPE AS taskType, STATE AS State, FLAG AS flag FROM T_PLAYER_TASK WHERE PLAYER_ID=#playerID# AND TASK_ID=#taskID#
+	</select>
+	
+	<select id="getPlayerTaskListByPlayerID"  parameterClass="Integer" resultClass="PlayerTask">
+		SELECT PLAYER_TASK_ID AS playerTaskID, PLAYER_ID AS playerID, TASK_ID AS taskID, TASK_TYPE AS taskType, STATE AS State, FLAG AS flag FROM T_PLAYER_TASK WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerTaskListByPlayerIDAndTaskTypeAndFlag" resultClass="PlayerTask"  parameterClass="java.util.Map">
+		<![CDATA[
+			SELECT PLAYER_TASK_ID AS playerTaskID, PLAYER_ID AS playerID, TASK_ID AS taskID, TASK_TYPE AS taskType, STATE AS State, FLAG AS flag FROM T_PLAYER_TASK WHERE FLAG=#flag# AND TASK_TYPE=#taskType# AND PLAYER_ID=#playerID# 
+		]]>
+	</select>
+	
+</sqlMap>

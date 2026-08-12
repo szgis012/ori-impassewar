@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildTechnologyGuild">
+	<typeAlias alias="GuildTechnologyguild" type="com.war.domain.GuildTechnologyGuild" />
+
+	<insert id="createGuildTechnologyguild" parameterClass="GuildTechnologyGuild">
+		INSERT INTO T_GUILD_TECHNOLOGYGUILD(GUILD_TECHNOLOGYGUILD_ID, GUILD_ID, GUILDTECHNOLOGY_ID, LEVEL, STATE) VALUES(#guildTechnologyguildID#, #guildID#, #guildtechnologyID#, #level#, #state#)
+		<selectKey resultClass="Integer" keyProperty="guildTechnologyguildID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateGuildTechnologyguild" parameterClass="GuildTechnologyGuild">
+		UPDATE T_GUILD_TECHNOLOGYGUILD SET GUILD_TECHNOLOGYGUILD_ID=#guildTechnologyguildID#, GUILD_ID=#guildID#, GUILDTECHNOLOGY_ID=#guildtechnologyID#, LEVEL=#level#, STATE=#state# WHERE GUILD_TECHNOLOGYGUILD_ID=#guildTechnologyguildID#
+	</update>
+
+	<update id="updateGuildTechnologyguildWithState" parameterClass="HashMap">
+		UPDATE T_GUILD_TECHNOLOGYGUILD SET STATE=#state# WHERE GUILD_TECHNOLOGYGUILD_ID=#guildTechnologyguildID#
+	</update>
+
+	<delete id="deleteGuildTechnologyguildByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_TECHNOLOGYGUILD WHERE GUILD_TECHNOLOGYGUILD_ID=#guildTechnologyguildID#
+	</delete>
+
+	<select id="getGuildTechnologyguildByID" parameterClass="Integer" resultClass="GuildTechnologyGuild">
+		SELECT GUILD_TECHNOLOGYGUILD_ID AS guildTechnologyguildID, GUILD_ID AS guildID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, STATE AS state FROM T_GUILD_TECHNOLOGYGUILD WHERE GUILD_TECHNOLOGYGUILD_ID=#guildTechnologyguildID#
+	</select>
+
+	<select id="getGuildTechnologyguildList" resultClass="GuildTechnologyGuild">
+		SELECT GUILD_TECHNOLOGYGUILD_ID AS guildTechnologyguildID, GUILD_ID AS guildID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, STATE AS state FROM T_GUILD_TECHNOLOGYGUILD
+	</select>
+
+	<select id="getGuildTechnologyguildListByGuildID" parameterClass="Integer" resultClass="GuildTechnologyGuild">
+		SELECT GUILD_TECHNOLOGYGUILD_ID AS guildTechnologyguildID, GUILD_ID AS guildID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, STATE AS state FROM T_GUILD_TECHNOLOGYGUILD WHERE GUILD_ID=#guildID#
+	</select>
+
+	<select id="getGuildTechnologyByIDAndGuildID" parameterClass="HashMap" resultClass="GuildTechnologyGuild">
+		SELECT GUILD_TECHNOLOGYGUILD_ID AS guildTechnologyguildID, GUILD_ID AS guildID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, STATE AS state FROM T_GUILD_TECHNOLOGYGUILD WHERE GUILD_TECHNOLOGYGUILD_ID=#guildtechnologyID# AND GUILD_ID=#guildID#
+	</select>
+
+	<select id="getGuildTechnologyWithResearching" parameterClass="HashMap" resultClass="GuildTechnologyGuild">
+		SELECT GUILD_TECHNOLOGYGUILD_ID AS guildTechnologyguildID, GUILD_ID AS guildID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, STATE AS state FROM T_GUILD_TECHNOLOGYGUILD WHERE GUILDTECHNOLOGY_ID=#guildTechnologyID# AND GUILD_ID=#guildID# AND STATE=#state#;
+	</select>
+
+</sqlMap>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="PlayerEquipment">
+	<typeAlias alias="PlayerEquipment" type="com.war.domain.PlayerEquipment" />
+	
+	<insert id="createPlayerEquipment" parameterClass="PlayerEquipment">
+		INSERT INTO T_PLAYER_EQUIPMENT(PLAYER_ID, EQUIPMENT_ID) VALUES(#playerID#, #equipmentID#)
+		<selectKey resultClass="Integer" keyProperty="playerEquipmentID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updatePlayerEquipment" parameterClass="PlayerEquipment">
+		UPDATE T_PLAYER_EQUIPMENT SET PLAYER_EQUIPMENT_ID=#playerEquipmentID#, PLAYER_ID=#playerID#, EQUIPMENT_ID=#equipmentID# WHERE PLAYER_EQUIPMENT_ID=#playerEquipmentID#
+	</update>
+	
+	<delete id="deletePlayerEquipmentByID" parameterClass="Integer">
+		DELETE FROM T_PLAYER_EQUIPMENT WHERE PLAYER_EQUIPMENT_ID=#playerEquipmentID#
+	</delete>
+	
+	<select id="getPlayerEquipmentByID" parameterClass="Integer" resultClass="PlayerEquipment">
+		SELECT PLAYER_EQUIPMENT_ID AS playerEquipmentID, PLAYER_ID AS playerID, EQUIPMENT_ID AS equipmentID FROM T_PLAYER_EQUIPMENT WHERE PLAYER_EQUIPMENT_ID=#playerEquipmentID#
+	</select>
+	
+	<select id="getPlayerEquipmentListByPlayerIDAndCategory" parameterClass="java.util.Map" resultClass="PlayerEquipment">
+		SELECT PLAYER_EQUIPMENT_ID AS playerEquipmentID, PLAYER_ID AS playerID, EQUIPMENT_ID AS equipmentID FROM T_PLAYER_EQUIPMENT WHERE PLAYER_ID=#playerID# AND (SELECT CATEGORY FROM T_EQUIPMENT WHERE T_EQUIPMENT.EQUIPMENT_ID=T_PLAYER_EQUIPMENT.EQUIPMENT_ID)=#category#
+	</select>
+	
+	<select id="getPlayerEquipmentList" resultClass="PlayerEquipment">
+		SELECT PLAYER_EQUIPMENT_ID AS playerEquipmentID, PLAYER_ID AS playerID, EQUIPMENT_ID AS equipmentID FROM T_PLAYER_EQUIPMENT
+	</select>
+
+</sqlMap>

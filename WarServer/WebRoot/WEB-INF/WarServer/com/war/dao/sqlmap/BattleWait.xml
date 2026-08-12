@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BattleWait">
+	<typeAlias alias="BattleWait" type="com.war.domain.BattleWait" />
+
+	<insert id="createBattleWait" parameterClass="BattleWait">
+		INSERT INTO T_BATTLE_WAIT(MAP_ID, ATTACKER_CITY_MILITARY_ID, DEFENDER_CITY_MILITARY_ID, START_TIME) VALUES(#mapID#, #attackerCityMilitaryID#, #defenderCityMilitaryID#, #startTime#)
+		<selectKey resultClass="Integer" keyProperty="battleWaitID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateBattleWait" parameterClass="BattleWait">
+		UPDATE T_BATTLE_WAIT SET MAP_ID=#mapID#, ATTACKER_CITY_MILITARY_ID=#attackerCityMilitaryID#, DEFENDER_CITY_MILITARY_ID=#defenderCityMilitaryID#, START_TIME=#startTime# WHERE BATTLE_WAIT_ID=#battleWaitID#
+	</update>
+
+	<delete id="deleteBattleWaitByID" parameterClass="Integer">
+		DELETE FROM T_BATTLE_WAIT WHERE BATTLE_WAIT_ID=#battleWaitID#
+	</delete>
+	
+	<delete id="deleteBattleWaitByMapID" parameterClass="Integer">
+		DELETE FROM T_BATTLE_WAIT WHERE MAP_ID=#mapID#
+	</delete>
+
+	<select id="getBattleWaitByID" parameterClass="Integer" resultClass="BattleWait">
+		SELECT BATTLE_WAIT_ID AS battleWaitID, MAP_ID AS mapID, ATTACKER_CITY_MILITARY_ID AS attackerCityMilitaryID, DEFENDER_CITY_MILITARY_ID AS defenderCityMilitaryID, START_TIME AS startTime FROM T_BATTLE_WAIT WHERE BATTLE_WAIT_ID=#battleWaitID#
+	</select>
+
+	<select id="getBattleWaitList" resultClass="BattleWait">
+		SELECT BATTLE_WAIT_ID AS battleWaitID, MAP_ID AS mapID, ATTACKER_CITY_MILITARY_ID AS attackerCityMilitaryID, DEFENDER_CITY_MILITARY_ID AS defenderCityMilitaryID, START_TIME AS startTime FROM T_BATTLE_WAIT
+	</select>
+	
+	<select id="getBattleWaitNumWithCityIDByMapID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_BATTLE_WAIT WHERE MAP_ID=(SELECT MAP_ID FROM T_CITY,T_MAP WHERE T_CITY.POSX=T_MAP.POSX AND T_CITY.POSY=T_MAP.POSY AND CITY_ID=#cityID#)
+	</select>
+	
+	<select id="getBattleWaitNumByPosXAndPosY" parameterClass="java.util.Map" resultClass="Integer">
+        SELECT COUNT(*) FROM T_BATTLE_WAIT WHERE MAP_ID=(SELECT MAP_ID FROM T_MAP WHERE POSX=#posX# AND POSY=#posY#)
+    </select>
+    
+    <select id="getBattleWaitByCityMilitaryID" parameterClass="java.lang.Integer" resultClass="BattleWait">
+    	SELECT BATTLE_WAIT_ID AS battleWaitID, MAP_ID AS mapID, ATTACKER_CITY_MILITARY_ID AS attackerCityMilitaryID, DEFENDER_CITY_MILITARY_ID AS defenderCityMilitaryID, START_TIME AS startTime FROM T_BATTLE_WAIT WHERE ATTACKER_CITY_MILITARY_ID=#value# OR DEFENDER_CITY_MILITARY_ID=#value#
+    </select>
+    
+    <select id="getIntervalFinishedBattleWaitList" resultClass="BattleWait">
+    	<![CDATA[
+    		SELECT BATTLE_WAIT_ID AS battleWaitID, MAP_ID AS mapID, ATTACKER_CITY_MILITARY_ID AS attackerCityMilitaryID, DEFENDER_CITY_MILITARY_ID AS defenderCityMilitaryID, START_TIME AS startTime FROM T_BATTLE_WAIT WHERE START_TIME <= SYSDATE() 
+    	]]>
+    </select>
+    
+</sqlMap>

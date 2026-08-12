@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:624
+ * 
+ * 名称：军神药水
+ * 描述：指挥官进行完美升级时消耗，完美升级能获得当前军魂所能获取的最大潜力点数。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.cityHeroPerfectLevelUp(params["cityHeroID"]);

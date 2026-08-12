@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="185" height="100" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.constant.TreasureStateConstant;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.vo.TreasureItemVO;
+			
+			
+			private var _treasureItem:TreasureItemVO;
+			
+			[Bindable]
+			public function get treasureItem():TreasureItemVO{
+				return _treasureItem;
+			}
+			
+			public function set treasureItem(ti:TreasureItemVO):void{
+				_treasureItem = ti;
+				
+				if(ti.state == TreasureStateConstant.HOT_SALE){
+					this.imgTrasureItem.source = new WarAssets.hotSale();
+				}else if(ti.state == TreasureStateConstant.SPECIAL_PRICE){
+					this.imgTrasureItem.source = new WarAssets.specailPrice();
+				}
+			}
+			
+			private function showBuyTreasureWindow():void{
+				var win:BuyTreasureWindow = new BuyTreasureWindow();
+				WindowUtil.showModelWindow(win);
+				win.treasureItem = this.treasureItem;
+			}
+		]]>
+	</mx:Script>
+	<mx:Image x="10" y="10" width="80" height="80" source="{ImagePathUtil.getTreasurePath(treasureItem.imgSrc)}" toolTip="{treasureItem.description}"/>
+	<mx:Label x="98" y="10" text="{treasureItem.name}" width="80"/>
+	<mx:Label x="98" y="38" text="金币：{treasureItem.cost}" width="80"/>
+	<mx:Button x="98" y="66" label="购 买" width="75" height="26" click="showBuyTreasureWindow()"/>
+	<mx:Image id="imgTrasureItem" x="10" y="10" visible="{treasureItem.state != 0}"/>
+	
+</mx:Canvas>

@@ -1,0 +1,16 @@
+/**
+ * 宝物编号:445
+ * 
+ * 名称：小型资金袋
+ * 描述：获得金钱，金钱不多于500
+ * 类型：宝箱
+ */
+
+//rand{1,5}
+int rnd = Math.random() * 10 % 5 + 1;
+
+int moneyNum = 100 * rnd;
+
+context.rewardResource(0,0,0,0,moneyNum);
+
+return "金钱:resource/5.png:${moneyNum}".toString();

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="240">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.citycenter.ChangeCityNameEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			
+			private function doChangeName():void{
+				var newName:String = this.txtName.text;
+				
+				if(newName.length==0){
+					MsgBox.showMessage("请输入新的城市名称！");
+					this.txtName.setFocus();
+					return;
+				}
+				
+				if(newName != model.cityInfo.name){
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityNameEvent(newName));
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="48" width="560" height="43" styleName="CanvasBorder">
+		<mx:Label x="5" y="10" text="城市名称："/>
+		<mx:Text x="78" y="10" text="{model.cityInfo.name}"/>
+		<mx:Label x="209" y="10" text="新城市名称："/>
+		<mx:TextInput x="294" y="9" id="txtName" maxChars="8"  width="133"/>
+		<mx:Button x="447" y="6" label="确定" click="doChangeName()" width="60" height="26"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="10" width="560" height="32" styleName="CanvasBorder">
+		<mx:Text x="5" y="5" text="这里可以修改您城市的名称" width="546" height="18"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

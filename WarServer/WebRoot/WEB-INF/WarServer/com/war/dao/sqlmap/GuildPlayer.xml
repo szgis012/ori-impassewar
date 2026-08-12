@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildPlayer">
+	<typeAlias alias="GuildPlayer" type="com.war.domain.GuildPlayer" />
+	
+	<insert id="createGuildPlayer" parameterClass="GuildPlayer">
+		INSERT INTO T_GUILD_PLAYER(GUILD_ID, PLAYER_ID, CONTRIBUTION, SUBSCRIBE_MONEY, SUBSCRIBE_ORIFLAMME_LOWER_NUM, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM, DUTY_NAME, PERMISSION, ALLOW_GARRISON, CREATE_TIME) VALUES(#guildID#, #playerID#, #contribution#, #subscribeMoney#, #subscribeOriflammeLowerNum#, #subscribeOriflammeIntermediateNum#, #subscribeOriflammeAdvancedNum#, #dutyName#, #permission#, #allowGarrison#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="guildPlayerID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateGuildPlayer" parameterClass="GuildPlayer">
+		UPDATE T_GUILD_PLAYER SET GUILD_ID=#guildID#, PLAYER_ID=#playerID#, CONTRIBUTION=#contribution#, SUBSCRIBE_MONEY=#subscribeMoney#, SUBSCRIBE_ORIFLAMME_LOWER_NUM=#subscribeOriflammeLowerNum#, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM=#subscribeOriflammeIntermediateNum#, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM=#subscribeOriflammeAdvancedNum#, DUTY_NAME=#dutyName#, PERMISSION=#permission#, ALLOW_GARRISON=#allowGarrison#, CREATE_TIME=#createTime# WHERE GUILD_PLAYER_ID=#guildPlayerID#
+	</update>
+	
+	<update id="updateAllowGarrisonByGuildPlayerID" parameterClass="HashMap">
+		UPDATE ALLOW_GARRISON=#allowGarrison# WHERE GUILD_PLAYER_ID=#guildPlayerID#
+	</update>
+	
+	<update id="updateAllowGarrisonByPlayerIDAndGuildID" parameterClass="HashMap">
+		UPDATE ALLOW_GARRISON=#allowGarrison# WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID#
+	</update>
+	
+	<delete id="deleteGuildPlayerByGuildIDAndPlayerID" parameterClass="HashMap">
+		DELETE FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID#
+	</delete>
+	
+	<delete id="deleteGuildPlayersByGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<select id="getGuildPlayerByID" parameterClass="Integer" resultClass="GuildPlayer">
+		SELECT GUILD_PLAYER_ID as guildPlayerID, GUILD_ID AS guildID, PLAYER_ID AS playerID, CONTRIBUTION AS contribution, SUBSCRIBE_MONEY AS subscribeMoney, SUBSCRIBE_ORIFLAMME_LOWER_NUM AS subscribeOriflammeLowerNum, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM AS subscribeOriflammeIntermediateNum, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM AS subscribeOriflammeAdvancedNum, DUTY_NAME AS dutyName, PERMISSION AS permission, ALLOW_GARRISON AS allowGarrison, CREATE_TIME AS createTime FROM T_GUILD_PLAYER WHERE GUILD_PLAYER_ID=#guildPlayerID#
+	</select>
+	
+	<select id="getGuildPlayerByGuildIDAndPlayerID" parameterClass="HashMap" resultClass="GuildPlayer">
+		SELECT GUILD_PLAYER_ID as guildPlayerID, GUILD_ID AS guildID, PLAYER_ID AS playerID, CONTRIBUTION AS contribution, SUBSCRIBE_MONEY AS subscribeMoney, SUBSCRIBE_ORIFLAMME_LOWER_NUM AS subscribeOriflammeLowerNum, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM AS subscribeOriflammeIntermediateNum, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM AS subscribeOriflammeAdvancedNum, DUTY_NAME AS dutyName, PERMISSION AS permission, ALLOW_GARRISON AS allowGarrison, CREATE_TIME AS createTime FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getGuildPlayerAmountByGuildID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildPlayerPagingListByGuildID" parameterClass="HashMap" resultClass="GuildPlayer">
+		SELECT GUILD_PLAYER_ID as guildPlayerID, GUILD_ID AS guildID, PLAYER_ID AS playerID, CONTRIBUTION AS contribution, SUBSCRIBE_MONEY AS subscribeMoney, SUBSCRIBE_ORIFLAMME_LOWER_NUM AS subscribeOriflammeLowerNum, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM AS subscribeOriflammeIntermediateNum, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM AS subscribeOriflammeAdvancedNum, DUTY_NAME AS dutyName, PERMISSION AS permission, ALLOW_GARRISON AS allowGarrison, CREATE_TIME AS createTime FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID# LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getGuildPlayerListByGuildID" parameterClass="Integer" resultClass="GuildPlayer">
+		SELECT GUILD_PLAYER_ID as guildPlayerID, GUILD_ID AS guildID, PLAYER_ID AS playerID, CONTRIBUTION AS contribution, SUBSCRIBE_MONEY AS subscribeMoney, SUBSCRIBE_ORIFLAMME_LOWER_NUM AS subscribeOriflammeLowerNum, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM AS subscribeOriflammeIntermediateNum, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM AS subscribeOriflammeAdvancedNum, DUTY_NAME AS dutyName, PERMISSION AS permission, ALLOW_GARRISON AS allowGarrison, CREATE_TIME AS createTime FROM T_GUILD_PLAYER WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildPlayerList" resultClass="GuildPlayer">
+		SELECT GUILD_PLAYER_ID as guildPlayerID, GUILD_ID AS guildID, PLAYER_ID AS playerID, CONTRIBUTION AS contribution, SUBSCRIBE_MONEY AS subscribeMoney, SUBSCRIBE_ORIFLAMME_LOWER_NUM AS subscribeOriflammeLowerNum, SUBSCRIBE_ORIFLAMME_INTERMEDIATE_NUM AS subscribeOriflammeIntermediateNum, SUBSCRIBE_ORIFLAMME_ADVANCED_NUM AS subscribeOriflammeAdvancedNum, DUTY_NAME AS dutyName, PERMISSION AS permission, ALLOW_GARRISON AS allowGarrison, CREATE_TIME AS createTime FROM T_GUILD_PLAYER
+	</select>
+	
+</sqlMap>

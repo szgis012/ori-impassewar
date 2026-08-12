@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" initialize="doInit()" layout="absolute" width="630" height="440" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.report.ReadReportEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.events.report.DeleteReportEvent;
+			import com.hifong.war.events.report.SaveReportEvent;
+			import com.hifong.war.util.MsgBox;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.hifong.war.common.ReportInfo;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.vo.ReportVO;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.constant.ReportTypeConstant;
+			import com.hifong.war.events.report.GetPaginateReportListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var reportInfo:ReportInfo = model.reportInfo;
+			
+			/** 全选/全不选标志*/
+			private var allSelected:Boolean = false;
+			
+			private var dispathcer:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			
+			private function doInit():void{
+				dispathcer.dispatchEvent(new GetPaginateReportListEvent(ReportTypeConstant.MILITARY_ACTION,1));
+				
+				model.haveNewReport = false;
+			}
+			
+			//查看报告详情
+			public function showReportDetailWindow(report:Object):void{
+				var win:ReportDetailWindow = new ReportDetailWindow();
+				win.report = report as ReportVO;
+				WindowUtil.showModelWindow(win);
+				//如果报告还未读
+				if(report.readFlag == 0){
+					dispathcer.dispatchEvent(new ReadReportEvent([report.reportID]));
+					report.readFlag = 1;
+				}
+				
+			}
+
+			/**
+			 * 查看HTML报告详细信息
+			 */
+			public function showHTMLReportDetailWindow(report:Object):void{
+				var win:HTMLReportDetailWindow = new HTMLReportDetailWindow();
+				win.report = report as ReportVO;
+				WindowUtil.showModelWindow(win);
+				//如果报告还未读
+				if(report.readFlag == 0){
+					dispathcer.dispatchEvent(new ReadReportEvent([report.reportID]));
+					report.readFlag = 1;
+				}
+			}
+			
+			//加载报告信息
+			private function loadReport(type:int):void{
+				if(type == reportInfo.currentReportType)
+					return;
+				
+				//获得第一页的数据
+				dispathcer.dispatchEvent(new GetPaginateReportListEvent(type,1));	
+			}
+			
+			//上一页
+			private function pageUp():void{
+				dispathcer.dispatchEvent(new GetPaginateReportListEvent(reportInfo.currentReportType,reportInfo.currentPageNum-1));
+			}
+			
+			//下一页
+			private function pageDown():void{
+				dispathcer.dispatchEvent(new GetPaginateReportListEvent(reportInfo.currentReportType,reportInfo.currentPageNum+1));
+			}
+			
+			//全选/取消全选
+			private function doSelectAll():void{
+				if(reportInfo.reportList){
+					var report:ReportVO;
+					allSelected = !allSelected;
+					
+					for(var i:int=0; i<reportInfo.reportList.length; i++){
+						report = reportInfo.reportList.getItemAt(i) as ReportVO;
+						report.selected = allSelected;
+					}
+				}
+			}
+			
+			//保存选择的报告
+			private function doSave():void{
+				var reportIDs:Array = getReportIDs();
+				
+				if(reportIDs.length>0){
+					dispathcer.dispatchEvent(new SaveReportEvent(reportIDs));
+				}else{
+					MsgBox.showMessage("请先选择要保存的报告！");
+				}
+			}
+			
+			//删除选择的报告
+			private function doDelete():void{
+				var reportIDs:Array = getReportIDs();
+				
+				if(reportIDs.length>0){
+					MsgBox.showConfirm("您确定要删除选择的报告吗？",function():void{
+						dispathcer.dispatchEvent(new DeleteReportEvent(reportIDs));
+					});
+				}else{
+					MsgBox.showMessage("请先选择要删除的报告！");
+				}
+			}
+			
+			//获得选择报告编号的数组
+			private function getReportIDs():Array{
+				var reportIDs:Array = [];
+				
+				if(reportInfo.reportList && reportInfo.reportList.length>0){
+					var report:ReportVO;
+					
+					for(var i:int=0; i<reportInfo.reportList.length; i++){
+						report = reportInfo.reportList.getItemAt(i) as ReportVO;
+						
+						//将选中的报告放入保存数组里
+						if(report.selected){
+							reportIDs.push(report.reportID);
+						}
+					}
+				}
+				
+				return reportIDs;
+			}
+			
+			private function onTabChange(event:IndexChangedEvent):void{
+				switch(event.newIndex){
+					case 0:
+						loadReport(ReportTypeConstant.MILITARY_ACTION)
+					break;
+					case 1:
+						loadReport(ReportTypeConstant.OTHER)
+					break;
+				}
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="报 告" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Text x="25" y="398" text="系统将定期清除2周前的报告,请将重要的内容及时存档"/>
+	<mx:TabNavigator x="25" y="37" id="tabContent" width="580" height="350" change="onTabChange(event)">
+		<mx:Canvas label="军事行动" width="100%" height="100%" styleName="ContentCanvas">
+			<mx:DataGrid id="dgReport0" x="10" y="10" width="558" height="267" dataProvider="{model.reportInfo.reportList}" sortableColumns="false" doubleClickEnabled="true" itemDoubleClick="showHTMLReportDetailWindow(event.itemRenderer.data)">
+				<mx:columns>
+					<mx:DataGridColumn dataField="reportID" headerText="选择" textAlign="center" width="40">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:CheckBox selected="{data.selected}" click="{data.selected = !data.selected}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn textAlign="center" headerText="保存" width="40">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Image toolTip="{data.saveFlag==1 ? '已保存' : '未保存'}" source="{data.saveFlag==1?'images/star1.png':'images/star2.png'}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="标题" dataField="title" width="280">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Label width="100%" height="100%" htmlText="{data.readFlag==0?'&lt;b&gt;'+data.title+' (未读)&lt;/b&gt;':data.title}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="时间" width="120"  dataField="receiveTime" labelFunction="DateFormatUtil.formatColumnDate" textAlign="center"/>
+					<mx:DataGridColumn headerText="操作" dataField="reportID" textAlign="center" width="55">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="查看" width="0" height="0" click="outerDocument.showHTMLReportDetailWindow(data)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button x="10" y="285" label="全选" click="doSelectAll()" width="70" height="26"/>
+			<mx:Button x="88" y="285" label="保存" click="doSave()" width="70" height="26"/>
+			<mx:Button x="166" y="285" label="删除" click="doDelete()" width="70" height="26"/>
+			<mx:Text x="307" y="288" text="{reportInfo.currentPageNum+'/'+reportInfo.totalPageNum}" width="105" fontWeight="bold" textAlign="right" height="21"/>
+			<mx:Button x="420" y="285" label="上一页" click="pageUp()" enabled="{reportInfo.currentPageNum &gt; 1}" width="70" height="26"/>
+			<mx:Button x="498" y="285" label="下一页" click="pageDown()" enabled="{reportInfo.currentPageNum &lt; reportInfo.totalPageNum}" width="70" height="26"/>
+		</mx:Canvas>
+		<mx:Canvas label="其他报告" width="100%" height="100%" styleName="ContentCanvas">
+			<mx:DataGrid id="dgReport1" x="10" y="10" width="558" height="267" dataProvider="{model.reportInfo.reportList}" sortableColumns="false" doubleClickEnabled="true" itemDoubleClick="showReportDetailWindow(event.itemRenderer.data)">
+				<mx:columns>
+					<mx:DataGridColumn dataField="reportID" headerText="选择" textAlign="center" width="40">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:CheckBox selected="{data.selected}" click="{data.selected = !data.selected}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn textAlign="center" headerText="保存" width="40">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Image toolTip="{data.saveFlag==1 ? '已保存' : '未保存'}" source="{data.saveFlag==1?'images/star1.png':'images/star2.png'}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="标题" dataField="title" width="280">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Label width="100%" height="100%" htmlText="{data.readFlag==0?'&lt;b&gt;'+data.title+' (未读)&lt;/b&gt;':data.title}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="时间" width="120" dataField="receiveTime" labelFunction="DateFormatUtil.formatColumnDate" textAlign="center"/>
+					<mx:DataGridColumn headerText="操作" dataField="reportID" textAlign="center" width="55">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="查看" width="0" height="0" click="outerDocument.showReportDetailWindow(data)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button x="10" y="285" label="全选" click="doSelectAll()" width="70" height="26"/>
+			<mx:Button x="88" y="285" label="保存" click="doSave()" width="70" height="26"/>
+			<mx:Button x="166" y="285" label="删除" click="doDelete()" width="70" height="26"/>
+			<mx:Text x="307" y="288" text="{reportInfo.currentPageNum+'/'+reportInfo.totalPageNum}" width="105" fontWeight="bold" textAlign="right" height="21"/>
+			<mx:Button x="420" y="285" label="上一页" click="pageUp()" enabled="{reportInfo.currentPageNum &gt; 1}" width="70" height="26"/>
+			<mx:Button x="498" y="285" label="下一页" click="pageDown()" enabled="{reportInfo.currentPageNum &lt; reportInfo.totalPageNum}" width="70" height="26"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

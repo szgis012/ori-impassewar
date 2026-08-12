@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:115
+ * 
+ * 名称：高级转移令
+ * 描述：使用后可以迁移一次城市
+ * 类型：宝物
+ */
+ 
+def params = context.getParams();
+
+context.moveCityToTargetPosition(params["posX"], params["posY"]);

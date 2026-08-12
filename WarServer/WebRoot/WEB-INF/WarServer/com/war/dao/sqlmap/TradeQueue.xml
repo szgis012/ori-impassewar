@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="TradeQueue">
+	<typeAlias alias="TradeQueue" type="com.war.domain.TradeQueue" />
+	
+	<insert id="createTradeQueue" parameterClass="TradeQueue">
+		INSERT INTO T_TRADE_QUEUE(CITY_ID, SELLER_ID, BUYER_ID, TARGET_CITY_ID, TARGET_ID, TYPE, BUSINESSMAN_NUM, ARRIVE_TIME) VALUES(#cityID#, #sellerID#, #buyerID#, #targetCityID#, #targetID#, #type#, #businessmanNum#, #arriveTime#)
+		<selectKey resultClass="Integer" keyProperty="tradeQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTradeQueue" parameterClass="TradeQueue">
+		UPDATE T_TRADE_QUEUE SET CITY_ID=#cityID#, SELLER_ID=#sellerID#, BUYER_ID=#buyerID#, TARGET_CITY_ID=#targetCityID#, TARGET_ID=#targetID#, TYPE=#type#, BUSINESSMAN_NUM=#businessmanNum#, ARRIVE_TIME=#arriveTime# WHERE TRADE_QUEUE_ID=#tradeQueueID#
+	</update>
+	
+	<delete id="deleteTradeQueueByID" parameterClass="Integer">
+		DELETE FROM T_TRADE_QUEUE WHERE TRADE_QUEUE_ID=#tradeQueueID#
+	</delete>
+	
+	<select id="getTradeQueueByID" parameterClass="Integer" resultClass="TradeQueue">
+		SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE WHERE TRADE_QUEUE_ID=#tradeQueueID#
+	</select>
+	
+	<select id="getTradeQueueListByCityID" resultClass="TradeQueue">
+		SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE WHERE (TYPE=1 OR TYPE=2) AND (CITY_ID=#cityID# OR TARGET_CITY_ID=#cityID#)
+		UNION
+		SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE WHERE TYPE=12 AND TARGET_CITY_ID=#cityID#
+	</select>
+	
+	<select id="getArrivedTradeQueueList" resultClass="TradeQueue">
+		<![CDATA[SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE WHERE ARRIVE_TIME<=SYSDATE()]]>
+	</select>
+	
+	<select id="getTradeQueueList" resultClass="TradeQueue">
+		SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE
+	</select>
+	
+	<select id="getResourceTradeQueueListByTargetCityID" parameterClass="Integer" resultClass="TradeQueue">
+		SELECT TRADE_QUEUE_ID AS tradeQueueID, SELLER_ID AS sellerID, BUYER_ID AS buyerID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, TARGET_ID AS targetID, TYPE AS type, BUSINESSMAN_NUM AS businessmanNum, ARRIVE_TIME AS arriveTime FROM T_TRADE_QUEUE WHERE TYPE=1 AND TARGET_CITY_ID=#targetCityID#
+	</select>
+	
+	<select id="getImportResourceTradeQueueNum"  parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_TRADE_QUEUE WHERE TYPE=12 AND TARGET_CITY_ID=#targetCityID#
+	</select>
+
+</sqlMap>

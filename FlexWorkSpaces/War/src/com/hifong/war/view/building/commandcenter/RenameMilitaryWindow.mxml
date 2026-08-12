@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow layout="absolute" xmlns:mx="http://www.adobe.com/2006/mxml" width="310" height="188" styleName="SimpleBorder">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			import com.hifong.war.events.building.commandcenter.RenameCityMilitaryEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var cityID:int = ModelLocator.getInstance().cityInfo.cityID;
+			
+			public var cityMilitaryID:int;
+			
+			[Bindable]
+			public var cityMilitaryName:String;
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 军队更名
+			 */
+			private function renameMilitary():void{
+				
+				var newCityMilitaryName:String = StringUtil.trim(textCityMilitaryName.text);
+				if(newCityMilitaryName.length==0){
+					MsgBox.showMessage("请输入新军队名称");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new RenameCityMilitaryEvent(cityID,cityMilitaryID,newCityMilitaryName));
+			
+				doClose();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="军队改名" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="260" height="125" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="军队名称："/>
+		<mx:Label x="10" y="38" text="新 名 称 ："/>
+		<mx:Label x="83" y="10" text="{cityMilitaryName}" width="146"/>
+		<mx:TextInput x="83" y="38" width="146" id="textCityMilitaryName" maxChars="8"/>
+		<mx:Button x="83" y="79" label="确定" click="renameMilitary()" width="70" height="26"/>
+	</mx:Canvas>
+</mx:TitleWindow>

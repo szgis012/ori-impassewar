@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SystemNotice">
+	<typeAlias alias="SystemNotice" type="com.war.domain.SystemNotice" />
+
+	<insert id="createSystemNotice" parameterClass="SystemNotice">
+		INSERT INTO T_SYSTEM_NOTICE(CONTENT) VALUES(#content#)
+		<selectKey resultClass="Integer" keyProperty="systemNoticeID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateSystemNotice" parameterClass="SystemNotice">
+		UPDATE T_SYSTEM_NOTICE SET CONTENT=#content# WHERE SYSTEM_NOTICE_ID=#systemNoticeID#
+	</update>
+
+	<delete id="deleteSystemNoticeByID" parameterClass="Integer">
+		DELETE FROM T_SYSTEM_NOTICE WHERE SYSTEM_NOTICE_ID=#systemNoticeID#
+	</delete>
+
+	<select id="getSystemNoticeByID" parameterClass="Integer" resultClass="SystemNotice">
+		SELECT SYSTEM_NOTICE_ID AS systemNoticeID, CONTENT AS content FROM T_SYSTEM_NOTICE WHERE SYSTEM_NOTICE_ID=#systemNoticeID#
+	</select>
+
+	<select id="getSystemNoticeList" resultClass="SystemNotice">
+		SELECT SYSTEM_NOTICE_ID AS systemNoticeID, CONTENT AS content FROM T_SYSTEM_NOTICE
+	</select>
+
+</sqlMap>

@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:234
+ * 
+ * 名称：超级流水线
+ * 描述：缩短军械生产时间2小时。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceOrdnanceProductCostTime(params["queueID"], 2*60*60);

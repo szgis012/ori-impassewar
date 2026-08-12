@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DataHistory">
+	<typeAlias alias="DataHistory" type="com.war.domain.DataHistory" />
+	
+	<insert id="createDataHistory" parameterClass="DataHistory">
+		INSERT INTO T_DATA_HISTORY(DATA_HISTORY_ID, ONLINE_PLAYER_NUM) VALUES(#dataHistoryID#, #onlinePlayerNum#)
+	</insert>
+	
+	<update id="updateDataHistory" parameterClass="DataHistory">
+		UPDATE T_DATA_HISTORY SET DATA_HISTORY_ID=#dataHistoryID#, ONLINE_PLAYER_NUM=#onlinePlayerNum# WHERE DATA_HISTORY_ID=#dataHistoryID#
+	</update>
+	
+	<delete id="deleteDataHistoryByID" parameterClass="Long">
+		DELETE FROM T_DATA_HISTORY WHERE DATA_HISTORY_ID=#dataHistoryID#
+	</delete>
+	
+	<select id="getDataHistoryByID" parameterClass="Long" resultClass="DataHistory">
+		SELECT DATA_HISTORY_ID AS dataHistoryID, ONLINE_PLAYER_NUM AS onlinePlayerNum FROM T_DATA_HISTORY WHERE DATA_HISTORY_ID=#dataHistoryID#
+	</select>
+	
+	<select id="getDataHistoryList" resultClass="DataHistory">
+		SELECT DATA_HISTORY_ID AS dataHistoryID, ONLINE_PLAYER_NUM AS onlinePlayerNum FROM T_DATA_HISTORY
+	</select>
+
+</sqlMap>

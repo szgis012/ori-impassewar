@@ -1,0 +1,81 @@
+/**
+* 任务编号: 1026
+*
+* 要求：将深层开采升级至1级，并使用道具“计算机”加速。
+* 奖励：石油500，计算机×2
+* 后置任务：1027
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 科技编号为13 
+def technologyID = 13;
+
+// 宝物编号为221
+def treasureID = 221;
+
+// 1. 深层开采升级至1级
+if(context.getTechnologyLevel(technologyID)>0)
+{
+	result += "将资源科技-深层开采升级至1级<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "将资源科技-深层开采升级至1级<a href='event:9'><font color='#ffff00'><b>[点击研究]</b></font></a><font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 2. 使用道具“计算机”
+if (context.hasUsedTreasure(treasureID)) 
+{
+	result += "使用道具“计算机”<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "使用道具“计算机”<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+if(count == 2)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+//奖励：石油500，计算机×2
+context.rewardResource(0,0,500,0,0);
+context.rewardTreasure(221, 2);
+}

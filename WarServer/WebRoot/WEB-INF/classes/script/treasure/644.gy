@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:644
+ * 
+ * 名称：战争概论
+ * 描述：先驱者留下的战争经验，指挥官学习后，直接增加指挥官经验1000，每天限购十本。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroExp(params["cityHeroID"], 1000);

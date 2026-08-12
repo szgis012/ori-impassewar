@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="User">
+	<typeAlias alias="User" type="com.war.domain.User" />
+	
+	<insert id="createUser" parameterClass="User">
+		INSERT INTO T_USER(USER_ID, NAME, PASSWORD, STATE) VALUES(#userID#, #name#, #password#, #state#)
+		<selectKey resultClass="Integer" keyProperty="userID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateUser" parameterClass="User">
+		UPDATE T_USER SET NAME=#name#, PASSWORD=#password#, STATE=#state# WHERE User_ID=#userID#
+	</update>
+	
+	<delete id="deleteUserByID" parameterClass="Integer">
+		DELETE FROM T_USER WHERE User_ID=#userID#
+	</delete>
+	
+	<select id="getUserByID" parameterClass="Integer" resultClass="User">
+		SELECT USER_ID AS userID, NAME AS name, PASSWORD AS password, STATE AS state FROM T_USER WHERE User_ID=#userID#
+	</select>
+	
+	<select id="getUserList" resultClass="User">
+		SELECT USER_ID AS userID, NAME AS name, PASSWORD AS password, STATE AS state FROM T_USER
+	</select>
+	
+	<select id="getUserByName" parameterClass="String" resultClass="User">
+		SELECT USER_ID AS userID, NAME AS name, PASSWORD AS password, STATE AS state FROM T_USER WHERE NAME=#name#
+	</select>
+
+</sqlMap>

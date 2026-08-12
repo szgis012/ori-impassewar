@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--野外地图-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" horizontalScrollPolicy="off" verticalScrollPolicy="off" initialize="doInit()" styleName="Normal" width="1000" height="600" backgroundColor="black" xmlns:ns1="com.hifong.war.view.world.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.world.CollectionWindow;
+			import com.hifong.war.util.LoadingUtil;
+			import mx.containers.Panel;
+			import com.hifong.war.util.WindowUtil;
+			import mx.containers.Grid;
+			import com.hifong.war.events.world.GetMapListByMapPosXYListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.constant.MapCategoryConstant;
+			import flash.geom.Point;
+			
+			import com.hifong.war.view.world.StrongHoldWindow;
+			import com.hifong.war.view.world.CityWindow;
+			import mx.controls.Image;
+			import com.hifong.war.vo.MapVO;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.world.WildLandWindow;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.CoordinateUtil;
+			import com.hifong.war.vo.GridInfoVO;
+			import com.hifong.war.view.world.WorldGrid;
+			import com.hifong.war.util.WorldUtil;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.WorldInfo;
+			
+			private var startTime:Number;
+			/** 棱形宽高 (图片宽高 110*75 */
+			private static const edgeWidth:Number=110;
+			private static const edgeHeight:Number=53;
+			/**图片的有效内容偏移图片顶端的高低*/
+			private static const IMG_OFFSETY:Number = (75 - 53);//图片的高度-图片的有效高度
+			/** 棱边长 */
+			private static const edgeLong:Number=Math.sqrt(26.5*26.5+55*55);
+			/** 是否按中心点定位容器坐标*/
+			private var haveSetPostion:Boolean=true;
+			/** 棱半夹角 α  */
+			private static var offsetAngle:Number=Math.atan(26.5/55);
+			/** 偏移半屏幕数*/
+			private static var screenMoveX:Number=2;
+			private static var screenMoveY:Number=2;
+			/** 请求地图点数据列表*/
+			private var requestPointList:Array=[ ];
+			/** 删除地图点数据列表*/
+			private var deletePointList:Array=[ ];
+			/** 拖动开始点 */
+			private var drawStartPoint:Point=new Point();
+			/**  请求地图点缓存 */
+			private var requesetPointObj:Object=new Object;
+			/** 要删除地图点的缓存 */
+			private var deletePointObj:Object=new Object;
+			/** 当前所需地图点集合列表*/
+			private var allMapPointList:Array=[ ];
+			/** 当前所需地图点集合对象 */
+			private var allMapPoint:Object={ };
+			
+			/**地图坐标原点在屏幕坐标中的X坐标值*/
+			private static const OFFSETX:Number = 500;//MapWidth/2
+			/**地图坐标原点在屏幕坐标中的Y坐标值*/
+			private static const OFFSETY:Number = 300;//MapHeight/2-图片的有效高度/2
+			/**是否锁定移动地图的操作*/
+			private var moveLocked:Boolean = false;
+			/**上一次移动地图的时间*/
+			private var lastMoveTime:Date = new Date(); 
+			/**移动地图的幅度*/
+			public const MOVE_GRID_HORI_STRAIGHT:int = 1;
+			public const MOVE_GRID_VERT_STRAIGHT:int = 1;
+			public const MOVE_GRID_OBLIQUE:int =5;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			/**
+			 * 世界地图信息
+			 */
+			[Bindable]
+			private var worldInfo:WorldInfo = model.worldInfo;
+			
+			//城市窗口
+			private var cityWindow:CityWindow;
+			//营寨窗口
+			private var strongHoldWindow:StrongHoldWindow;
+			//野地窗口
+			private var wildLandWindow:WildLandWindow;
+			//
+			private var isDown:Boolean=false;
+			//拖动标志,true表示处在拖动状态
+			private var isDrag:Boolean = false;
+			private var noClick:Boolean=false;
+			
+			//开始拖动时拖动目标和鼠标的偏移位置
+			private var dragOffsetX:Number;
+			private var dragOffsetY:Number;
+			//拖动开始时的坐标值
+			private var dragStartPos:Point
+			//开始拖动的时间
+			private var startDragTime:Number;
+			//限制拖动时间
+			private var limitDragTime:Number=2000;
+			
+			
+			[Bindable]
+			[Embed(source="images/move.png")]
+			private var MoveIcon:Class;
+			
+			/** 添加网格 */
+			public function addGrid(arr:Array):void{
+				var time:Number=new Date().time;
+				if(arr==null || arr.length==0) return ;	
+				//网格
+				var wg:WorldGrid;
+				var obj:Object=worldInfo.gridInfoMap;
+				var index:int;
+				//设定坐标
+				if(haveSetPostion){
+					haveSetPostion=false;
+					setGridPanelByCertenPoint(new Point(worldInfo.mapX,worldInfo.mapY)); 
+				}
+				for each( var map:MapVO in arr){
+						wg = new WorldGrid();
+						index=WorldUtil.getIndexFromXY(map.posX,map.posY);
+						wg.posX=map.posX;
+						wg.posY=map.posY;
+						var cate:int=map.category;
+						if(map.category == MapCategoryConstant.MONSTERFIELD){
+							wg.addImg((new worldInfo.worldAssets.terrainImages[map.category+"_"+map.type]() as Bitmap).bitmapData);
+							cate=0;
+						}
+						wg.source=(new worldInfo.worldAssets.terrainImages[cate+"_"+map.type] as Bitmap).bitmapData;
+						gridPanel.addChild(wg);  
+						if(obj[index]==null) obj[index]=map;
+						setGridPosition(wg);
+					}
+					//设置深度。。。todo
+				//移除加载数据的图标
+				cursorManager.removeAllCursors();
+				var now:Number=new Date().time;
+				deleteGrid(deletePointList);
+				resetIndex();
+				moveLocked=false;
+				trace("use:"+(now-time));
+				trace(new Date().time);
+			}
+			/** 删除网格 */
+			public function deleteGrid(arr:Array):void{
+				var wg:WorldGrid;
+				var obj:Object=worldInfo.gridInfoMap;
+				for each(var map:MapVO in arr){
+					wg=getGridByPostion(new Point(map.posX,map.posY));
+					if(wg!=null){
+						gridPanel.removeChild(wg);
+						wg=null;
+					}
+				}
+				allMapPoint={ };
+				
+				deletePointObj={ };
+				deletePointList=[ ];
+			}
+			/**
+			 * 重设深度
+			 */
+			private function resetIndex():void{
+				var arr:Array=gridPanel.getChildren();
+				arr.sortOn(["posX","posY"],[Array.NUMERIC,Array.NUMERIC]);
+				for(var i:int=0;i<gridPanel.numChildren;i++){
+					gridPanel.setChildIndex(arr[i],i);
+				}
+			}
+			/**
+			 * 根据地图点返回在gridPanel网格
+			 */
+			private function getGridByPostion(p:Point):WorldGrid{
+				var index:int=WorldUtil.getIndexFromXY(p.x,p.y);
+				for each(var wg:WorldGrid in gridPanel.getChildren()){
+					if(WorldUtil.getIndexFromXY(wg.posX,wg.posY)==index) return wg;
+				}
+				return null;
+			}
+			/** 显示网格 */
+			public function showGrid(event:Object):void{
+				var time:Number=new Date().time;
+				if(!worldInfo.gridInfoMap)
+					return;
+				//存储地图上的元素
+				var grids:Object= {};
+				//网格
+				var wg:WorldGrid;
+				var arr:Array = gridPanel.getChildren();
+				//缓存地图元素
+				for(var p:int=arr.length-1; p>=0; p--){
+					wg = arr[p] as WorldGrid;
+					//不包括野怪的数量图片
+//					if(wg){
+//						wg.visible = false;
+//						grids[wg.gridInfo.category+"_"+wg.gridInfo.type]=wg;
+//						//清除怪物贴图
+//						wg.removeImg();
+//						//清掉旗号
+//						wg.hideFlag();
+//					}
+				}
+				//图片的z位置
+				var ind:Number = 0;	
+				//按照Map坐标按行构造网格
+					for each(var map:MapVO in worldInfo.gridInfoMap){
+						var index:int=WorldUtil.getIndexFromXY(map.posX,map.posY);
+						var pc:Point=getScreenPostion(new Point(map.posX,map.posY));
+						var pp:Point=getScreenPostion(new Point(worldInfo.mapX,worldInfo.mapY));
+						//						trace(gridPanel.x+":"+gridPanel.y);
+						//						trace(pc+":"+pp);
+						if((pp.y-pc.y)<-screenMoveY*OFFSETY || (pp.y-pc.y)>screenMoveY*OFFSETY) {
+							delete worldInfo.gridInfoMap[index] ;
+							wg=getGridByPostion(new Point(map.posX,map.posY));
+							if(wg) gridPanel.removeChild(wg);
+							wg=null;
+							continue;
+						}
+						
+						if((pp.x-pc.x)<-screenMoveX*OFFSETX || (pp.x-pc.x)>screenMoveX*OFFSETX){
+							delete worldInfo.gridInfoMap[index] ;
+							wg=getGridByPostion(new Point(map.posX,map.posY));
+							if(wg) gridPanel.removeChild(wg);
+							wg=null;
+							continue; 
+						} 
+						//如果缓存中有
+						if(grids[map.category+"_"+map.type]!=null ){
+//							wg = grids[map.category+"_"+map.type];  
+//							wg.gridInfo = map;
+						}else{
+							wg = new WorldGrid();
+							var cate:int=map.category;
+							if(cate==11) cate=0;
+							wg.source=(new worldInfo.worldAssets.terrainImages[cate+"_"+map.type] as Bitmap).bitmapData;
+							gridPanel.addChild(wg);
+						}
+						gridPanel.setChildIndex(wg,ind);
+						//定位格子
+						setGridPosition(wg);
+						wg.visible = true;
+						
+						//TODO 添加地图点数据 
+						//如果是空地并且有野怪就显示npc野怪
+						if(map.category == MapCategoryConstant.MONSTERFIELD && map.mapMonster){
+							var monsterBM:Bitmap=new worldInfo.worldAssets.monsterImages[map.mapMonster.level - 1]() as Bitmap;
+							wg.addImg(monsterBM.bitmapData);
+						}
+						
+						ind++;
+						//处理旗号
+						if(model.app.showFlag) {
+							//是怪物
+							if(map.category == MapCategoryConstant.MONSTERFIELD && map.mapMonster){
+								wg.showFlag(map.mapMonster.level);	
+							}
+							//是城市
+							if(map.type==1){
+								
+							}
+						}
+					
+				}
+				//解除锁定
+				moveLocked = false;
+				//移除加载数据的图标
+				cursorManager.removeBusyCursor();
+				//设定坐标
+//				if(haveSetPostion){
+					haveSetPostion=!haveSetPostion;
+					setGridPanelByCertenPoint(new Point(worldInfo.mapX,worldInfo.mapY));
+//				}
+				var now:Number=new Date().time;
+				trace("use:"+(now-time)+"-len:"+ind);
+				trace(new Date().time);
+			}
+			/**
+			 * 根据中心点设置格子面板坐标
+			 */
+			private function setGridPanelByCertenPoint(p:Point):void{
+				var point:Point=getScreenPostion(p);
+				gridPanel.x=OFFSETX-point.x;
+				gridPanel.y=OFFSETY-point.y;
+			}
+			/**
+			 * 显示世界旗号数据
+			 */
+			public function showWorldFlag():void{
+				var map:MapVO;
+				var arr:Array=gridPanel.getChildren();
+				for each(var grid:WorldGrid in arr){
+					map=worldInfo.gridInfoMap[WorldUtil.getIndexFromXY(grid.posX,grid.posY)];
+//					map=grid.gridInfo;
+				//是怪物
+				if(map.category == MapCategoryConstant.MONSTERFIELD && map.mapMonster ){
+						grid.showFlag(map.mapMonster.level);	
+				}
+					
+					//是城市
+					if(map.type==1){
+						
+					}
+				}
+			}
+			/**
+			 * 隐藏世界旗号数据
+			 */
+			public function hideWorldFlag():void{
+				var arr:Array=gridPanel.getChildren();
+				for each(var grid:WorldGrid in arr){
+					grid.hideFlag();
+				}
+			}
+			
+			private function doInit():void{
+				model.worldPanel=this;
+				var gridMask:Shape=new Shape();
+				gridMask.graphics.beginFill(0);
+				var point:Point=this.localToGlobal(new Point(this.x,this.y));
+				gridMask.graphics.drawRect(point.x,point.y,this.width,this.height);
+				gridMask.graphics.endFill();
+				gridPanel.mask=gridMask;
+				
+				//绑定以便更新地图显示
+//				BindingUtils.bindSetter(showGrid,worldInfo,"gridInfoMap"); 
+				//城市提示弹出窗口
+				this.cityWindow = new CityWindow();
+				this.cityWindow.visible = false;
+				this.cityWindow.x = (this.width-this.cityWindow.width)/2;
+				this.cityWindow.y = 50;
+				this.addChild(this.cityWindow);
+				//要塞提示弹出窗口
+				this.strongHoldWindow = new StrongHoldWindow();
+				this.strongHoldWindow.visible = false;
+				this.strongHoldWindow.x = (this.width-this.strongHoldWindow.width)/2;
+				this.strongHoldWindow.y = 50;
+				this.addChild(this.strongHoldWindow);
+				//荒地提示弹出窗口
+				this.wildLandWindow = new WildLandWindow();
+				this.wildLandWindow.visible = false;
+				this.wildLandWindow.x = (this.width-this.wildLandWindow.width)/2;
+				this.wildLandWindow.y = 50;
+				this.addChild(this.wildLandWindow);
+				
+			}
+			/**
+			 * 鼠标按下时的处理函数
+			 */
+			private function onMouseClick(event:MouseEvent) : void
+			{
+				//	        	//如果处在拖动状态就返回
+				//	        	if(isDrag){
+				//	        		return;
+				//	        	}
+				if(moveLocked || noClick){
+					return;
+				}
+				
+				this.pnlToolTip.visible = false;
+				
+				//获得网格的信息
+				var map:MapVO = getMapData(event);
+				
+				//如果超出有效地图范围
+				if(!map)
+					return;
+				
+				//设置窗口打开标志
+				worldInfo.hasDisplayedWindow = true;
+				
+				switch(map.type){
+					//如果是城市
+					case 1:
+						showCityWindow(map);
+						break;
+					//如果是要塞	
+					case 2:
+						showStrongHoldWindow(map);
+						break;	
+					default:
+						showWildLandWindow(map);
+						break;
+				}
+				isDown=false;
+			}
+			
+			private function doDrag(event:MouseEvent):void{
+				var gpt:Point = new Point(event.stageX,event.stageY);
+				var pt:Point;
+				
+				//开始拖动初始化
+				if(!isDrag){
+					//计算拖动时的鼠标位置和拖动目标的偏移距离
+					pt = this.globalToLocal(gpt);
+					dragStartPos = new Point(gpt.x,gpt.y);
+					startDragTime=new Date().time;
+					
+					dragOffsetX = pt.x - gridPanel.x;
+					dragOffsetY = pt.y - gridPanel.y;
+					//设置拖动目标的透明度和鼠标样式
+					cursorManager.setCursor(MoveIcon);
+					//设置拖动状态
+					isDrag = true;
+					var rect:Rectangle=gridPanel.getBounds(this);
+//					drawStartPoint.x=rect.x;
+//					drawStartPoint.y=rect.y;
+					trace("startDrag:"+rect);
+				}
+				
+				//鼠标在容器内的坐标
+				pt = this.globalToLocal(gpt);
+				
+				gridPanel.x = pt.x-dragOffsetX ;
+				gridPanel.y = pt.y-dragOffsetY ;
+				
+				//判断拖动距离大于半屏则加载数据
+				if(Math.sqrt(Math.pow(gpt.x-dragStartPos.x,2)+Math.pow(gpt.y-dragStartPos.y,2))>OFFSETY){
+					doEndDrag(event);
+				}
+				//当拖动时间大于限制时间
+				if(new Date().time-startDragTime>limitDragTime){
+					doEndDrag(event);
+				}
+				event.updateAfterEvent(); 
+			}
+			
+			//结束拖动
+			private function doEndDrag(event:MouseEvent):void{
+				//如果不在拖动状态就返回
+				if(!isDrag){
+					return;
+				}
+				cursorManager.removeAllCursors();
+				isDrag = false;
+				isDown=false;
+				noClick=true;
+				moveLocked=true;
+				
+				trace("endDrag:"+gridPanel.getBounds(this)); 
+				var rectEnd:Rectangle=gridPanel.getBounds(this);
+				
+				//				var rectH:Rectangle, rectV:Rectangle, rectDH:Rectangle, rectDV:Rectangle;
+				var vx:Number=rectEnd.x-drawStartPoint.x;
+				var vy:Number=rectEnd.y-drawStartPoint.y;
+				//如果没用有效拖动
+				if(vx==0&& vy==0) return;
+				
+				var point:Point=getMapPostion(new Point(OFFSETX-gridPanel.x,OFFSETY-gridPanel.y));
+				startTime=new Date().time;
+				callMapDataByCenterPoint(point);
+				
+				event.stopPropagation();
+				event.stopImmediatePropagation();
+//				trace(new Date().time-startHandlerTime); 
+			}
+			/**
+			 * 根据地图中心点请求数据
+			 */
+			public  function callMapDataByCenterPoint(p:Point,hasSetAsCenterPostion:Boolean=false):void{
+				var now:Date = new Date();
+				//间隔至少1秒
+				if ((now.time - lastMoveTime.time) < 1000) return;
+				lastMoveTime = now;
+				
+				haveSetPostion=hasSetAsCenterPostion;
+				var mx:int=p.x;
+				var my:int=p.y;
+				mx = Math.min(mx,worldInfo.MAX_RANGE_X);
+				my = Math.min(my,worldInfo.MAX_RANGE_Y);
+				mx=Math.max(mx,worldInfo.MIN_RANGE_X);
+				my=Math.max(my,worldInfo.MIN_RANGE_Y);
+				
+				worldInfo.mapX=mx;
+				worldInfo.mapY=my;
+				
+				var point:Point=getScreenPostion(p); 
+				getAllPointByCenterPoint(point);
+				collectionOperationPoint();
+//				trace(requestPointList.length);
+				
+				startTime=lastMoveTime.time;
+//				moveLocked = true;
+				
+				//请求数据
+				worldInfo.requestMapXY(requestPointList,hasSetAsCenterPostion); 
+				//清空请求数据
+				requesetPointObj={ };
+				requestPointList.length=0;
+			}
+			/**
+			 * 收集请求和待删除的地图点
+			 */
+			private function collectionOperationPoint( ):void{
+				var nowPoints:Object=worldInfo.gridInfoMap;
+				for (var item:String in nowPoints){
+					var map:MapVO=nowPoints[item];
+					if(map==null) continue;
+					var index:int=WorldUtil.getIndexFromXY(map.posX,map.posY);
+					//所需的屏幕中无此点
+					if(allMapPoint[index]==null){
+						deletePointList.push(map);
+						delete nowPoints[index];
+					}else if(allMapPoint[index]!=null){
+						//已有此点 则从请求节点中删掉
+						delete allMapPoint[index];
+					}
+				} 
+				//统计请求节点
+				requestPointList=[ ];
+				for(var t:String in allMapPoint){
+					var p:Point=allMapPoint[t] as Point;
+					if(p!=null) 	requestPointList.push(p);
+				}
+			}
+			
+			private function onMouseDown(event:MouseEvent):void{
+				if(!(event.target is Canvas)) return ;
+				isDown=true;
+				noClick=false;
+			}
+			private function onMouseMove(event:MouseEvent):void{
+				//如果有打开的窗口就不显示tooltip
+				if(worldInfo.hasDisplayedWindow)
+					return;
+				
+				//换算到屏幕坐标
+				var pt:Point = tipPanel.localToGlobal(new Point(controlPanel.x,controlPanel.y));
+				//如果在控制面板范围内上
+				if (event.stageX >= pt.x && event.stageX < pt.x + controlPanel.width && event.stageY >= pt.y && event.stageY < pt.y + controlPanel.height){
+					this.pnlToolTip.visible = false;
+					return;
+				}
+				//如果处在鼠标按下或者拖动状态
+				if(isDown || isDrag){
+					event.buttonDown=false;
+					this.pnlToolTip.visible = false;
+					doDrag(event);
+					return;
+				}
+				
+				
+				//获得网格的信息
+				var map:MapVO = getMapData(event);
+				
+				//如果超出有效地图范围
+				if(!map)
+					return;
+				
+				this.pnlToolTip.gridInfo = map;
+				
+				//转换为相对于tooltip面板的坐标
+				pt = this.tipPanel.globalToLocal(new Point(event.stageX,event.stageY));
+				//tooltip X坐标偏移
+				pt.x += 20;
+				
+				if( (pt.x+this.pnlToolTip.width) > this.width){
+					pt.x -= (this.pnlToolTip.width +40);
+				}
+				
+				if( (pt.y+this.pnlToolTip.height) > this.height){
+					pt.y -= this.pnlToolTip.height;
+				}
+				
+				this.pnlToolTip.x = pt.x;
+				this.pnlToolTip.y = pt.y;
+				
+				this.pnlToolTip.visible	 = true;
+				
+//				event.updateAfterEvent();
+			}
+			
+			//得到鼠标位置处的MapVO对象
+			private function getMapData(event:MouseEvent):MapVO{
+				//换算到屏幕坐标
+				var pt:Point = tipPanel.localToGlobal(new Point(controlPanel.x,controlPanel.y));
+				//如果在控制面板范围内上
+				if (event.stageX >= pt.x && event.stageX < pt.x + controlPanel.width && event.stageY >= pt.y && event.stageY < pt.y + controlPanel.height)
+					return null;
+				
+				var pp:Point=getMapPostion(new Point(event.localX-gridPanel.x,event.localY-gridPanel.y));
+				var map: MapVO=worldInfo.gridInfoMap[WorldUtil.getIndexFromXY(pp.x,pp.y)] as MapVO;
+				//获得网格的信息
+				return map;
+			}
+			
+			//显示城池窗口
+			private function showCityWindow(map:MapVO):void{
+				this.strongHoldWindow.visible = false;
+				this.wildLandWindow.visible = false;
+				this.cityWindow.gridInfo = map;
+				this.cityWindow.visible = true;
+			}
+			
+			//显示要塞窗口
+			private function showStrongHoldWindow(map:MapVO):void{
+				this.cityWindow.visible = false;
+				this.wildLandWindow.visible = false;
+				this.strongHoldWindow.gridInfo = map;
+				this.strongHoldWindow.visible = true;
+			}
+			
+			//显示野地窗口
+			private function showWildLandWindow(map:MapVO):void{
+				this.strongHoldWindow.visible = false;
+				this.cityWindow.visible = false;
+				this.wildLandWindow.gridInfo = map;
+				this.wildLandWindow.visible = true;
+			}
+			/**
+			 * 	将屏幕坐标转换成地图坐标
+			 */
+			private function getMapPostion(p:Point):Point
+			{
+				var pt:Point=new Point(p.x,p.y);
+				var nip:Number=Math.atan2(pt.y, pt.x);
+				nip < 0 ? nip*=-1 : null;
+				var angleA:Number=nip - offsetAngle;
+				var angleB:Number=2 * offsetAngle;
+				if (pt.x < 0)
+				{
+					angleA=Math.PI - offsetAngle - nip;
+				}
+				var AC:Number=Math.sqrt(pt.x * pt.x + pt.y * pt.y);
+				var CD:Number=AC * Math.sin(angleA);
+				var BC:Number=CD / Math.sin(angleB);
+				var AB:Number=BC * Math.cos(angleB) + AC * Math.cos(angleA);
+				var ox:int=AB / (edgeLong * 0.5) >> 0;
+				var tx:int=ox % 2 + ox / 2 >> 0;
+				var oy:int=BC / (edgeLong * 0.5) >> 0;
+				var ty:int=oy % 2 + oy / 2 >> 0;
+				if (pt.x < 0)
+				{
+					var trans:int=ty;
+					ty=tx;
+					tx=trans;
+				}
+				return new Point(tx, ty);
+			}
+			//移动地图
+			private function moveViewTo(mapX:int, mapY:int) : void
+			{
+				if (!moveLocked)
+				{
+					
+					var now:Date = new Date();
+					
+					//间隔至少1秒
+					if ((now.time - lastMoveTime.time) < 1000)
+					{
+						return;
+					}
+					
+					lastMoveTime = now;
+					
+					cursorManager.setBusyCursor();
+					
+					worldInfo.loadMapData(mapX,mapY);
+					
+					moveLocked = true;
+				}
+			}			
+			
+			private function moveTo():void{ 
+				var mx:int = parseInt(this.inputPosX.text);
+				var my:int = parseInt(this.inputPosY.text);
+				
+				callMapDataByCenterPoint(new Point(mx,my),true);
+//				moveViewTo(mx,my);
+			}
+			
+			private function onRightDown() : void
+			{
+				callMapDataByCenterPoint(new Point(worldInfo.mapX + MOVE_GRID_OBLIQUE, worldInfo.mapY),true);
+//				moveViewTo(worldInfo.mapX + MOVE_GRID_OBLIQUE, worldInfo.mapY);
+			}
+			
+			private function onLeftUp() : void
+			{
+				callMapDataByCenterPoint(new Point(worldInfo.mapX - MOVE_GRID_OBLIQUE, worldInfo.mapY),true);
+//				moveViewTo(worldInfo.mapX - MOVE_GRID_OBLIQUE, worldInfo.mapY);
+			}
+			
+			private function onUp() : void
+			{
+//				moveViewTo(worldInfo.mapX - MOVE_GRID_VERT_STRAIGHT, worldInfo.mapY - MOVE_GRID_VERT_STRAIGHT);
+			}
+			
+			private function onLeft() : void
+			{
+//				moveViewTo(worldInfo.mapX - MOVE_GRID_HORI_STRAIGHT, worldInfo.mapY + MOVE_GRID_HORI_STRAIGHT);
+			}
+			
+			private function onRightUp() : void
+			{
+				callMapDataByCenterPoint(new Point(worldInfo.mapX, worldInfo.mapY - MOVE_GRID_OBLIQUE),true);
+//				moveViewTo(worldInfo.mapX, worldInfo.mapY - MOVE_GRID_OBLIQUE);
+			}
+			
+			private function onRight() : void
+			{
+//				moveViewTo(worldInfo.mapX + MOVE_GRID_HORI_STRAIGHT, worldInfo.mapY - MOVE_GRID_HORI_STRAIGHT);
+			}
+			
+			private function onLeftDown() : void
+			{
+				callMapDataByCenterPoint(new Point(worldInfo.mapX, worldInfo.mapY + MOVE_GRID_OBLIQUE),true);
+//				moveViewTo(worldInfo.mapX, worldInfo.mapY + MOVE_GRID_OBLIQUE);
+			}
+			
+			private function onDown() : void
+			{
+//				moveViewTo(worldInfo.mapX + MOVE_GRID_VERT_STRAIGHT, worldInfo.mapY + MOVE_GRID_VERT_STRAIGHT);
+			}
+			/**
+			 * 返回城市中心地图
+			 */
+			private function onCenter():void{
+				callMapDataByCenterPoint(new Point(model.cityInfo.posX,model.cityInfo.posY),true);
+//				moveViewTo(model.cityInfo.posX,model.cityInfo.posY);
+			}
+			
+			//鼠标移除时的事件处理
+			private function onMouseOut(event:MouseEvent):void{
+				this.pnlToolTip.visible = false;
+				doEndDrag(event);
+			}
+			/**
+			 * 按地图设置屏幕坐标
+			 */
+			private function setGridPosition(wg:WorldGrid):void{
+				var point:Point=getScreenPostion(new Point(wg.posX,wg.posY));
+				//计算偏移量
+				wg.x=point.x-edgeWidth/2;
+				wg.y=point.y-edgeHeight/2-IMG_OFFSETY;
+			}
+			/**
+			 * 根据地图坐标换算为屏幕坐标（地图中心点）
+			 */
+			private function getScreenPostion(point:Point):Point{
+				var tx:int=point.x;
+				var ty:int=point.y;
+				
+				var vx:Number;
+				var vy:Number;
+				//邻短边
+				var a:Number=Math.min(tx,ty)*edgeLong;
+				//邻长边
+				var b:Number=Math.max(tx,ty)*edgeLong;
+				//余弦定理
+				var c:Number=Math.sqrt(a*a+b*b -2*a*b*Math.cos(2*offsetAngle));
+				var cosA:Number=(b*b+c*c-a*a)/(2*b*c); 
+				var angleA:Number=Math.acos(cosA);
+				vx=c* Math.cos(angleA+offsetAngle);
+				vy=c* Math.sin(angleA+offsetAngle); 
+				if(tx==ty){
+					vx=0;
+					vy=tx*edgeHeight;
+				}else if(tx<ty){ 
+					vx *=-1;
+				}
+				//	        	trace("A:"+a+" B:"+b+" C:"+c+" angleA:"+angleA+"vx:"+vx+" vy:"+vy);
+				return new Point(vx,vy);
+			}
+			/**
+			 * 根据中心点获取所需屏幕地图坐标集合
+			 */
+			private function getAllPointByCenterPoint(p:Point):void{
+				var moveX:Number;
+				var moveY:Number;
+				allMapPointList.length=0;
+				allMapPoint={ };
+				var pp:Point;
+				
+				//左上
+				for(moveX=p.x;moveX>p.x-OFFSETX*screenMoveX;moveX-=edgeWidth){
+					for(moveY=p.y;moveY>p.y-OFFSETY*screenMoveY;moveY-=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				for(moveX=p.x-edgeWidth*0.5;moveX>p.x-OFFSETX*screenMoveX;moveX-=edgeWidth){
+					for(moveY=p.y-edgeHeight*0.5;moveY>p.y-OFFSETY*screenMoveY;moveY-=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				//左下
+				for(moveX=p.x;moveX>p.x-OFFSETX*screenMoveX;moveX-=edgeWidth){
+					for(moveY=p.y;moveY<p.y+OFFSETY*screenMoveY;moveY+=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				for(moveX=p.x-edgeWidth*0.5;moveX>p.x-OFFSETX*screenMoveX;moveX-=edgeWidth){
+					for(moveY=p.y+edgeHeight*0.5;moveY<p.y+OFFSETY*screenMoveY;moveY+=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				//右上
+				for(moveX=p.x;moveX<p.x+OFFSETX*screenMoveX;moveX+=edgeWidth){
+					for(moveY=p.y;moveY>p.y-OFFSETY*screenMoveY;moveY-=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				for(moveX=p.x+edgeWidth*0.5;moveX<p.x+OFFSETX*screenMoveX;moveX+=edgeWidth){
+					for(moveY=p.y-edgeHeight*0.5;moveY>p.y-OFFSETY*screenMoveY;moveY-=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				//右下
+				for(moveX=p.x;moveX<p.x+OFFSETX*screenMoveX;moveX+=edgeWidth){
+					for(moveY=p.y;moveY<p.y+OFFSETY*screenMoveY;moveY+=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+				for(moveX=p.x+edgeWidth*0.5;moveX<p.x+OFFSETX*screenMoveX;moveX+=edgeWidth){
+					for(moveY=p.y+edgeHeight*0.5;moveY<p.y+OFFSETY*screenMoveY;moveY+=edgeHeight){
+						pp=getMapPostion(new Point(moveX,moveY));
+						if(pp!=null && allMapPoint[WorldUtil.getIndexFromXY(moveX,moveY)] ==null ){
+							allMapPoint[WorldUtil.getIndexFromXY(pp.x,pp.y)]=pp;
+							allMapPointList.push(pp);
+						}
+					}
+				}
+//				trace(allMapPointList.length);
+			}
+			private function onShowCollection():void{
+				var win:CollectionWindow=new CollectionWindow();
+				win.type=0;
+				WindowUtil.showModelWindow(win);
+			}
+		]]>
+	</mx:Script>
+	
+	<!--背景-->
+	<!--<mx:Canvas x="0" y="0" width="100%" height="100%" id="bgPanel" styleName="Normal"  horizontalScrollPolicy="off" verticalScrollPolicy="off" />-->
+	<mx:Image x="0"  y="0" width="1000" height="600" source="@Embed('images/map/world_bg.jpg')" /> 
+	
+	<!--网格-->
+	<mx:Canvas x="0" y="0" width="100%" height="100%" styleName="Normal"  id="gridPanel" mouseChildren="false" horizontalScrollPolicy="off" verticalScrollPolicy="off"   />
+	<!--旗号（待做）-->
+	<!--	<mx:Canvas x="0" y="0" width="100%" height="100%" id="flagPanel" styleName="Normal" />-->
+	<!--地形提示-->
+	<mx:Canvas horizontalScrollPolicy="off" verticalScrollPolicy="off" x="0" y="0" width="100%" height="100%" id="tipPanel" styleName="Normal" click="onMouseClick(event)" mouseUp="doEndDrag(event)" mouseDown="onMouseDown(event)"  mouseMove="onMouseMove(event)" mouseOut="onMouseOut(event)">
+		
+		<ns1:ToolTipWindow x="201" y="250" id="pnlToolTip" visible="false" styleName="WorldToolTip">
+		</ns1:ToolTipWindow>
+		<!--地图控制器-->
+		<mx:Canvas width="197" height="114" x="769" y="317" id="controlPanel" alpha="0.9" styleName="MapControl">
+			<mx:TextInput x="17" y="92" width="34" height="19" id="inputPosX" maxChars="3" restrict="0-9" text="{worldInfo.mapX}" fontSize="9" enter="moveTo()" tabEnabled="true" tabIndex="0"/>
+			<mx:TextInput x="61" y="92" width="34" height="19" id="inputPosY" maxChars="3" restrict="0-9"  text="{worldInfo.mapY}" fontSize="9" enter="moveTo()" tabEnabled="true" tabIndex="1"/>
+			<mx:Label x="48" y="92" text="Y" fontWeight="bold" width="16" fontSize="10" textAlign="center"/>
+			<mx:Label x="3" y="92" text="X" fontWeight="bold" width="16" fontSize="10" textAlign="center"/>
+			<mx:Button x="98" y="92" label="GO" width="40" click="moveTo()" height="20" fontSize="9"/>
+			<mx:Button x="9" y="8" styleName="LeftArrow" click="onLeftUp()"/>
+			<mx:Button x="95" y="8" styleName="TopArrow" click="onRightUp()"/>
+			<mx:Button x="94" y="44" styleName="RightArrow" click="onRightDown()"/>
+			<mx:Button x="9" y="44" styleName="BottomArrow" click="onLeftDown()"/>
+			<mx:Button x="51" y="22" styleName="CenterArrow" click="onCenter()"/>
+			<mx:Button x="142" y="92" label="收藏" width="51" height="21" click="onShowCollection()"/>
+		</mx:Canvas>
+	</mx:Canvas>
+	
+</mx:Canvas>

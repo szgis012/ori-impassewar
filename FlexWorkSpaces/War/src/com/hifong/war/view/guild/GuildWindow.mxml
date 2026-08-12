@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="438" showCloseButton="false" close="doClose()" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.guild.ReceiveSubsidyEvent;
+			import com.hifong.war.events.guild.RemoveGuildRelationshipEvent;
+			import mx.controls.DataGrid;
+			import com.hifong.war.vo.GuildPlayerVO;
+			import com.hifong.war.events.guild.GuildMemberGrantEvent;
+			import com.hifong.war.events.building.commandcenter.ExitGuildEvent;
+			import com.hifong.war.events.guild.GetTotalAlmsOfGuildMemberInGuildEvent;
+			import com.hifong.war.events.guild.UpgradeGuildEvent;
+			import com.hifong.war.events.guild.UpgradeTechnologyEvent;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.hifong.war.events.guild.DonateOriflammeEvent;
+			import com.hifong.war.events.guild.GetGuildTechnologyEvent;
+			import com.hifong.war.events.guild.DonateMoneyEvent;
+			import com.hifong.war.events.guild.GetAllGuildIncomeInfoEvent;
+			import mx.core.UIComponent;
+			import com.hifong.war.events.guild.RefusePlayerJoinGuildApplicationEvent;
+			import com.hifong.war.events.guild.AccpetPlayerJoinGuildApplicationEvent;
+			import com.hifong.war.view.player.ViewPlayerInfoWindow;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.guild.DismissGuildEvent;
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.events.guild.ShowGuildRelationshipListEvent;
+			import com.hifong.war.events.guild.RemoveGuildMemberByPlayerNameEvent;
+			import com.hifong.war.events.guild.RemoveGuildMemberEvent;
+			import com.hifong.war.events.guild.ShowGuildMemberRemoveListEvent;
+			import com.hifong.war.events.guild.ShowGuildMemberGrantWindowEvent;
+			import com.hifong.war.events.guild.ShowGuildMemberGrantListEvent;
+			import com.hifong.war.events.guild.AddGuildRelationshipEvent;
+			import com.hifong.war.events.guild.CancelInvitePlayerEvent;
+			import com.hifong.war.events.guild.ShowGuildPlayerAppInvListEvent;
+			import com.hifong.war.events.guild.InviteJoinGuildEvent;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			import com.hifong.war.events.guild.UpdateGuildInfoEvent;
+			import com.hifong.war.events.guild.InitGuildManageEvent;
+			import mx.collections.ArrayCollection;
+			import mx.events.PropertyChangeEvent;
+			import com.hifong.war.events.guild.ShowGuildAttackListEvent;
+			import com.hifong.war.events.guild.ShowGuildEventListEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.events.guild.ShowGuildMemberListEvent;
+			import com.hifong.war.events.guild.ShowGuildInfoEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.vo.GuildVO;
+			import com.hifong.war.model.ModelLocator;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			public var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var guildID:int = model.playerInfo.guildID;
+			private var playerID:int = model.playerInfo.playerID;
+			
+			[Bindable]
+			private var currentGuildMemberPageNum:int = 0;
+			[Bindable]
+			private var currentGuildEventPageNum:int = 0;
+			[Bindable]
+			private var currentGuildAttackPageNum:int = 0;
+			[Bindable]
+			private var currentGuildMemberGrantPageNum:int = 0;
+			
+			private var pageSize:int = model.messagePageSize;
+			
+			[Bindable]
+			private var attackType:ArrayCollection = new ArrayCollection(new Array("","攻击","防御"));
+			[Bindable]
+			private var inviteType:ArrayCollection = new ArrayCollection(new Array("","申请加入","邀请加入"));
+			[Bindable] 
+			private var relationshipType:ArrayCollection = new ArrayCollection(new Array("","友好","敌对"));
+			
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+
+				tabGuild.selectedIndex = 4;
+				tabGuild.selectedIndex = -1;
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 显示工会信息
+			 */
+			private function showGuildInfo():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildInfoEvent(model.playerInfo.guildID));
+			} 
+			
+			/**
+			 * 显示工会成员列表
+			 */
+			private function showGuildMemberList(pageNum:int):void{
+				
+				currentGuildMemberPageNum = pageNum;
+				
+				var start:int = (currentGuildMemberPageNum-1)*pageSize;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildMemberListEvent(guildID,start,pageSize));
+			}
+			
+			/**
+			 * 显示工会成员上一页列表
+			 */
+			private function showGuildMemberPreviousPageList():void{
+				if(currentGuildMemberPageNum!=1){
+					currentGuildMemberPageNum--;
+					showGuildMemberList(currentGuildMemberPageNum);
+				}
+			}
+			
+			/**
+			 * 显示工会成员下一页列表
+			 */
+			private function showGuildMemberNextPageList():void{
+				if(currentGuildMemberPageNum!=model.guildMemberPage){
+					currentGuildMemberPageNum++;
+					showGuildMemberList(currentGuildMemberPageNum);
+				}
+			}
+			
+			/**
+			 * 显示工会事件列表
+			 */
+			private function showGuildEventList(pageNum:int):void{
+				
+				currentGuildEventPageNum = pageNum;
+				
+				var start:int = (currentGuildEventPageNum-1)*pageSize;
+
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildEventListEvent(guildID,start,pageSize));
+			}
+			
+			/**
+			 * 显示工会事件上一页列表
+			 */
+			private function showGuildEventPreviousPageList():void{
+				if(currentGuildEventPageNum!=1){
+					currentGuildEventPageNum--;
+					showGuildEventList(currentGuildEventPageNum);
+				}
+			}
+			
+			/**
+			 * 显示工会事件下一页列表
+			 */
+			private function showGuildEventNextPageList():void{
+				if(currentGuildEventPageNum!=model.guildEventPage){
+					currentGuildEventPageNum++;
+					showGuildEventList(currentGuildEventPageNum);
+				}
+			}
+			
+			/**
+			 * 显示工会攻击列表
+			 */
+			private function showGuildAttackList(pageNum:int):void{
+				
+				currentGuildAttackPageNum = pageNum;
+				
+				var start:int = (currentGuildAttackPageNum-1)*pageSize;
+
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildAttackListEvent(guildID,start,pageSize));
+			}
+			
+			/**
+			 * 显示工会攻击上一页列表
+			 */
+			private function showGuildAttackPreviousPageList():void{
+				if(currentGuildAttackPageNum!=1){
+					currentGuildAttackPageNum--;
+					showGuildAttackList(currentGuildAttackPageNum);
+				}
+			}
+			
+			/**
+			 * 显示工会攻击下一页列表
+			 */
+			private function showGuildAttackNextPageList():void{
+				if(currentGuildAttackPageNum!=model.guildAttackPage){
+					currentGuildAttackPageNum++;
+					showGuildAttackList(currentGuildAttackPageNum);
+				}
+			}
+			
+			/**
+			 * 初始化工会管理
+			 */
+			private function initGuildManage():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new InitGuildManageEvent(guildID,playerID));
+			}
+			
+			
+			/**
+			 * 更新工会信息
+			 */
+			private function updateGuildInfo():void{
+				var guild:GuildVO = new GuildVO();
+				
+				guild.guildID = guildID;
+				guild.name = textGuildName_Manage.text;
+				guild.introduction = textareaIntroduction_Manage.text;
+				guild.notice = textareaNotice_Manage.text;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new UpdateGuildInfoEvent(guild));
+			}
+			
+			/**
+			 * 邀请加入工会
+			 */
+			private function inviteJoinGuild():void{
+				
+				var playerName:String = StringUtil.trim(textInvitePlayerName.text);
+				
+				if(playerName.length==0){
+					MsgBox.showMessage("请输入玩家名称");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new InviteJoinGuildEvent(guildID,playerName));
+			}
+
+			/**
+			 * 同意玩家加入工会申请
+			 */
+			public function accpetPlayerJoinGuildApplication(playerID:int,guildID:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AccpetPlayerJoinGuildApplicationEvent(playerID,guildID));
+			}
+			
+			/**
+			 * 拒绝玩家加入工会申请
+			 */
+			public function refusePlayerJoinGuildApplication(playerID:int,guildID:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new RefusePlayerJoinGuildApplicationEvent(playerID,guildID));
+			}
+
+			/**
+			 * 取消邀请玩家
+			 */
+			public function cancelInvitePlayer(playerID:int,playerName:String):void{
+				MsgBox.showConfirm("您确定要取消对玩家 " + playerName + " 的邀请吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelInvitePlayerEvent(guildID,playerID));
+				});
+			}
+			
+			/**
+			 * 显示工会玩家申请邀请列表
+			 */
+			private function showGuildPlayerAppInvList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildPlayerAppInvListEvent(guildID));
+			}
+			
+			/**
+			 * 根据玩家名称移除工会成员
+			 */
+			private function removeGuildMemberByPlayerName():void{
+				var playerName:String = textRemoveMemberName.text
+				if(StringUtil.trim(playerName).length==0){
+					MsgBox.showMessage("请输入玩家名称");
+					return;
+				}else{
+					if(model.guildVO.chairman.name==playerName){
+						MsgBox.showMessage("无法将创始人移除");
+						return;
+					}else if(playerName==model.playerInfo.name){
+						MsgBox.showMessage("无法将自己移除");
+						return;
+					}else{
+						MsgBox.showConfirm("您确定要移除玩家 " + playerName + " 吗？",function ():void{
+							CairngormEventDispatcher.getInstance().dispatchEvent(new RemoveGuildMemberByPlayerNameEvent(guildID,playerName));
+						});
+					}
+				}
+			}
+			
+			/**
+			 * 移除工会玩家
+			 */
+			public function removeGuildMember(playerID:int,playerName:String):void{
+				if(model.guildVO.chairmanID==playerID){
+					MsgBox.showMessage("无法将创始人移除");
+				}else if(playerID==model.playerInfo.playerID){
+					MsgBox.showMessage("无法将自己移除");
+					return;
+				}else{
+					MsgBox.showConfirm("您确定要移除玩家 " + playerName + "吗？",function ():void{
+						CairngormEventDispatcher.getInstance().dispatchEvent(new RemoveGuildMemberEvent(guildID,playerID));
+					});
+				}
+			}
+			
+			/**
+			 * 显示工会玩家移除列表
+			 */
+			private function showGuildMemberRemoveList(pageNum:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildMemberRemoveListEvent(guildID));
+			}
+			
+			/**
+			 * 添加工会关系
+			 */
+			private function addGuildRelationship():void{
+				
+				var targetGuildName:String = textGuildName_Relationship.text
+	
+				if(targetGuildName.length==0){
+					MsgBox.showMessage("请输入军团名称");
+					return;
+				}
+				if(radioRelationshipType_Manage.selection==null){
+					MsgBox.showMessage("请选择类型");
+					return;
+				}
+				
+				var type:int = radioRelationshipType_Manage.selection.data as int;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AddGuildRelationshipEvent(guildID,targetGuildName,type));
+			}
+			
+			/**
+			 * 显示工会关系列表
+			 */
+			private function showGuildRelationshipList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRelationshipListEvent(guildID));
+			}
+			
+			/**
+			 * 显示工会成员授权列表
+			 */
+			private function showGuildMemberGrantList(pageNum:int):void{
+				
+				currentGuildMemberGrantPageNum = pageNum;
+				
+				var start:int = (currentGuildMemberGrantPageNum-1)*pageSize;
+
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildMemberGrantListEvent(guildID,start,pageSize));
+			}
+			
+			/**
+			 * 显示工会成员授权窗口
+			 */
+			public function showGuildMemberGrantWindow(playerID:int):void{
+//				if(model.guildVO.chairmanID==playerID){
+//					MsgBox.showMessage("创始人无法被授权");
+//					return;
+//				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildMemberGrantWindowEvent(guildID,playerID,this));
+			}
+			
+			/**
+			 * 显示玩家信息窗口
+			 */
+			public function showPlayerInfo(playerID:int):void{
+				var win:ViewPlayerInfoWindow = new ViewPlayerInfoWindow();
+				win.playerID = playerID;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 获得列攻击类型
+			 */
+			private function getColumnAttackType(item:Object, column:DataGridColumn):String{
+				return attackType.getItemAt(item[column.dataField]).toString();
+			}
+			
+			/**
+			 * 获得列邀请类型
+			 */
+			private function getColumnInviteType(item:Object, column:DataGridColumn):String{
+				return inviteType.getItemAt(item[column.dataField]).toString();
+			}
+			
+			/**
+			 * 获得列关系类型
+			 */
+			private function getColumnRelationshipType(item:Object, column:DataGridColumn):String{
+				return relationshipType.getItemAt(item[column.dataField]).toString();
+			}
+			/////////////////////////////军团管理/////////////////////////////////
+			private function guildManageSelectShow(temp:UIComponent):void{
+				canvasGuildInfoManage.visible = false;
+				transferOfficial.visible = false;
+//				disbandGuild.visible = false;
+				guildResearch.visible = false;
+				upgradeGuild.visible = false;
+				guildMessage.visible = false;
+				canvasGuildOfficerManage.visible = false;
+				
+				canvasGuildMemeberAppInvManage.visible = false;
+				canvasGuildMemeberRemoveManage.visible = false;
+				canvasGuildRelationship.visible = false;
+				
+				temp.visible=true;
+			}
+			/**
+			 * 获取可研究科技列表
+			 */
+			private function doGuildResearch():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildTechnologyEvent(model.playerInfo.guildID));
+			}
+			/**
+			 * 解散军团
+			 */
+			private function dismissGuild():void{
+				
+				MsgBox.showConfirm("您确定要解散军团吗？\n一旦解散军团所有军团相关信息将无法恢复，并且当前所有军团成员将全部退出。",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DismissGuildEvent(model.guildVO.guildID));
+					doClose();
+				});
+				
+			}
+			/**
+			 * 官员辞职
+			 */
+			private function showOfficalResign():void{
+				MsgBox.showConfirm("您确定要辞职吗？\n辞职后的玩家，不再享有当前职位具备的权限，请玩家慎重考虑。",function ():void{
+					if(model.guildVO.chairmanID==model.playerInfo.playerID){
+						MsgBox.showMessage("创建人不能辞职，请先解散军团。");
+						return;
+					}
+					var guildPlayerVO:GuildPlayerVO=new GuildPlayerVO();
+					guildPlayerVO.guildID=model.playerInfo.guildID;
+					guildPlayerVO.playerID=model.playerInfo.playerID;
+					guildPlayerVO.dutyName="成员";
+					guildPlayerVO.permission="0-0-0-0-0-0";
+					CairngormEventDispatcher.getInstance().dispatchEvent(new GuildMemberGrantEvent(guildPlayerVO));
+				});
+			}
+			/**
+			 * 退出军团
+			 */
+			 private function showQuitGuildWindow():void{
+			 	MsgBox.showConfirm("您确定要推出军团吗？\n玩家退出军团后，将不再受到军团的保护，24小时内也不得再加入其他军团。",function ():void{
+			 		CairngormEventDispatcher.getInstance().dispatchEvent(new ExitGuildEvent(model.playerInfo.playerID));
+			 		doClose();
+			 	});
+			 }
+			 /**
+			 * 研究科技
+			 */
+			 public  function upgradeTechnology(data:Object):void{ 
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new UpgradeTechnologyEvent(model.guildVO.guildID,int(data.technologyID))); 
+			 }
+			 /**
+			 * 升级军团
+			 */
+			 private function upgradeGuildHandler():void{
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new UpgradeGuildEvent(model.guildVO.guildID));
+			 }
+			 /**
+			 * 军团外交-解除关系
+			 */
+			public function removeGuildRelationship(data:Object):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new RemoveGuildRelationshipEvent(model.guildVO.guildID,data.targetGuild.name));
+			}
+			////////////////////////////军团操作/////////////////////////////////
+			/**
+			 *  军团操作  选择界面
+			 */
+			 private function guildOperatoinSelectShow(temp:UIComponent):void{
+			 	guildOperationDefault.visible=false;
+			 	guildContribute.visible=false;
+			 	guildSubsidy.visible=false;
+			 	guildFight.visible=false;
+			 	temp.visible=true;
+			 }
+			 /**
+			 * 获取军团收入明细情况
+			 */
+			private function getGuildIncomeInfo():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTotalAlmsOfGuildMemberInGuildEvent(model.guildVO.guildID,0,1));
+//				CairngormEventDispatcher.getInstance().dispatchEvent(new GetAllGuildIncomeInfoEvent(model.playerInfo.guildID));
+			}
+			/**
+			 * 捐献金钱
+			 */
+			private function donateMoney():void{
+				if(StringUtil.trim(moneyTxt.text)=="") return;
+			 	if(Number(StringUtil.trim(moneyTxt.text))==0) return;
+			 	if(Number(StringUtil.trim(moneyTxt.text))>model.cityInfo.cityResource.moneyNum){
+			 		MsgBox.showMessage("您拥有的金钱数不足。");
+			 		return;
+			 	}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new DonateMoneyEvent(model.playerInfo.guildID,model.playerInfo.playerID,Number(moneyTxt.text)));
+			}
+			private const bannerSelectAC:ArrayCollection=new ArrayCollection(GuildConfig.oriflammeTypeArray);
+			/**
+			 * 获取自身旗帜数量
+			 */
+			 private function getBannerNum(index:int):int{
+			 	return GuildConfig.playerOriflammeArray[index];
+			 }
+		 /**
+		 * 捐献旗帜
+		 */
+		 private function donateOriflamme():void{
+				if(StringUtil.trim(bannerTxt.text)=="") return;
+				if(Number(StringUtil.trim(bannerTxt.text))==0) return;
+				if(Number(bannerTxt)>getBannerNum(bannerSelect.selectedIndex)){
+					MsgBox.showMessage("您拥有的旗帜数量不足。");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new DonateOriflammeEvent(model.playerInfo.guildID,model.playerInfo.playerID,"XXX",int(bannerTxt.text)));
+		 }
+		 /**
+		 * 获取成员捐献旗帜情况
+		 */
+		 private function getDonateOriflamme(data:Object,column:DataGridColumn):String{
+		 	var s:String;
+		 	if(data["guildIncExpHistory"]==null){
+		 		return "0士官军旗; 0 校官军旗; 0 元帅军旗数量";
+		 	}
+		 	s=data["guildIncExpHistory"]["oriflammeLowerNum"]+"士官军旗;";
+		 	s+=data["guildIncExpHistory"]["oriflammeIntermediateNum"]+" 校官军旗;";
+		 	s+=data["guildIncExpHistory"]["oriflammeAdvancedNum"]+" 元帅军旗";
+		 	return s;
+		 }
+		 /**
+		 * 获取成员捐献金钱
+		 */
+		 private  function getDonateMoney(data:Object,column:DataGridColumn):String{
+		 	if(data["guildIncExpHistory"]==null){
+			 	return "0";
+		 	}
+	 		return data["guildIncExpHistory"]["money"];
+		 }
+		 /**
+		 * 领取军团补贴
+		 */
+		 private function receiveSubsidy():void{
+		 	CairngormEventDispatcher.getInstance().dispatchEvent(new ReceiveSubsidyEvent(model.guildVO.guildID,model.playerInfo.playerID));
+		 }
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabGuild" x="25" y="37" width="580" height="375">
+		<mx:Canvas label="军团概况" width="100%" height="100%" initialize="showGuildInfo()" styleName="ContentCanvas">
+			<mx:Label x="10" y="10" text="军团名称：{model.guildVO.name}" width="169.5"/>
+			<mx:Label x="10" y="66" text="创 始 人 ：{model.guildVO.chairman.name}" width="169.5"/>
+			<mx:Label x="187.5" y="38" text="成员人数：{model.guildVO.population}/{model.guildVO.populationMax}" width="179.5"/>
+			<mx:Label x="187.5" y="10" text="当前排名：{model.guildVO.rank}"/>
+			<mx:Label x="187.5" y="66" text="军团声望：{model.guildVO.renown}"/>
+			<mx:Label x="10" y="38" text="军团等级 ：{model.guildVO.level}" width="169.5"/>
+			<mx:Label x="187.5" y="94" text="军团荣誉：{model.guildVO.contribution}"/>
+			<!--工会介绍-->
+			<mx:TextArea x="10" y="122" height="90" width="357" editable="false" htmlText="{model.guildVO.introductionDescription}" />
+			<!--工会公告-->
+			<mx:TextArea x="10" y="220" height="107" width="357" editable="false" htmlText="{model.guildVO.noticeDescription}" />
+			<!--工会关系描述-->
+			<!--<mx:TextArea x="375" y="9" height="318" width="193" editable="false" htmlText="{model.guildVO.relationshipDescription}" verticalScrollPolicy="on"/>-->
+			<!--联盟外交-->
+				<mx:TextArea x="375" y="10" height="317" width="193" htmlText="{model.guildVO.relationshipDescription}">
+				</mx:TextArea>
+		</mx:Canvas>
+		
+		<mx:Canvas label="成员列表" width="100%" height="100%" initialize="showGuildMemberList(1)" styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10" dataProvider="{model.guildMemberList}" width="558" height="287">
+				<mx:columns>
+					<mx:DataGridColumn headerText="名称" dataField="player.name" sortable="false" labelFunction="DataGridUtil.getColumnProperty" />
+					<mx:DataGridColumn headerText="职位" dataField="dutyName" sortable="false" textAlign="center" />
+					<mx:DataGridColumn headerText="军衔" dataField="player.honorName" sortable="false" textAlign="center" labelFunction="DataGridUtil.getColumnProperty"  />
+					<mx:DataGridColumn headerText="声望" dataField="player.renown" sortable="false" textAlign="right" labelFunction="DataGridUtil.getColumnProperty" />
+					<mx:DataGridColumn headerText="贡献" dataField="contribution" sortable="false"  textAlign="right" />
+					<!--<mx:DataGridColumn headerText="加入时间" dataField="createTime" sortable="false" labelFunction="DateFormatUtil.formatColumnDate" />-->
+					<mx:DataGridColumn headerText="操作"  sortable="false" width="60">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button height="0" width="0" label="查看" click="outerDocument.showPlayerInfo(data.playerID)" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="350" y="311" text="{currentGuildMemberPageNum}/{model.guildMemberPage}" id="labelGuildMemberPage" width="70"/>
+			<mx:Button x="420" y="308" label="上一页" id="buttonGuildMemberPreviousPage" click="showGuildMemberPreviousPageList()" width="70" height="26"/>
+			<mx:Button x="498" y="308" label="下一页" id="buttonGuildMemberNextPage" click="showGuildMemberNextPageList()" width="70" height="26"/>
+		</mx:Canvas>
+		
+		<mx:Canvas label="军团事件" width="100%" height="100%" initialize="showGuildEventList(1)" styleName="ContentCanvas">
+			<mx:Label x="350" y="311" text="{currentGuildEventPageNum}/{model.guildEventPage}" id="labelGuildEventPage" width="70"/>
+			<mx:Button x="420" y="308" label="上一页" id="buttonGuildEventPreviousPage" click="showGuildEventPreviousPageList()" width="70" height="26"/>
+			<mx:Button x="498" y="308" label="下一页" id="buttonGuildEventNextPage" click="showGuildEventNextPageList()" width="70" height="26"/>
+			<mx:DataGrid x="10" y="10" dataProvider="{model.guildEventList}" width="558" height="287">
+				<mx:columns>
+					<mx:DataGridColumn headerText="事件" dataField="description" sortable="false"/>
+					<mx:DataGridColumn width="150" headerText="时间" textAlign="center" dataField="createTime" sortable="false" labelFunction="DateFormatUtil.formatColumnLongDate">
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		
+		<mx:Canvas label="军团攻击" width="100%" height="100%" initialize="showGuildAttackList(1)" styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10" dataProvider="{model.guildAttackList}" width="558" height="287">
+				<mx:columns>
+					<mx:DataGridColumn headerText="类型" width="60" textAlign="center" sortable="false" dataField="type" labelFunction="getColumnAttackType" />
+					<mx:DataGridColumn headerText="对方军团" width="120" sortable="false" dataField="targetGuild.name" labelFunction="DataGridUtil.getColumnProperty"/>
+					<mx:DataGridColumn headerText="事件" sortable="false" dataField="description"/>
+					<mx:DataGridColumn headerText="时间" width="150" textAlign="center" sortable="false" dataField="createTime" labelFunction="DateFormatUtil.formatColumnLongDate"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="350" y="311" text="{currentGuildAttackPageNum}/{model.guildAttackPage}" id="labelGuildAttackPage" width="70"/>
+			<mx:Button x="420" y="308" label="上一页" id="buttonGuildAttackPreviousPage" click="showGuildAttackPreviousPageList()" width="70" height="26"/>
+			<mx:Button x="498" y="308" label="下一页" id="buttonGuildAttackNextPage" click="showGuildAttackNextPageList()" width="70" height="26"/>
+		</mx:Canvas> 
+		
+		<mx:Canvas label="军团操作" width="100%" height="100%"  styleName="ContentCanvas">
+		
+			<mx:Button label="捐献历史" x="10" y="10" click="guildOperatoinSelectShow(guildOperationDefault);" />
+			<mx:Canvas id="guildOperationDefault" visible="true" initialize="getGuildIncomeInfo();"> 
+				<mx:Label x="10" y="52" text="当前军团等级：{model.guildVO.level}"/>
+				<mx:Label x="10" y="80" text="当前军团资产：{model.guildVO.money} 金钱  {model.guildVO.oriflammeLowerNum} 士官军旗  {model.guildVO.oriflammeIntermediateNum} 校官军旗   {model.guildVO.oriflammeAdvancedNum} 元帅军旗 "/>
+				<mx:DataGrid x="10" y="108" width="558" height="228" dataProvider="{model.guildMenberContributeList}"> 
+					<mx:columns>
+						<mx:DataGridColumn headerText="成员" sortable="false" dataField="player.name"  labelFunction="{DataGridUtil.getColumnProperty}"/>
+						<mx:DataGridColumn headerText="贡献度" sortable="false" dataField="contribution" textAlign="right"/>
+						<mx:DataGridColumn headerText="捐献金钱" sortable="false" labelFunction="getDonateMoney" textAlign="right"/>
+						<mx:DataGridColumn headerText="捐献旗帜" sortable="false" labelFunction="getDonateOriflamme" width="230"/>
+					</mx:columns>
+				</mx:DataGrid>	
+			</mx:Canvas>
+						 
+			<mx:Button label="军团捐献" x="96" y="10" click="guildOperatoinSelectShow(guildContribute);" />
+			<mx:Canvas id="guildContribute" width="558" height="292" x="10" y="43" visible="false">
+				<mx:Label text="捐献金钱："  y="29" x="10"/>
+				<mx:TextInput id="moneyTxt"  x="83" y="28" width="82" restrict="0-9"/>
+				<mx:TextInput  id="bannerTxt" x="195" y="68" width="82" restrict="0-9"/>
+				<mx:Label x="184" y="26" text="当前拥有：{model.cityInfo.cityResource.moneyNum}金钱"/>
+				<mx:Label x="285" y="69" text="当前拥有：{getBannerNum(0)}"/>
+				<mx:Button x="457" y="26" label="捐献" click="donateMoney();"/>
+				
+				<mx:Button x="457" y="66" label="捐献" click="donateOriflamme();"/>
+				<mx:Label x="10" y="69" text="捐献旗帜："/>
+				<mx:ComboBox id="bannerSelect" x="83" y="66" width="104" dataProvider="{bannerSelectAC}" dataChange="getBannerNum(bannerSelect.selectedIndex);" />
+				<mx:Text x="10" y="131" text="捐献的物资，将直接存入军团资产并根据比例增加军团的贡献度，已存入的物质将无法取回。" width="507" height="110" color="#FD3A2C"/>
+			</mx:Canvas>
+			
+			<mx:Button label="军团补贴" x="182" y="10" click="guildOperatoinSelectShow(guildSubsidy);" />
+			<mx:Canvas id="guildSubsidy" width="558" height="292" x="10" y="43" visible="false">
+				<mx:Text text="todo..." />
+				<mx:Button label="领取" click="receiveSubsidy();" />
+				<mx:Text x="10" y="224" text="军团补贴每周可领取一次，根据军团等级不同，可领取的补贴也不同。所有成员均可领取。" width="538" height="58" color="#FD3A2C"/>
+			</mx:Canvas>
+			
+			<mx:Button label="军团战斗" x="268" y="10"  click="guildOperatoinSelectShow(guildFight);" />
+			<mx:Canvas id="guildFight" width="558" height="292" x="10" y="43" visible="false">
+			</mx:Canvas>
+			
+			
+		</mx:Canvas>
+					
+		<mx:Canvas label="军团道具" width="100%" height="100%"  styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10"  width="558" height="326">
+				<mx:columns>
+					<mx:DataGridColumn headerText="道具名称" sortable="false" />
+					<mx:DataGridColumn headerText="金钱" sortable="false" />
+					<mx:DataGridColumn headerText="贡献" sortable="false" />
+					<mx:DataGridColumn headerText="荣誉" sortable="false" />
+					<mx:DataGridColumn headerText="操作" sortable="false" >
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="购买" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		
+		<mx:Canvas label="军团管理" width="100%" height="100%" initialize="initGuildManage()" styleName="ContentCanvas">
+		
+			<mx:Button id="buttonGuildInfoManage" x="10" y="10" label="军团介绍" enabled="{model.manageGuildInfoPermission}" click="guildManageSelectShow(canvasGuildInfoManage);" width="80" height="26"/>
+				<mx:Canvas id="canvasGuildInfoManage"  width="558" height="265" x="10" y="70" visible="true">
+					<mx:Label x="300" y="11" text="军团名称："/>
+					<mx:Label x="21" y="10" text="军团介绍："/>
+					<mx:Label x="21" y="133" text="军团公告："/>
+					<mx:TextInput x="373" y="10" width="165" id="textGuildName_Manage" maxChars="8" text="{model.guildVO.name}"/>
+					<mx:TextArea x="21" y="38" height="87" width="262" id="textareaIntroduction_Manage" maxChars="512" text="{model.guildVO.introduction}"/>
+					<mx:TextArea x="21" y="161" width="253" height="80" id="textareaNotice_Manage" maxChars="2048" text="{model.guildVO.notice}"/>
+					<mx:Button x="478" y="229" width="60" height="26" label="修改" click="updateGuildInfo()"/>
+					<mx:Text x="300" y="39" text="注：改军团名称需要道具。7天之内不能再次进行修改" height="74" width="248" color="#FE1919"/>
+				</mx:Canvas>
+			
+			<!--to do--> 
+			<mx:Button x="180" y="10" label="团长转让" enabled="{model.guildVO.chairmanID==model.playerInfo.playerID}"   width="80" height="26" click="guildManageSelectShow(transferOfficial)"/> 
+				<mx:Canvas  id="transferOfficial"  width="558" height="265" x="10" y="70" visible="false">
+						<mx:Label x="128" y="28" text="创始人：{model.guildVO.chairman.name}"/>
+						<mx:Label  x="128" y="56" text="当前军团长：{model.guildVO.chairman.name}" />
+						<mx:Label x="128" y="84" text="转让给："/>
+						<mx:TextArea x="213" y="83" height="21"/>
+						<mx:Button x="391" y="83" label="确定"/>
+						<mx:Text x="156.5" y="142" text="转让后，玩家将失去所有权利变成普通成员。        to do ....." color="#FF4C29"/>
+				</mx:Canvas>
+				
+			<mx:Button x="442" y="10" label="退出军团"  width="80" height="26"  click="showQuitGuildWindow()"/>
+				
+				
+			<mx:Button x="10" y="40" label="解散"  width="80" height="26"  enabled="{model.manageGuildOfficerPermission}" click="dismissGuild();"/>
+<!--			<mx:Button x="10" y="40" label="解散"  width="80" height="26"  click="guildManageSelectShow(disbandGuild)"/>
+				<mx:Canvas id="disbandGuild"   width="558" height="265" x="10" y="70" visible="false">
+						<mx:Label  x="128" y="56" text="建设中。。。" />
+				</mx:Canvas>-->
+				
+			<mx:Button x="94" y="40" label="研究"  width="80" height="26"  click="guildManageSelectShow(guildResearch)"/>
+				<mx:Canvas id="guildResearch"   width="558" height="265" x="10" y="70" visible="false" show="doGuildResearch();">
+					<mx:DataGrid width="100%" height="100%" dataProvider="{model.guildTechnologyList}"> 
+						<mx:columns>
+							<mx:DataGridColumn headerText="科技名称" sortable="false" dataField="name">
+								<mx:itemRenderer>
+									<mx:Component>
+											<mx:Label text="{data.name}" toolTip="{data.description}" width="100%" />
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="军团等级" sortable="false" dataField="guildtechnologyCost.level" labelFunction="{DataGridUtil.getColumnProperty}"/>
+							<mx:DataGridColumn headerText="研究费用" sortable="false"  dataField="guildtechnologyCost.money" labelFunction="{DataGridUtil.getColumnProperty}" />
+							<mx:DataGridColumn headerText="研究时间" sortable="false" dataField="guildtechnologyCost.time" labelFunction="{DataGridUtil.getColumnProperty}"/>
+							<mx:DataGridColumn headerText="研究状态" sortable="false" dataField="type"/>
+							<mx:DataGridColumn headerText="操作" sortable="false">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:HBox horizontalAlign="center">
+											<mx:Button label="研究" width="60" enabled="{outerDocument.model.manageGuildOfficerPermission}" click="outerDocument.upgradeTechnology(data)" />
+										</mx:HBox>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+				
+			<mx:Button x="180" y="40" label="升级"  width="80" height="26"  click="guildManageSelectShow(upgradeGuild)"/>
+				<mx:Canvas  id="upgradeGuild"  width="558" height="265" x="10" y="70" visible="false">
+						<mx:Label x="32" y="25" text="升级到：{model.guildVO.level+1}"/>
+						<!--<mx:ComboBox  id="guildUpgradeSelect" x="93" y="22" width="85" dataProvider="{GuildConfig.upgradeGuildRequire}" labelField="level" />-->
+						<mx:Button x="210" y="22" label="确定升级" enabled="{model.manageGuildOfficerPermission}" click="upgradeGuildHandler();"/>
+						<mx:Label x="32" y="75" text="所需成员：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).memberNum }"/>
+						<mx:Label x="32" y="103" text="所需金钱：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).money  }"/>
+						<mx:Label x="32" y="159" text="所需荣誉：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).honor  }"/>
+						<mx:Label x="249" y="75" text="所需声望：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).renown  }"/>
+						<mx:Label x="249" y="103" text="所需士官旗帜：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).oriflammeLowerNum  }"/>
+						<mx:Label x="32" y="131" text="所需校官旗帜：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).oriflammeIntermediateNum  }"/>
+						<mx:Label x="249" y="131" text="所需元帅旗帜：{GuildConfig.upgradeGuildRequire.getItemAt(model.guildVO.level).oriflammeAdvancedNum  }"/>
+						<mx:Text x="32" y="187" text="军团升级后，军团成员获得的成员增益。" width="498" height="68"  color="#FF4C29"/>
+				</mx:Canvas> 
+				
+			<mx:Button x="354" y="10" label="官员辞职"  width="80" height="26"  click="showOfficalResign();"/>
+				
+			<mx:Button x="442" y="40" label="军团消息"  width="80" height="26" enabled="{model.manageGuildMessagePermission}"  click="guildManageSelectShow(guildMessage)"/>
+				<mx:Canvas id="guildMessage"   width="558" height="265" x="10" y="70" visible="false">
+					<mx:Text text="建设中。。。" />
+				</mx:Canvas> 
+			<!--to do end-->
+			<mx:Button id="buttonGuildMemeberAppInvManage" x="94" y="10" label="审核邀请" enabled="{model.manageGuildMemberAppInvPermission}" click="guildManageSelectShow(canvasGuildMemeberAppInvManage)" width="80" height="26"/>
+				<mx:Canvas id="canvasGuildMemeberAppInvManage"  width="558" height="265" x="10" y="70" visible="false" show="showGuildPlayerAppInvList();">
+					<mx:Label x="0" y="12" text="玩家名称："/>
+					<mx:TextInput id="textInvitePlayerName" x="73" y="11"/>
+					<mx:Button x="241" y="11" label="邀请" id="buttonInviteJoinGuild" click="inviteJoinGuild()" height="22" width="55"/>
+					<mx:DataGrid x="0" y="40" dataProvider="{model.guildPlayerAppInvList}" width="100%" height="225">
+						<mx:columns>
+							<mx:DataGridColumn headerText="玩家名称" sortable="false" dataField="player.name" labelFunction="DataGridUtil.getColumnProperty"/>
+						<!--	<mx:DataGridColumn headerText="类型" sortable="false" dataField="type" labelFunction="getColumnInviteType" />
+							<mx:DataGridColumn headerText="时间" sortable="false" dataField="createTime" labelFunction="DateFormatUtil.formatColumnDate"/>-->
+							<mx:DataGridColumn headerText="军衔" sortable="false" />
+							<mx:DataGridColumn headerText="声望" sortable="false" />
+							<mx:DataGridColumn headerText="操作" width="140" sortable="false" dataField="description">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:HBox horizontalAlign="center">
+											<mx:Button height="22" width="{data.type==1?60:0}" label="同意" click="outerDocument.accpetPlayerJoinGuildApplication(data.playerID,data.guildID)" />
+											<mx:Button height="22" width="{data.type==1?60:0}" label="拒绝" click="outerDocument.refusePlayerJoinGuildApplication(data.playerID,data.guildID)" />
+											<mx:Button height="22" width="{data.type==2?90:0}" label="取消邀请" click="outerDocument.cancelInvitePlayer(data.playerID,data.player.name)" />
+										</mx:HBox> 
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+ 
+			<mx:Button id="buttonGuildRemoveMemeberManage" x="356" y="40" label="移除" enabled="{model.manageGuildMemberRemovePermission}" click="guildManageSelectShow(canvasGuildMemeberRemoveManage)" width="80" height="26"/>
+				<mx:Canvas id="canvasGuildMemeberRemoveManage"  width="558" height="265" x="10" y="70" visible="false" show="showGuildMemberRemoveList(1);">
+					<mx:Label x="0" y="2" text="玩家名称："/>
+					<mx:TextInput x="73" y="1" id="textRemoveMemberName" />
+					<mx:Button x="241" y="2" label="移除" maxHeight="22" width="55" click="removeGuildMemberByPlayerName()"/>
+					<mx:DataGrid x="0" y="30" dataProvider="{model.guildMemberRemoveList}" width="100%" height="225">
+						<mx:columns>
+							<mx:DataGridColumn headerText="名称" sortable="false" dataField="player.name" labelFunction="DataGridUtil.getColumnProperty" />
+							<mx:DataGridColumn headerText="职位" sortable="false" dataField="dutyName" textAlign="center" />
+							<mx:DataGridColumn headerText="军衔" sortable="false" dataField="player.honorName" textAlign="center" labelFunction="DataGridUtil.getColumnProperty" />
+							<mx:DataGridColumn headerText="声望" sortable="false" dataField="player.renown" textAlign="right" labelFunction="DataGridUtil.getColumnProperty" />
+							<mx:DataGridColumn headerText="贡献" sortable="false" dataField="contribution" textAlign="right"  />
+							<mx:DataGridColumn headerText="操作" sortable="false" dataField="playerID" width="60">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:Button height="0" width="0" label="移除" click="outerDocument.removeGuildMember(data.playerID,data.player.name)"/>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas> 
+ 
+			<mx:Button id="buttonGuildRelationship" x="268" y="10" label="军团外交" enabled="{model.manageGuildRelationshipPermission}" click="guildManageSelectShow(canvasGuildRelationship)"  width="80" height="26"/>
+				<mx:Canvas id="canvasGuildRelationship" width="558" height="265" x="10" y="70" visible="false"  show="showGuildRelationshipList();">
+					<mx:Label x="0" y="2" text="类      型："/>
+					<mx:RadioButtonGroup id="radioRelationshipType_Manage"/>
+					<mx:RadioButton x="73" y="0" label="友好" groupName="radioRelationshipType_Manage" data="1"/>
+					<mx:RadioButton x="131" y="0" label="敌对" groupName="radioRelationshipType_Manage" data="2"/>
+					<mx:Label x="0" y="31" text="军团名称："/>
+					<mx:TextInput x="73" y="30" id="textGuildName_Relationship" enter="addGuildRelationship()"/>
+					<mx:Button x="241" y="30" label="确定" click="addGuildRelationship()" height="22" width="55"/>
+					<mx:DataGrid x="0" y="59" dataProvider="{model.guildRelationshipList}" width="100%" height="206">
+						<mx:columns>
+							<mx:DataGridColumn headerText="工会名称" sortable="false" dataField="targetGuild.name" labelFunction="DataGridUtil.getColumnProperty" />
+							<mx:DataGridColumn headerText="类型" sortable="false" dataField="type" width="100" labelFunction="getColumnRelationshipType" textAlign="center" />
+							<mx:DataGridColumn headerText="操作" sortable="false" dataField="targetGuildID" width="90">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:Button height="0" width="0" label="解除关系" click="outerDocument.removeGuildRelationship(data)" />
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+
+			<mx:Button id="buttonGuildOfficerManage" x="268" y="40" label="授权" enabled="{model.manageGuildOfficerPermission}" click="guildManageSelectShow(canvasGuildOfficerManage)"  width="80" height="26"/>
+				<mx:Canvas id="canvasGuildOfficerManage"  width="558" height="265" x="10" y="70" visible="false" show="showGuildMemberGrantList(1);">
+					<mx:DataGrid x="0" y="0" dataProvider="{model.guildMemberGrantList}" width="100%" height="100%">
+						<mx:columns>
+							<mx:DataGridColumn headerText="名称" sortable="false" dataField="player.name" labelFunction="DataGridUtil.getColumnProperty" />
+							<mx:DataGridColumn headerText="职位" sortable="false" dataField="dutyName" />
+							<mx:DataGridColumn headerText="声望" sortable="false" dataField="player.renown" labelFunction="DataGridUtil.getColumnProperty" textAlign="right" />
+							<mx:DataGridColumn headerText="排名" sortable="false" dataField="player.rank" labelFunction="DataGridUtil.getColumnProperty" textAlign="right" />
+							<mx:DataGridColumn headerText="加入时间" sortable="false" dataField="createTime" labelFunction="DateFormatUtil.formatColumnDate" />
+							<mx:DataGridColumn headerText="操作" sortable="false" dataField="playerID" width="60">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:Button height="0" width="0" label="授权" click="outerDocument.showGuildMemberGrantWindow(data.playerID)"/>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+				
+		</mx:Canvas>
+	</mx:TabNavigator>
+		<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="军 团" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+</mx:TitleWindow>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="560" height="220">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="5" width="545" height="47">
+		<mx:Text x="5" y="5" text="关于建筑队列的说明。关于建筑队列的说明。关于建筑队列的说明。关于建筑队列的说明关于建筑队列的说明。关于建筑队列的说明。于建筑队列的说明。" width="530" height="36"/>
+	</mx:Canvas>
+	<mx:Canvas x="5" y="60" width="550" height="155" horizontalScrollPolicy="off">
+		<mx:Grid x="5" y="5" width="540">
+			<mx:GridRow width="100%" height="100%">
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Label text="建筑名称" fontWeight="bold"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Label text="行为" fontWeight="bold"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Label text="剩余时间" fontWeight="bold"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Label text="进度" fontWeight="bold"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Label text="操作" fontWeight="bold"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			
+			<mx:Repeater id="buildingProgress" dataProvider="{model.buildProcessList}">
+			<mx:GridRow width="100%" height="100%">
+				<mx:GridItem width="100%" height="100%">
+					<mx:Text text="{buildingProgress.currentItem.targetName}"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%">
+					<mx:Text text="{buildingProgress.currentItem.info}"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%">
+					<mx:Text text="100时30分20秒"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+					<mx:ProgressBar id="progrossBar" label="10%" minimum="0" maximum="100" width="100" height="20" labelPlacement="center"  color="#10E010"/>
+				</mx:GridItem>
+				<mx:GridItem width="100%" height="100%" horizontalAlign="center">
+					<mx:Button label="加速"/>
+					<mx:Button label="取消"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			</mx:Repeater>
+		</mx:Grid>
+	</mx:Canvas>
+	
+</mx:Canvas>

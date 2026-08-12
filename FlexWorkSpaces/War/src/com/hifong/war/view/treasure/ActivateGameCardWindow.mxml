@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose();" layout="absolute" width="330" height="160">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.treasure.ActivateGameCardEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.WindowUtil;
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+
+			/**
+			 * 激活游戏卡
+			 */
+			private function activateGameCard():void{
+				
+				if(type.selectedValue==null){
+					MsgBox.showMessage("请选择类型。");
+					return;
+				}
+				
+				if(textGameCardNO.text.length==0){
+					MsgBox.showMessage("请输入卡号。");
+					return;
+				}
+				
+				if(textGameCardNO.text.length!=16){
+					MsgBox.showMessage("卡号长度必须为16位。");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ActivateGameCardEvent(ModelLocator.getInstance().playerInfo.playerID,textGameCardNO.text,type.selectedValue as int));
+				
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="激活游戏卡奖励" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Label x="29" y="47" text="类型："/>
+	<mx:RadioButtonGroup id="type"/>
+	<mx:RadioButton x="78" y="45" label="新手卡" value="1" groupName="type"/>
+	<mx:RadioButton x="148" y="45" label="白金卡" value="2" groupName="type"/>
+	<mx:Label x="29" y="77" text="卡号："/>
+	<mx:TextInput x="78" y="76" id="textGameCardNO" maxChars="16" width="225"/>
+	<mx:Button x="231" y="109" label="激活" click="activateGameCard()"/>
+	
+</mx:TitleWindow>

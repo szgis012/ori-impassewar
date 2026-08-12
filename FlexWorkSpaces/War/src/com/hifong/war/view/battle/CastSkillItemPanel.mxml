@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="70" height="90" styleName="InnerBorder" mouseOver="onMouseover()" mouseOut="onMouseout()" click="castSkill()" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event)">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.CityHeroVO;
+			import mx.managers.CursorManager;
+			import com.hifong.war.util.tooltip.CastSkillTooltip;
+			import com.hifong.war.model.ModelLocator;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.util.tooltip.HeroSkillTooltip;
+			import com.hifong.war.util.tooltip.SkillTooltip;
+			import com.hifong.war.constant.ImagePathConstant;
+			
+			[Bindable]
+			public var heroSkill:Object;
+			
+			public var cityHero:CityHeroVO;
+			
+			private var hilightFilter:ColorMatrixFilter = new ColorMatrixFilter([1, 0, 0, 0, 50, 0, 1, 0, 0, 50, 0, 0, 1, 0, 50, 0, 0, 0, 1, 0]);
+			
+			private function onMouseover():void{
+				img.filters = [hilightFilter];
+			}
+			
+			private function onMouseout():void{
+				img.filters = null;
+			}
+			
+			private function generateTooltip(event:ToolTipEvent):void{
+				event.toolTip = new CastSkillTooltip(heroSkill);
+			}
+			
+			/**
+			 * 释放技能
+			 */
+			private function castSkill():void{
+				
+				if(cityHero.stamina<heroSkill.skill.costStamina){
+					MsgBox.showMessage("指挥官体力不足");
+					return;
+				}
+				
+				this.parentDocument.doClose();
+				var model:ModelLocator = ModelLocator.getInstance();
+				model.battleWindow.castingHeroSkillID = heroSkill.heroSkillID;
+				model.battleWindow.castingSkillCostStamina = heroSkill.skill.costStamina;
+				model.battleWindow.isCastingSkill = true;
+				model.battleWindow.cursorID = CursorManager.setCursor(model.battleWindow.magicCursor,2,-20,-20);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Label x="5" y="2" text="{heroSkill.skill.name}" height="20" width="60" textAlign="center"/>
+	<mx:Image x="5" y="25" width="60" height="60" id="img" source="{ImagePathConstant.SKILL_PATH_PREFIX+heroSkill.skill.image}"/>
+	
+</mx:Canvas>

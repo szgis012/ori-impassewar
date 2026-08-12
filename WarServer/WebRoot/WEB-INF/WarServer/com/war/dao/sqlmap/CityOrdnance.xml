@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityOrdnance">
+	<typeAlias alias="CityOrdnance" type="com.war.domain.CityOrdnance" />
+	
+	<insert id="createCityOrdnance" parameterClass="CityOrdnance">
+		INSERT INTO T_CITY_ORDNANCE(CITY_ORDNANCE_ID, ORDNANCE_ID, CITY_ID, NUM) VALUES(#cityOrdnanceID#, #ordnanceID#, #cityID#, #num#)
+		<selectKey resultClass="Integer" keyProperty="cityOrdnanceID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityOrdnance" parameterClass="CityOrdnance">
+		UPDATE T_CITY_ORDNANCE SET CITY_ID=#cityID#, NUM=#num# WHERE City_Ordnance_ID=#cityOrdnanceID#
+	</update>
+	
+	<delete id="deleteCityOrdnanceByID" parameterClass="Integer">
+		DELETE FROM T_CITY_ORDNANCE WHERE City_Ordnance_ID=#cityOrdnanceID#
+	</delete>
+	
+	<select id="getCityOrdnanceByID" parameterClass="Integer" resultClass="CityOrdnance">
+		SELECT CITY_ORDNANCE_ID AS cityOrdnanceID, ORDNANCE_ID AS ordnanceID, CITY_ID AS cityID, NUM AS num FROM T_CITY_ORDNANCE WHERE City_Ordnance_ID=#cityOrdnanceID#
+	</select>
+	
+	<select id="getCityOrdnanceList" resultClass="CityOrdnance">
+		SELECT CITY_ORDNANCE_ID AS cityOrdnanceID, ORDNANCE_ID AS ordnanceID, CITY_ID AS cityID, NUM AS num FROM T_CITY_ORDNANCE
+	</select>
+	
+	<select id="getCityOrdnance" parameterClass="Map" resultClass="CityOrdnance">
+		SELECT CITY_ORDNANCE_ID AS cityOrdnanceID, ORDNANCE_ID AS ordnanceID, CITY_ID AS cityID, NUM AS num FROM T_CITY_ORDNANCE WHERE CITY_ID = #cityID# AND ORDNANCE_ID = #ordnanceID#
+	</select>
+	
+	<select id="getCityOrdnanceListByCityID" parameterClass="Integer"  resultClass="CityOrdnance">
+		SELECT CITY_ORDNANCE_ID AS cityOrdnanceID, ORDNANCE_ID AS ordnanceID, CITY_ID AS cityID, NUM AS num FROM T_CITY_ORDNANCE WHERE CITY_ID = #cityID#
+	</select>
+
+</sqlMap>

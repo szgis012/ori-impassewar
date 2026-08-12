@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="PayHistory">
+	<typeAlias alias="PayHistory" type="com.war.domain.PayHistory" />
+	
+	<insert id="createPayHistory" parameterClass="PayHistory">
+		INSERT INTO T_PAY_HISTORY(PLAYER_ID, AMOUNT, PAY_TIME) VALUES(#playerID#, #amount#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="payHistoryID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updatePayHistory" parameterClass="PayHistory">
+		UPDATE T_PAY_HISTORY SET PAY_HISTORY_ID=#payHistoryID#, PLAYER_ID=#playerID#, AMOUNT=#amount#, PAY_TIME=#payTime# WHERE PAY_HISTORY_ID=#payHistoryID#
+	</update>
+	
+	<delete id="deletePayHistoryByID" parameterClass="Integer">
+		DELETE FROM T_PAY_HISTORY WHERE PAY_HISTORY_ID=#payHistoryID#
+	</delete>
+	
+	<select id="getPayHistoryByID" parameterClass="Integer" resultClass="PayHistory">
+		SELECT PAY_HISTORY_ID AS payHistoryID, PLAYER_ID AS playerID, AMOUNT AS amount, PAY_TIME AS payTime FROM T_PAY_HISTORY WHERE PAY_HISTORY_ID=#payHistoryID#
+	</select>
+	
+	<select id="getPayHistoryList" resultClass="PayHistory">
+		SELECT PAY_HISTORY_ID AS payHistoryID, PLAYER_ID AS playerID, AMOUNT AS amount, PAY_TIME AS payTime FROM T_PAY_HISTORY
+	</select>
+
+</sqlMap>

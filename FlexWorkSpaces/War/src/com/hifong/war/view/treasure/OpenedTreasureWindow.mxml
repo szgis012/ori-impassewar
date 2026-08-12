@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="530" close="doClose()" creationComplete="onInit()" height="232" showCloseButton="false" xmlns:ns1="com.hifong.war.view.treasure.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import mx.collections.ArrayCollection;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.binding.utils.ChangeWatcher;
+			
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var _treasureList:ArrayCollection;
+			
+			/**
+			 * 获得的宝物列表信息
+			 * 格式：宝物名称:对应的图片:数量 宝物间以|分隔 例如：初级护甲:112.jpg:1|初级移民:223:22
+			 */ 
+			public function set treasureList(treasureList:String):void{
+				if(!treasureList || treasureList.length==0)
+					return;
+					
+				_treasureList = new ArrayCollection();
+				
+				var items:Array = treasureList.split("|");
+				var tmp:Array;
+				var tivo:TreasureItemVO;
+				for(var i:int=0; i<items.length; i++){
+					tmp = items[i].split(":");
+					if(tmp.length == 3){
+						tivo = new TreasureItemVO();
+						tivo.name = tmp[0];
+						tivo.imgSrc = tmp[1];
+						tivo.num = tmp[2];
+						tivo.description = tmp[0];
+						_treasureList.addItem(tivo);
+					}
+				}
+				
+			}
+			
+			private function onInit():void{
+				showTreasure(this._treasureList);
+			}
+			
+			public function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+
+			//在canva容器内显示指定类型的道具
+			private function showTreasure(treasureList:ArrayCollection):void{
+				if(!treasureList || treasureList.length==0)
+					return;
+					
+				var len:int = treasureList.length;
+				var tivo:TreasureItemVO;
+				var row:int;
+				var col:int;
+				var j:int  = 0;
+				var colsPerRow:int = 5;//一行显示多少列
+				var offsetX:int = 5;
+				var offsetY:int = 5;
+				var ti:TreasureItem;
+				
+				for(var i:int=0; i<len; i++){
+					//TreasureItemVO对象
+					tivo = treasureList.getItemAt(i)as TreasureItemVO ;
+								
+					ti = new TreasureItem();
+					ti.treasureItem = tivo;
+					ti.canUse = false;
+					ti.isReward = true;
+					ti.parentWindow = this;
+					
+					//calc x,y
+					row = j / colsPerRow;
+					col = j % colsPerRow;
+					
+					ti.x = (ti.width * col) + offsetX * col + offsetX;
+					ti.y = (ti.height * row) + offsetY * row + offsetY;
+					
+					pnlTreasure.addChild(ti);
+					
+					j++;
+				}
+				
+//				//如果类型不足一行，就调整界面的宽度
+//				if(len < colsPerRow){
+//					this.width = (ti.width * len) + offsetX * len + offsetX + 50;
+//					this.pnlTreasure.width = (ti.width * len) + offsetX * len + offsetX;
+//				}
+				
+				this.pnlTreasure.height = Math.ceil(len / colsPerRow)  * (110+offsetY) + offsetY;
+				this.btnBuy.y = this.pnlTreasure.y + this.pnlTreasure.height + 10;
+				this.height = this.btnBuy.y + this.btnBuy.height + 25;
+				
+				centerWindow();
+				
+			}
+			
+			//让道具窗口居中
+			private function centerWindow():void{
+				var offx:Number = (model.app.bodyCanvas.width - this.width) / 2;
+				var offy:Number =  (model.app.bodyCanvas.height - this.height) / 2;
+				
+				var pt:Point = model.app.bodyCanvas.localToGlobal(new Point(offx,offy));
+				this.x = pt.x;
+				this.y = pt.y;
+				
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="获得道具" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="480" height="130" styleName="CanvasBorder" id="pnlTreasure" horizontalScrollPolicy="off" >
+	</mx:Canvas>
+	
+	<mx:Button x="435" y="178" label="确 定" id="btnBuy" width="70" height="30" click="doClose()"/>
+	
+</mx:TitleWindow>

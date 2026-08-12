@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="90" height="110" borderStyle="solid" borderColor="black" styleName="InnerBorder" toolTip="{treasureItem.treasure.description}">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.UseHeroItemEvent;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.WindowUtil;
+			import mx.core.IFlexDisplayObject;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.events.treasure.UseTreasureEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.CloseEvent;
+			import mx.events.ToolTipEvent;
+			import mx.controls.Alert;
+			import mx.controls.ToolTip;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			public var treasureItem:Object;
+			
+			/** 使用宝物传递的参数 */
+			public var params:Object ;
+			
+			/** 父窗口的引用,如果在使用完宝物后要将父窗口关闭可以指定该值 */
+			public var parentWindow:Object;
+			
+			/** 是否可以使用宝物 */
+			public var canUse:Boolean;
+			
+			/** 是否为奖励物品，如果是的话在单击事件时不做处理（因为奖励的宝物信息并不包含描述） */
+			public var isReward:Boolean = false;
+			
+			private function onClick():void{
+				
+				if(treasureItem.num<=0){
+					MsgBox.showMessage("道具数量不足。");
+					return;
+				}
+				
+				MsgBox.showConfirm(treasureItem.treasure.description+"\n是否使用"+treasureItem.treasure.name+"？",doUseTreasure)
+
+			}
+
+			//使用宝物
+			public function doUseTreasure():void{
+				
+				var params:Object = {cityHeroID:model.currentCityHero.cityHeroID};
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new UseHeroItemEvent(model.playerInfo.playerID, treasureItem.treasureID, params));
+				
+			}
+
+		]]>
+	</mx:Script>
+	
+	<mx:Image x="6" y="6" width="80" height="80" toolTip="{treasureItem.description}" useHandCursor="true" buttonMode="true" mouseChildren="false" click="onClick()" source="{ImagePathUtil.getTreasurePath(treasureItem.treasure.imgSrc)}"/>
+	<mx:Label x="10" y="68" textAlign="right" id="lblNum" width="73" text="{treasureItem.num}" height="18" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="onClick()"/>
+	<mx:Label x="5" y="85" text="{treasureItem.treasure.name}" width="80" textAlign="center"/>
+		
+</mx:Canvas>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="560" height="80" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.tooltip.ConstraintDependTooltip;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.events.building.BuildBuildingEvent;
+			import mx.events.ToolTipEvent;
+			import mx.core.IFlexDisplayObject;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			//建筑
+			private var _building:Building ;
+			//建造地点
+			private var _buildingGrid:BuildingGrid;
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean;
+			
+			public function set building(b:Building):void{
+				_building = b;
+				canCreate = BuildingUtil.meetAllConditions(_building.nextConstraintDepend);
+				updatePanel();
+			}
+			
+			public function get buildingGrid():BuildingGrid{
+				return _buildingGrid;
+			}
+			
+			public function set buildingGrid(b:BuildingGrid):void{
+				_buildingGrid = b;
+			}
+			
+			public function get building():Building{
+				return _building;
+			}
+			
+			private function onCreateClick():void{
+				var model:ModelLocator = ModelLocator.getInstance();
+				//建造建筑
+				CairngormEventDispatcher.getInstance().dispatchEvent(new BuildBuildingEvent(model.cityInfo.cityID,building.buildingID,buildingGrid.position));
+				CreateBuildingWindow(this.parent.parent.parent).doClose();
+			}
+			
+			//图片上的提示信息
+			private function showImgToolTip(event:ToolTipEvent):void{
+				event.toolTip.text = building.description;
+			}
+			
+			//显示更新条件
+			private function showBuildingToolTip(event:ToolTipEvent):void{
+				event.toolTip.text = building.createInfo;
+			}
+			
+			//更新面板信息
+			private function updatePanel():void{
+				if(_building){
+					this.imgBuilding.source = model.countryRelatedAssets.getBuildingImageSource(_building.buildingID);
+					this.lblName.text = _building.name;
+					this.txtDesc.text = _building.description;
+				}
+			}
+			
+			private function showTooltip(event:ToolTipEvent):void{
+				event.toolTip = new ConstraintDependTooltip("建造",_building.name,_building.nextConstraintDepend);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Image x="10" y="10" width="60" height="60" id="imgBuilding" toolTip="建筑图片" toolTipShown="showImgToolTip(event)"/>
+	<mx:Button x="79" y="39" label="建造" id="btnCreate" enabled="{canCreate}" click="onCreateClick()" toolTip="升级条件" toolTipCreate="showTooltip(event)" height="26" width="56"/>
+	<mx:TextArea x="147" y="10" width="400" height="60" editable="false"  id="txtDesc">
+	</mx:TextArea>
+	<mx:Label x="80" y="10" fontWeight="bold" id="lblName"/>
+	
+</mx:Canvas>

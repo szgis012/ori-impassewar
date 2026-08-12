@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="200" height="60" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.constant.MapCategoryConstant;
+			import com.hifong.war.constant.WildLandTypeConstant;
+			import com.hifong.war.util.WorldUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.WorldInfo;
+			import com.hifong.war.vo.MapVO;
+			
+			private var worldInfo:WorldInfo = ModelLocator.getInstance().worldInfo;
+			
+			private var _gridInfo:MapVO;
+						
+			public function set gridInfo(map:MapVO):void{
+				this._gridInfo = map;
+				
+				var info:String = new String();
+				
+				//如果是玩家城市
+				if(map.category == MapCategoryConstant.CITY){
+					info = "<font size='14'><b>"+map.name+"("+map.posX+","+map.posY+")"+"</b></font>\n";
+					info += WorldUtil.getCityDescription(map);
+					this.width = 180;
+					this.height = 110;
+				}else if(map.category == MapCategoryConstant.STRONGHOLD){
+					//TODO 要塞
+				}else if(map.category == MapCategoryConstant.MONSTERFIELD){
+					//具有野怪的野地
+					if(map.mapMonster) info = "<font size='14'><b>"+map.mapMonster.level+"级野怪("+map.posX+","+map.posY+")"+"</b></font>\n";
+					this.width = 150;
+					this.height = 40;
+				}else{
+					info = "<font size='14'><b>"+WildLandTypeConstant.getTypeName(map.category)+"("+map.posX+","+map.posY+")"+"</b></font>\n";
+					this.width = 130;
+					this.height = 40;
+				}
+				
+				this.txtInfo.htmlText = info;
+			}
+		]]>
+	</mx:Script>
+	<mx:Text x="10" y="10" width="180" height="120" id="txtInfo" />
+	
+</mx:Canvas>

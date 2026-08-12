@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="410" height="370" initialize="doInit()" close="doClose()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var heroWatcher:ChangeWatcher;
+			
+			private function doInit():void{
+				heroWatcher = ChangeWatcher.watch(model,"currentCityHero",onCityHeroChanged);
+				onCityHeroChanged(null);
+ 			}
+			
+			private function doClose():void{
+				heroWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function onCityHeroChanged(arg:Object):void{
+				canvasHeroSkill.removeAllChildren();
+				if(model.currentCityHero.skillList==null) return;
+				for(var i:int=0;i<model.currentCityHero.skillList.length;i++){
+					
+					var heroSkillItemPanel:HeroSkillItemPanel = new HeroSkillItemPanel();
+					heroSkillItemPanel.heroSkill = model.currentCityHero.skillList.getItemAt(i);
+					heroSkillItemPanel.x = 10;
+					heroSkillItemPanel.y = 10 + i*90;
+					
+					canvasHeroSkill.addChild(heroSkillItemPanel);
+				}
+			}
+			
+			/**
+			 * 显示技能窗口
+			 */
+			private function showSkillWindow():void{
+				var win:SkillWindow = new SkillWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官技能" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Button x="289" y="37" label="学习新技能" click="showSkillWindow()" height="24"/>
+	<mx:Canvas x="30" y="66" width="350" height="278" id="canvasHeroSkill" styleName="CanvasBorder" horizontalScrollPolicy="off">
+	</mx:Canvas>
+	<mx:Label x="30" y="39" text="技能数量：{model.currentCityHero.skillList.length}/{model.currentCityHero.maxSkillNum}" width="100"/>
+	
+</mx:TitleWindow>

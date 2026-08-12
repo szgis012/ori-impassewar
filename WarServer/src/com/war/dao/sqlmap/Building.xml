@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Building">
+	<typeAlias alias="Building" type="com.war.domain.Building" />
+	
+	<insert id="createBuilding" parameterClass="Building">
+		INSERT INTO T_BUILDING( NAME, IMAGE, MAX_LEVEL, DESCRIPTION, ISONLYONE) VALUES(#name#, #image#, #maxLevel#, #description#, #isOnlyone#)
+		<selectKey resultClass="Integer" keyProperty="buildingID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateBuilding" parameterClass="Building">
+		UPDATE T_BUILDING SET BUILDING_ID=#buildingID#, NAME=#name#, IMAGE=#image#, MAX_LEVEL=#maxLevel#, DESCRIPTION=#description#, ISONLYONE=#isOnlyone# WHERE BUILDING_ID=#buildingID#
+	</update>
+	
+	<delete id="deleteBuildingByID" parameterClass="Integer">
+		DELETE FROM T_BUILDING WHERE BUILDING_ID=#buildingID#
+	</delete>
+	
+	<select id="getBuildingByID" parameterClass="Integer" resultClass="Building">
+		SELECT BUILDING_ID AS buildingID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, ISONLYONE AS isOnlyone FROM T_BUILDING WHERE BUILDING_ID=#buildingID#
+	</select>
+	
+	<select id="getBuildingList" resultClass="Building">
+		SELECT BUILDING_ID AS buildingID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, ISONLYONE AS isOnlyone FROM T_BUILDING
+	</select>
+
+	<select id="getBuildingName" parameterClass="Integer" resultClass="String">
+		SELECT NAME AS name FROM T_BUILDING WHERE BUILDING_ID=#buildingID#
+	</select>
+</sqlMap>

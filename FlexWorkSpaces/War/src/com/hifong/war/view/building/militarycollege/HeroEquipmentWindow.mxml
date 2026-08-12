@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="580" height="363" showCloseButton="false" initialize="doInit()" close="doClose()" xmlns:hero="com.hifong.war.view.building.militarycollege.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.ToolTip;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.constant.ImagePathConstant;
+			import com.hifong.war.util.tooltip.EquipmentTooltip;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.events.building.militarycollege.OffloadCityHeroEquipmentEvent;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.containers.Canvas;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.events.equipment.GetPlayerEquipmentListByCategoryEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			public var currentIndex:int;
+			
+			private var equipmentListWatcher:ChangeWatcher;
+			
+			private var currentEquipmentCanvas:Canvas;
+			
+			private function doInit():void{
+				equipmentListWatcher = ChangeWatcher.watch(model,"equipmentList_Hero",onEquipmentListChanged);
+				currentEquipmentCanvas = canvas_epaulet;
+				currentIndex = 0;
+				
+				getPlayerEquipmentList();
+			}
+			
+			private function doClose():void{
+				equipmentListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			public function onEquipmentListChanged(arg:Object):void{
+				currentEquipmentCanvas.removeAllChildren();
+				for(var i:int=0;i<model.equipmentList_Hero.length;i++){
+					var heroEquipmentItemPanel:HeroEquipmentItemPanel = new HeroEquipmentItemPanel();
+					heroEquipmentItemPanel.playerEquipment = model.equipmentList_Hero.getItemAt(i);
+
+					heroEquipmentItemPanel.x = (i-3*int(i/3))*90+10;
+					heroEquipmentItemPanel.y = int((i)/3)*110+10;
+					
+					currentEquipmentCanvas.addChild(heroEquipmentItemPanel);
+				}
+			}
+			
+			private function onTabIndexChanged(event:IndexChangedEvent):void{
+				currentIndex = event.newIndex;
+				currentEquipmentCanvas = event.relatedObject as Canvas;
+				getPlayerEquipmentList();
+			}
+			
+			/**
+			 * 卸下装备
+			 */
+			private function offloadHeroEquipment(category:int):void{
+				var currentHeroEquipment:Object;
+				switch(category){
+					case 1:
+						if(model.currentCityHero.equipmentEpaulet==0){
+							return;
+						}
+						currentHeroEquipment = model.currentCityHero.equipmentEpauletObject;
+						model.currentCityHero.equipmentEpaulet = 0;
+						model.currentCityHero.equipmentEpauletObject = null;
+						break;
+					case 2:
+						if(model.currentCityHero.equipmentCap==0){
+							return;
+						}
+						currentHeroEquipment = model.currentCityHero.equipmentCapObject;
+						model.currentCityHero.equipmentCap = 0;
+						model.currentCityHero.equipmentCapObject = null;
+						break;
+					case 3:
+						if(model.currentCityHero.equipmentClothes==0){
+							return;
+						}
+						currentHeroEquipment = model.currentCityHero.equipmentClothesObject;
+						model.currentCityHero.equipmentClothes = 0;
+						model.currentCityHero.equipmentClothesObject = null;
+						break;
+					case 4:
+						if(model.currentCityHero.equipmentShoe==0){
+							return;
+						}
+						currentHeroEquipment = model.currentCityHero.equipmentShoeObject;
+						model.currentCityHero.equipmentShoe = 0;
+						model.currentCityHero.equipmentShoeObject = null;
+						break;
+					case 5:
+						if(model.currentCityHero.equipmentWeapon==0){
+							return;
+						}
+						currentHeroEquipment = model.currentCityHero.equipmentWeaponObject;
+						model.currentCityHero.equipmentWeapon = 0;
+						model.currentCityHero.equipmentWeaponObject = null;
+						break;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new OffloadCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,category,currentIndex+1));
+				
+				model.currentCityHero.command -= currentHeroEquipment.command;
+				model.currentCityHero.defense -= currentHeroEquipment.defense;
+				model.currentCityHero.mind -= currentHeroEquipment.mind;
+				model.currentCityHero.executivepower -= currentHeroEquipment.executivepower;
+				
+			}
+			
+			/**
+			 * 根据装备种类获得玩家装备列表
+			 */
+			public function getPlayerEquipmentList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerEquipmentListByCategoryEvent(model.playerInfo.playerID,currentIndex+1));
+			}
+			
+			private function generateTooltip(event:ToolTipEvent,category:int):void{
+				var equipment:Object;
+				switch(category){
+					case 1:
+						equipment = model.currentCityHero.equipmentEpauletObject;
+						break;
+					case 2:
+						equipment = model.currentCityHero.equipmentCapObject;
+						break;
+					case 3:
+						equipment = model.currentCityHero.equipmentClothesObject;
+						break;
+					case 4:
+						equipment = model.currentCityHero.equipmentShoeObject;
+						break;
+					case 5:
+						equipment = model.currentCityHero.equipmentWeaponObject;
+						break;
+				}
+				if(equipment!=null){
+					event.toolTip = new EquipmentTooltip(equipment);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官装备" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="200" height="300" styleName="CanvasBorder">
+		<mx:Image x="85" y="20" source="images/equipment/bg/hero_equipment_bg.png" alpha="0.5"/>
+		<mx:Image x="105" y="20" width="60" height="60" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event,2)" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+String(model.currentCityHero.equipmentCap==0?'bg/blank_cap_bg.jpg':model.currentCityHero.equipmentCapObject.image)}" alpha="0.8" id="image_cap" click="offloadHeroEquipment(2)"/>
+		<mx:Image x="32" y="59" width="60" height="60" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event,1)" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+String(model.currentCityHero.equipmentEpaulet==0?'bg/blank_epaulet_bg.jpg':model.currentCityHero.equipmentEpauletObject.image)}" alpha="0.8" id="image_epaulet" click="offloadHeroEquipment(1)"/>
+		<mx:Image x="105" y="105" width="60" height="60" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event,3)" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+String(model.currentCityHero.equipmentClothes==0?'bg/blank_clothes_bg.jpg':model.currentCityHero.equipmentClothesObject.image)}" alpha="0.8" id="image_clothes" click="offloadHeroEquipment(3)"/>
+		<mx:Image x="23" y="157" width="60" height="60" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event,5)" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+String(model.currentCityHero.equipmentWeapon==0?'bg/blank_weapon_bg.jpg':model.currentCityHero.equipmentWeaponObject.image)}" alpha="0.8" id="image_weapon" click="offloadHeroEquipment(5)"/>
+		<mx:Image x="101" y="210" width="60" height="60" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event,4)" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+String(model.currentCityHero.equipmentShoe==0?'bg/blank_shoe_bg.jpg':model.currentCityHero.equipmentShoeObject.image)}" alpha="0.8" id="image_shoe" click="offloadHeroEquipment(4)"/>
+	</mx:Canvas>
+	<mx:Canvas x="233" y="37" width="320" height="300" styleName="CanvasBorder">
+		<mx:TabNavigator x="10" y="40" width="300" height="250" change="onTabIndexChanged(event)">
+			<mx:Canvas label="肩章" width="100%" height="100%" styleName="BugFixBorder" id="canvas_epaulet">
+			</mx:Canvas>
+			<mx:Canvas label="帽子" width="100%" height="100%" styleName="BugFixBorder">
+			</mx:Canvas>
+			<mx:Canvas label="衣服" width="100%" height="100%" styleName="BugFixBorder">
+			</mx:Canvas>
+			<mx:Canvas label="鞋子" width="100%" height="100%" styleName="BugFixBorder">
+			</mx:Canvas>
+			<mx:Canvas label="武器" width="100%" height="100%" styleName="BugFixBorder">
+			</mx:Canvas>
+		</mx:TabNavigator>
+		<mx:Label x="127.5" y="10" text="装备选择" fontWeight="bold" fontSize="14"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

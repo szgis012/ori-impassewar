@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="1012" height="600" initialize="doInit()" creationComplete="doRemeberLogin()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.ConfigUtil;
+			import mx.utils.Base64Encoder;
+			import mx.utils.Base64Decoder;
+			import com.hifong.war.events.common.EnterGameEvent;
+			import com.hifong.war.util.LoadingUtil;
+			import com.hifong.war.events.common.LoadPlayerGlobalDataEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import com.hifong.war.util.CookieUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.events.common.LoginEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var encodePassword:String;
+			
+			private function doInit():void{
+				textareNotice.htmlText = "<p align=\"center\"><font size=\"18\"><b>游戏公告</b></font></p>" + ConfigUtil.getProperty("LOGIN_NOTICE");
+			}
+			
+			//使用cookie验证
+			private function doRemeberLogin():void{
+				var isRember:Boolean = CookieUtil.getProperty("isRember");
+				
+				//如果之前登录用户选择了记住我
+				if(isRember){
+					var name:String = CookieUtil.getProperty("name");
+					
+					//解密用户保存密码
+					var base64:Base64Decoder = new Base64Decoder();
+					base64.decode(CookieUtil.getProperty("password"));
+					var pass:String = base64.toByteArray().toString();
+					
+					this.txtUserName.text = name;
+					this.txtPassword.text = pass;
+					this.chkRemeber.selected = true;
+					
+					this.txtPassword.setFocus();
+					this.txtPassword.setSelection(this.txtPassword.text.length,this.txtPassword.text.length);
+				}else{
+					txtUserName.setFocus();
+				}
+			}
+			
+			private function doLogin():void{
+				//如果登陆按钮不可用
+				if(!btnLogin.enabled){
+					return;
+				}
+				
+				var name:String = this.txtUserName.text;
+				var pass:String = this.txtPassword.text;
+				
+				if(name.length == 0 || pass.length == 0){
+					Alert.show("用户名和密码不能为空。");
+					return;
+				}
+				
+				doRemeber();
+				
+				this.setFocus();
+				
+				var base64:Base64Encoder = new Base64Encoder();
+				base64.encode(txtPassword.text);
+				encodePassword = base64.toString();
+
+				canvasLoading.visible = true;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new LoginEvent(txtUserName.text));
+				//loginWS.login.send();
+				//playerService.getPlayerByUserName(txtUserName.text);
+			}
+			
+            private function getError(e:FaultEvent):void{  
+            	Alert.show(e.message.toString());  
+            }
+            
+            private function getROResult(e:ResultEvent) :void {  
+                Alert.show(e.message.toString()); 
+            }  
+
+			
+			private function doRemeber():void{
+				//如果选择了记住我
+				if(this.chkRemeber.selected){
+					CookieUtil.setProperty("isRember", true);
+					CookieUtil.setProperty("name", this.txtUserName.text);
+					
+					//加密保存用户密码
+					var base64:Base64Encoder = new Base64Encoder();
+					base64.encode(txtPassword.text);
+					CookieUtil.setProperty("password", base64.toString());
+					
+				}else{
+					CookieUtil.setProperty("isRember", false);
+					CookieUtil.setProperty("name", null);
+					CookieUtil.setProperty("password", null);
+				}
+			}
+			
+			private function selectRemember():void{
+				chkRemeber.selected = !chkRemeber.selected;
+			}
+			
+			private function result(event:ResultEvent):void{
+				
+				var result:Object = event.result;
+				
+				switch(result.resultCode){
+					case 1:
+						//初始化游戏运行环境
+						// CairngormEventDispatcher.getInstance().dispatchEvent(new EnterGameEvent(result.userID));
+						CairngormEventDispatcher.getInstance().dispatchEvent(new LoadPlayerGlobalDataEvent(result.userID));
+						break;
+					case 2:
+						MsgBox.showMessage("抱歉，您输入的用户名不存在。");
+						canvasLoading.visible = false;
+						break;
+					case 3:
+						MsgBox.showMessage("抱歉，用户名或密码错误。");
+						canvasLoading.visible = false;
+						break;
+				}
+			}
+			
+			private function fault(event:FaultEvent):void{
+				MsgBox.showMessage("连接用户服务器失败，请刷新浏览器重试。");
+				btnLogin.enabled = false;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Style>
+		Button.Login
+		{
+			upSkin: Embed(source="images/login/login.png");
+			overSkin: Embed(source="images/login/login_over.png");
+			downSkin: Embed(source="images/login/login_down.png");
+			disabled-skin:Embed(source="images/login/login_disabled.png");
+		}
+		
+		Button.Register
+		{
+			upSkin: Embed(source="images/login/register.png");
+			overSkin: Embed(source="images/login/register_over.png");
+			downSkin: Embed(source="images/login/register_down.png");
+		}
+		
+		Button.Website
+		{
+			upSkin: Embed(source="images/login/website.png");
+			overSkin: Embed(source="images/login/website_over.png");
+			downSkin: Embed(source="images/login/website_down.png");
+		}
+		
+		.LoginTextInput
+		{
+			borderStyle: none;
+			backgroundColor: #081018;
+			backgroundAlpha: 0.6;
+			color: #E8E2A0;
+			fontSize: 18px;
+			letterSpacing: 1;
+			padding-top:1px;
+			padding-bottom:1px;
+			paddingLeft: 5px;
+			paddingRight: 5px;
+			backgroundImage: Embed(source="images/login/textinput_bg.png");
+		}
+	</mx:Style>
+	
+	<!--玩家Service-->
+	<mx:WebService id="loginWS" wsdl="{ConfigUtil.getProperty('LOGIN_WEBSERVICE_WSDL')}" result="result(event)" fault="fault(event)" showBusyCursor="true">
+		<mx:operation name="login" result="result(event)">
+			<mx:request>
+				<username>{txtUserName.text}</username>
+				<password>{encodePassword}</password>
+			</mx:request>
+		</mx:operation>
+	</mx:WebService>
+	
+	<mx:Image x="0" y="0" source="@Embed(source='images/login/background.jpg')" />
+	
+	<mx:TextInput styleName="LoginTextInput" x="417" y="398" height="29" width="192" maxChars="16" id="txtUserName" tabIndex="1"/>
+	<mx:TextInput styleName="LoginTextInput" x="417" y="440" height="29" width="192" displayAsPassword="true" maxChars="16" tabIndex="2" id="txtPassword" enter="doLogin()"/>
+	
+	<mx:Button x="536" y="482" styleName="Login" id="btnLogin" click="doLogin()" tabIndex="4"/>
+	<mx:Image x="735" y="145" source="@Embed(source='images/login/notice_bg.png')"/>
+	<mx:TextArea x="735" y="145" id="textareNotice" width="240" height="315" backgroundAlpha="0" color="#EDEC8F" paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10" alpha="1.0" borderThickness="0" editable="false"/>
+	<mx:CheckBox x="425" y="490" id="chkRemeber" tabIndex="3"/>
+	<mx:Button x="893" y="468" styleName="Register" tabIndex="5" click="ExternalInterface.call('window.open',ConfigUtil.getProperty('REG_URL'),'_blank')"/>
+	<mx:Button x="893" y="502" styleName="Website" tabIndex="6" click="ExternalInterface.call('window.open',ConfigUtil.getProperty('WEBSITE_URL'),'_blank')"/>
+	<mx:Image x="443" y="492" source="@Embed(source='images/login/rememberAccount.png')" click="selectRemember()"/>
+	
+	<mx:Canvas x="0" y="0" width="1000" height="600" id="canvasLoading" backgroundAlpha="0.3" backgroundColor="#000000" visible="false">
+		<mx:SWFLoader x="410" y="260" source="images/loading.swf" />
+	</mx:Canvas>
+	
+</mx:Canvas>

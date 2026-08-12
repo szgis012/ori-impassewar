@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:222
+ * 
+ * 名称：大型计算机
+ * 描述：缩短科技研究时间1小时。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceTechResearchCostTime(params["queueID"], 1*60*60);

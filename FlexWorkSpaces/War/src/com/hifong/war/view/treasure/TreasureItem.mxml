@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="90" height="110" borderStyle="solid" borderColor="black" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.AddMilitarySoulEvent;
+			import com.hifong.war.constant.TreasureConstant;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.WindowUtil;
+			import mx.core.IFlexDisplayObject;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.events.treasure.UseTreasureEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.CloseEvent;
+			import mx.events.ToolTipEvent;
+			import mx.controls.Alert;
+			import mx.controls.ToolTip;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			public var treasureItem:TreasureItemVO;
+			
+			/** 使用宝物传递的参数 */
+			public var params:Object ;
+			
+			/** 父窗口的引用,如果在使用完宝物后要将父窗口关闭可以指定该值 */
+			public var parentWindow:Object;
+			
+			/** 是否可以使用宝物 */
+			public var canUse:Boolean;
+			
+			/** 是否为奖励物品，如果是的话在单击事件时不做处理（因为奖励的宝物信息并不包含描述） */
+			public var isReward:Boolean = false;
+			
+			private function onClick():void{
+				
+				if(isReward){
+					return;
+				}
+				
+				if(!canUse && treasureItem.directUseTooltip!=null) {
+					MsgBox.showMessage(treasureItem.directUseTooltip);
+					return;
+				} else {
+					
+					if(treasureItem.treasureID==TreasureConstant.NEWPLAYER_BOX2) {
+						if(BuildingUtil.getMaxLevel(BuildingConstant.CITY_CENTER)<11){
+							MsgBox.showMessage("城镇中心达到11级才能打开该礼包。");
+							return;
+						}
+					}
+					if(treasureItem.treasureID==TreasureConstant.NEWPLAYER_BOX3) {
+						if(BuildingUtil.getMaxLevel(BuildingConstant.CITY_CENTER)<21){
+							MsgBox.showMessage("城镇中心达到21级才能打开该礼包。");
+							return;
+						}
+					}
+
+					MsgBox.showConfirm(treasureItem.description + "\n是否使用 " + treasureItem.name + " ？",doUseTreasure);
+				}
+				
+			}
+			/**
+			 *  打开商城
+			 */ 
+			 private function doBuyTreasure():void{
+			 	var win:TreasureShopWindow = new TreasureShopWindow();
+				win.treasureListCategory=treasureItem.category;
+				WindowUtil.showWindow(win);
+			 }
+
+			//使用宝物
+			public function doUseTreasure():void{
+				if(treasureItem.num==0){
+					MsgBox.showConfirm("\n道具"+treasureItem.name+"数量不足，是否去商城购买？ " ,doBuyTreasure);
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent( new UseTreasureEvent(treasureItem,params) );
+				if(parentWindow){
+					parentWindow.doClose();
+				}
+			}
+
+		]]>
+	</mx:Script>
+	<mx:Image x="6" y="6" width="80" height="80" toolTip="{treasureItem.description}" useHandCursor="true" buttonMode="true" mouseChildren="false" click="onClick()" source="{ImagePathUtil.getTreasurePath(treasureItem.imgSrc)}"/>
+	<mx:Label x="10" y="68" textAlign="right" id="lblNum" width="73" text="{treasureItem.num}" height="18" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="onClick()"/>
+	<mx:Label x="5" y="85" text="{treasureItem.name}" width="80" textAlign="center"/>
+		
+</mx:Canvas>

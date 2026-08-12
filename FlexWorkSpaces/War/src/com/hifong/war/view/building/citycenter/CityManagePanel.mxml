@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="220" show="onItemChange()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.CityVO;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.citycenter.ImposeMaterialEvent;
+			import com.hifong.war.events.building.citycenter.GuardsParadeEvent;
+			import com.hifong.war.events.building.citycenter.HolidayCelebrateEvent;
+			import com.hifong.war.events.building.citycenter.SafetyPatrolEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var items:Array = ['安全巡查','阅兵仪式','节日庆典','征收物资'];
+			
+			private var itemDesc:Array = [
+				"安全巡查：派出士兵进行巡查，提升治安20，每1市民消耗金钱10，之后15分钟将无法进行其他治理。",
+				"阅兵仪式：通过举办一次壮观的阅兵提升治安10，每1市民消耗金钱5，之后15分钟将无法进行其他治理。",
+				"节日庆典：通过举办一次盛大的庆典提升治安5，每1市民消耗金钱2，之后15分钟将无法进行其他治理。",
+				"征收物资：向城市每1市民征收木材5，钢铁5，石油5，食物10，但是降低治安20，之后15分钟将无法进行其他治理，请谨慎使用。"
+			];
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityInfo:CityVO = model.cityInfo;
+			
+			
+			private function onClick():void{
+				var ind:int = this.cboItems.selectedIndex;
+				var now:Date = new Date();
+				
+				model.lastCityManageTime = now;
+
+				switch(ind){
+					//安全巡查
+					case 0:
+						if((cityInfo.tax + cityInfo.security) == 100){
+							MsgBox.showMessage("税率与治安的和最大为100，您现在已经无法通过该操作提高治安值了，若想提高治安值请调整城市税率。");
+							return;
+						}
+						CairngormEventDispatcher.getInstance().dispatchEvent(new SafetyPatrolEvent());
+						break;
+					//节日庆典	
+					case 1:
+						if((cityInfo.tax + cityInfo.security) == 100){
+							MsgBox.showMessage("税率与治安的和最大为100，您现在已经无法通过该操作提高治安值了，若想提高治安值请调整城市税率。");
+							return;
+						}
+						CairngormEventDispatcher.getInstance().dispatchEvent(new GuardsParadeEvent());
+						break;
+					//阅兵仪式	
+					case 2:
+						if((cityInfo.tax + cityInfo.security) == 100){
+							MsgBox.showMessage("税率与治安的和最大为100，您现在已经无法通过该操作提高治安值了，若想提高治安值请调整城市税率。");
+							return;
+						}
+						CairngormEventDispatcher.getInstance().dispatchEvent(new HolidayCelebrateEvent()); 
+						
+						break;
+					//征收物资	
+					case 3:
+						if(cityInfo.security < 40){
+							MsgBox.showMessage("治安值不足40不能进行该操作。");
+							return;
+						}
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ImposeMaterialEvent());
+						break;			
+				}
+			}
+			
+			//选择更改时同步描述信息
+			private function onItemChange():void{
+				this.txtDesc.text = itemDesc[this.cboItems.selectedIndex] as String;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="560" height="45" styleName="CanvasBorder">
+		<mx:Text x="5" y="5" id="txtDesc" width="546" height="30"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="63" width="560" height="50" styleName="CanvasBorder">
+		<mx:Label x="10" y="13" text="进行：" fontWeight="bold"/>
+		<mx:ComboBox x="62" y="12" id="cboItems" dataProvider="{items}" width="150" change="onItemChange()"></mx:ComboBox>
+		<mx:Button x="221" y="11" label="确认" click="onClick()" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

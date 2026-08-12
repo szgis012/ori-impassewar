@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="530" close="doClose()" initialize="init()" height="242" showCloseButton="false" xmlns:ns1="com.hifong.war.view.treasure.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import mx.collections.ArrayCollection;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.binding.utils.ChangeWatcher;
+			
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			private var treasureListWatcher:ChangeWatcher;
+				
+			/** 给道具传递的参数信息*/
+			public var params:Object;
+			
+			/** 道具使用类型 0为可以直接使用 1为返回数据*/
+			public var treasureUseAbel:int=0;
+			/** 道具是否可以购买*/
+			[Bindable]
+			public var canBuy:Boolean=true;
+			
+			/** 宝物类别 */
+			public var treasureCategory:int;
+			/** 宝物类型 */
+			public var treasureType:int;
+			
+			//初始化
+			private function init():void{
+				model.currentUseTreasure=this;
+				
+				treasureListWatcher = ChangeWatcher.watch(model,"treasureList",doListChanged);
+				callTreasureData();
+			}
+			public function callTreasureData():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTreasureMapListByTypeEvent(treasureCategory, treasureType));
+			}
+			
+			public function doClose():void{
+				treasureListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			//更新数据
+			private function doListChanged(arg:Object):void{
+				showTreasure();
+			}
+
+			//在canva容器内显示指定类型的道具
+			private function showTreasure():void{
+				
+				var treasureList:ArrayCollection = model.treasureList;
+				
+				if(!treasureList || treasureList.length==0)
+					return;
+					
+				var len:int = model.treasureList.length;
+				var tivo:TreasureItemVO;
+				var row:int;
+				var col:int;
+				var j:int  = 0;
+				var colsPerRow:int = 5;//一行显示多少列
+				var offsetX:int = 5;
+				var offsetY:int = 5;
+				var ti:*;
+				
+				for(var i:int=0; i<len; i++){
+					//TreasureItemVO对象
+					tivo = model.treasureList.getItemAt(i)as TreasureItemVO ;
+								
+					if(treasureUseAbel==0)	ti = new TreasureItem();
+					else if(treasureUseAbel==1) ti=new TreasureElement();
+					ti.treasureItem = tivo;
+					ti.params = params;
+					ti.canUse = true;
+					ti.parentWindow = this;
+					
+					//calc x,y
+					row = j / colsPerRow;
+					col = j % colsPerRow;
+					
+					ti.x = (ti.width * col) + offsetX * col + offsetX;
+					ti.y = (ti.height * row) + offsetY * row + offsetY;
+					
+					pnlTreasure.addChild(ti);
+					
+					j++;
+				}
+				
+//				//如果类型不足一行，就调整界面的宽度
+//				if(len < colsPerRow){
+//					this.width = (ti.width * len) + offsetX * len + offsetX + 50;
+//					this.pnlTreasure.width = (ti.width * len) + offsetX * len + offsetX;
+//				}
+				
+				this.pnlTreasure.height = Math.ceil(len / colsPerRow)  * (110+offsetY) + offsetY;
+				this.btnBuy.y = this.pnlTreasure.y + this.pnlTreasure.height + 10;
+				this.height = this.btnBuy.y + this.btnBuy.height + 25;
+				
+//				centerWindow();
+				
+			}
+			
+			//让道具窗口居中
+			private function centerWindow():void{
+//				var offx:Number = (model.app.bodyCanvas.width - this.width) / 2;
+//				var offy:Number =  (model.app.bodyCanvas.height - this.height) / 2;
+//				
+//				var pt:Point = model.app.bodyCanvas.localToGlobal(new Point(offx,offy));
+//				this.x = pt.x;
+//				this.y = pt.y;
+				
+			}
+			
+			private function showTreasureShopWindow():void{
+				var win:TreasureShopWindow = new TreasureShopWindow();
+				win.modelWindow = true;
+				win.treasureListCategory = treasureCategory;
+//				this.doClose(); 
+				WindowUtil.showModelWindow(win);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Canvas x="25" y="47" width="480" height="130" styleName="CanvasBorder" id="pnlTreasure" horizontalScrollPolicy="off" >
+	</mx:Canvas>
+	
+	<mx:Button x="435" y="189" label="购  买" id="btnBuy" enabled="{canBuy}" width="70" height="30" click="showTreasureShopWindow()"/> 
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="使用道具" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+</mx:TitleWindow>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Army">
+	<typeAlias alias="Army" type="com.war.domain.Army" />
+	
+	<insert id="createArmy" parameterClass="Army">
+		INSERT INTO T_ARMY(ARMY_ID, NAME, IMAGE, DESCRIPTION, LIFE, ATTACK, DEFENSE, `RANGE`, SPEED, CARRY, COST_FOOD, COST_OIL, COST_MONEY, POPULATION, ATTACK_TYPE, DEFENSE_TYPE, TYPE) VALUES(#armyID#, #name#, #image#, #description#, #life#, #attack#, #defense#, #range#, #speed#, #carry#, #costFood#, #costOil#, #costMoney#, #population#, #attackType#, #defenseType#, #type#)
+		<selectKey resultClass="Integer" keyProperty="armyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateArmy" parameterClass="Army">
+		UPDATE T_ARMY SET ARMY_ID=#armyID#, NAME=#name#, IMAGE=#image#, DESCRIPTION=#description#, LIFE=#life#, ATTACK=#attack#, DEFENSE=#defense#, `RANGE`=#range#, SPEED=#speed#, CARRY=#carry#, COST_FOOD=#costFood#, COST_OIL=#costOil#, COST_MONEY=#costMoney#, POPULATION=#population#, ATTACK_TYPE=#attackType#, DEFENSE_TYPE=#defenseType#, TYPE=#type# WHERE Army_ID=#armyID#
+	</update>
+	
+	<delete id="deleteArmyByID" parameterClass="Integer">
+		DELETE FROM T_ARMY WHERE Army_ID=#armyID#
+	</delete>
+	
+	<select id="getArmyByID" parameterClass="Integer" resultClass="Army">
+		SELECT ARMY_ID AS armyID, NAME AS name, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, `RANGE` AS `range`, SPEED AS speed, CARRY AS carry, COST_FOOD AS costFood, COST_OIL AS costOil, COST_MONEY AS costMoney, POPULATION AS population, ATTACK_TYPE AS attackType, DEFENSE_TYPE AS defenseType, TYPE AS type FROM T_ARMY WHERE Army_ID=#armyID#
+	</select>
+	
+	<select id="getArmyList" resultClass="Army">
+		SELECT ARMY_ID AS armyID, NAME AS name, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, `RANGE` AS `range`, SPEED AS speed, CARRY AS carry, COST_FOOD AS costFood, COST_OIL AS costOil, COST_MONEY AS costMoney, POPULATION AS population, ATTACK_TYPE AS attackType, DEFENSE_TYPE AS defenseType, TYPE AS type FROM T_ARMY
+	</select>
+	
+	 <select id="getArmyListByType" parameterClass="Integer"  resultClass="Army">
+		SELECT ARMY_ID AS armyID, NAME AS name, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, `RANGE` AS `range`, SPEED AS speed, CARRY AS carry, COST_FOOD AS costFood, COST_OIL AS costOil, COST_MONEY AS costMoney, POPULATION AS population, ATTACK_TYPE AS attackType, DEFENSE_TYPE AS defenseType, TYPE AS type FROM T_ARMY WHERE TYPE = #type#
+	</select>
+	
+</sqlMap>

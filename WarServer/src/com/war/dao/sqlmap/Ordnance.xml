@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Ordnance">
+	<typeAlias alias="Ordnance" type="com.war.domain.Ordnance" />
+	
+	<insert id="createOrdnance" parameterClass="Ordnance">
+		INSERT INTO T_ORDNANCE(ORDNANCE_ID, CONSTRAINT_DEPEND_ID, NAME, IMAGE, DESCRIPTION,TYPE) VALUES(#ordnanceID#, #constraintDependID#, #name#, #image#, #description#,#type#)
+		<selectKey resultClass="Integer" keyProperty="ordnanceID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateOrdnance" parameterClass="Ordnance">
+		UPDATE T_ORDNANCE SET CONSTRAINT_DEPEND_ID=#constraintDependID#, NAME=#name#, IMAGE=#image#, DESCRIPTION=#description#,TYPE=#type# WHERE Ordnance_ID=#ordnanceID#
+	</update>
+	
+	<delete id="deleteOrdnanceByID" parameterClass="Integer">
+		DELETE FROM T_ORDNANCE WHERE Ordnance_ID=#ordnanceID#
+	</delete>
+	
+	<select id="getOrdnanceByID" parameterClass="Integer" resultClass="Ordnance">
+		SELECT ORDNANCE_ID AS ordnanceID, CONSTRAINT_DEPEND_ID AS constraintDependID, NAME AS name, IMAGE AS image, DESCRIPTION AS description,TYPE AS type FROM T_ORDNANCE WHERE Ordnance_ID=#ordnanceID#
+	</select>
+	
+	<select id="getOrdnanceList" resultClass="Ordnance">
+		SELECT ORDNANCE_ID AS ordnanceID, CONSTRAINT_DEPEND_ID AS constraintDependID, NAME AS name, IMAGE AS image, DESCRIPTION AS description,TYPE AS type FROM T_ORDNANCE
+	</select>
+
+</sqlMap>

@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:633
+ * 
+ * 名称：极效体力药剂
+ * 描述：恢复指挥官300体力值
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroStamina(params["cityHeroID"], 300);

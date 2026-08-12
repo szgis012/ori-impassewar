@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  layout="absolute" width="440" height="398" initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.military.RecallMilitaryEvent;
+			import com.hifong.war.events.military.AccelerateMilitaryRetruningEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.utils.ObjectProxy;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.util.DateFormatUtil;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.util.WindowUtil;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/**
+			 * 事件类型：1为侦察 2为攻击 3为派遣
+			 */ 
+			public var type:int;
+			
+			//兵种数量信息
+			[Bindable]
+			private var armyData:ArrayCollection;
+			
+			private var militaryActionDetailWatcher:ChangeWatcher;
+			
+			
+			private function doInit():void{
+				this.addEventListener(KeyboardEvent.KEY_DOWN,onKeyDown);
+				this.setFocus();
+				militaryActionDetailWatcher = ChangeWatcher.watch(model,"militaryActionDetail",onMilitaryActionDetailChange);
+			}
+			
+			private function onMilitaryActionDetailChange(event:Object):void{
+				switch(type){
+					//侦察
+					case 1:
+						renderSpyDetail();
+						break;
+					//攻击	
+					case 2:
+					case 9:
+						renderAttackDetail(type);
+						break;
+					//派遣	
+					case 3:
+						break;		
+				}
+			}
+			
+			//显示侦察详细消息
+			private function renderSpyDetail():void{
+				this.txtMilitaryName.text = "侦察部队";
+				this.txtTarget.text = "坐标(" + model.militaryActionDetail.toPosX +"," + model.militaryActionDetail.toPosY + ")";
+				this.txtType.text = "侦察(" + (model.militaryActionDetail.state==1?"前往":"返回") + ")";
+				this.txtArriveTime.text = DateFormatUtil.formatTime(model.militaryActionDetail.finishTime);
+				
+				var arr:ArrayCollection = new ArrayCollection();
+				var op:ObjectProxy = new ObjectProxy();
+				op.armyName = "侦察兵";
+				op.num = model.militaryActionDetail.num;
+				arr.addItem(op);
+				
+				this.armyData = arr;
+			}
+			
+			//显示攻击详细消息
+			private function renderAttackDetail(type:int):void{
+				this.txtMilitaryName.text = model.militaryActionDetail.militaryName;
+				this.txtTarget.text = "坐标(" + model.militaryActionDetail.posX +"," + model.militaryActionDetail.posY + ")";
+				this.txtCommander.text = model.militaryActionDetail.heroName;
+				this.txtLevel.text = model.militaryActionDetail.level;
+				this.txtType.text = (type == 2) ? "攻击" : "返回";
+				this.txtArriveTime.text = DateFormatUtil.formatTime(model.militaryActionDetail.finishTime);
+				
+				var arr:ArrayCollection = new ArrayCollection();
+				addArmyItem(arr,model.militaryActionDetail.army1);
+				addArmyItem(arr,model.militaryActionDetail.army2);
+				addArmyItem(arr,model.militaryActionDetail.army3);
+				addArmyItem(arr,model.militaryActionDetail.army4);
+				addArmyItem(arr,model.militaryActionDetail.army5);
+				addArmyItem(arr,model.militaryActionDetail.army6);
+				addArmyItem(arr,model.militaryActionDetail.army7);
+				addArmyItem(arr,model.militaryActionDetail.army8);
+				
+				this.armyData = arr;
+			}
+			
+			
+			//添加兵种信息
+			private function addArmyItem(arr:ArrayCollection,army:String):void{
+				if(army == null || army.length==0){
+					return;
+				}
+				
+				var tmp:Array = army.split(":");
+				if(tmp.length != 2){
+					return;
+				}
+				
+				var op:ObjectProxy = new ObjectProxy();
+				op.armyName = model.armyInfo.armyMap[tmp[0]].name;
+				op.num = tmp[1];
+				
+				arr.addItem(op);
+			}
+			
+			private function onKeyDown(event:KeyboardEvent):void{
+				if(event.charCode==Keyboard.ESCAPE){
+					doClose();
+				}
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function accelerateMilitaryRetruning():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AccelerateMilitaryRetruningEvent(model.militaryActionDetail.depoyQueueID));
+			}
+			
+			private function recallMilitary():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new RecallMilitaryEvent(model.militaryActionDetail.depoyQueueID));
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="查看军队信息" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="27.5" y="37" width="385" height="100" styleName="CanvasBorder">
+		<mx:Label x="10" y="12" text="军   队："/>
+		<mx:TextInput x="58" y="10" width="120" editable="false" id="txtMilitaryName"/>
+		<mx:Label x="187" y="12" text="目的地：" textAlign="right" width="66"/>
+		<mx:TextInput x="248" y="10" width="120" editable="false" id="txtTarget"/>
+		<mx:TextInput x="248" y="40" width="120" editable="false" text="未知" id="txtLevel"/>
+		<mx:Label x="10" y="42" text="指挥官：" textAlign="left" width="53"/>
+		<mx:TextInput x="58" y="40" width="120" editable="false" textAlign="left" fontWeight="normal" text="没有指挥官" id="txtCommander"/>
+		<mx:Label x="10" y="71" text="类   型："/>
+		<mx:TextInput x="58" y="69" width="120" editable="false" id="txtType"/>
+		<mx:Label x="187" y="71" text="到达时间：" width="66"/>
+		<mx:TextInput x="248" y="69" width="120" editable="false" id="txtArriveTime"/>
+		<mx:Label x="202" y="42" text="等  级："/>
+	</mx:Canvas>
+	<mx:DataGrid x="27.5" y="149" width="297" height="220" fontWeight="bold" textAlign="left" id="dgArmy" dataProvider="{armyData}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="兵种" dataField="armyName"/>
+			<mx:DataGridColumn headerText="数量" dataField="num" textAlign="right" />
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:Canvas x="332.5" y="149" width="80" height="220" styleName="CanvasBorder">
+		<mx:Button x="10" y="152" label="加速" click="accelerateMilitaryRetruning()"/>
+		<mx:Button x="10" y="185" label="撤回" click="recallMilitary()"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

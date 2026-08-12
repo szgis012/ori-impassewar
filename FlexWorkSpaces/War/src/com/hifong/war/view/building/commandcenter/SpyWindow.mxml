@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="posChanged()" layout="absolute" width="320" height="230" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.commandcenter.SpyEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.constant.ArmyConstant;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WorldUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private static var SPY_MONEY_COST:int = 5;
+			
+			//目标x坐标
+			[Bindable]
+			public var posX:int;
+			// 目标y坐标
+			[Bindable]
+			public var posY:int;
+
+			//野怪等级
+			public var level:int = 0;
+
+			//消耗金钱数量
+			[Bindable]
+			private var costMoney:int = 0;
+			
+			//出征
+			private function doDepoy():void{
+				if(this.txtNum.text.length == 0){
+					MsgBox.showMessage("请输入侦察兵的数量。");
+					this.txtNum.setFocus();
+					return;
+				}
+				
+				var num:int = parseInt(this.txtNum.text);
+				
+				if(num <= 0){
+					MsgBox.showMessage("您至少要指派1个侦察兵才能进行侦察。");
+					this.txtNum.setFocus();
+					return;
+				}
+				
+				if( (posX == model.cityInfo.posX) && (posY == model.cityInfo.posY) ){
+					MsgBox.showMessage("您不能对自己的城市进行侦察。");
+					this.txtNum.setFocus();
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new SpyEvent(num,posX,posY));
+				
+				WindowUtil.closeModelWindow(this);
+				
+			}
+			
+			private function posChanged():void{
+				this.posX = int(this.txtPosX.text);
+				this.posY = int(this.txtPosY.text);
+				
+				if(this.posX>model.worldInfo.MAX_RANGE_X){
+					this.posX = model.worldInfo.MAX_RANGE_X;
+				}
+					
+				if(this.posY>model.worldInfo.MAX_RANGE_Y)
+					this.posY = model.worldInfo.MAX_RANGE_Y;	
+					
+				this.setNeedTime();	
+			}
+			
+			//获得出征所需的时间
+			private function setNeedTime():void{
+				var speed:int = ArmyConstant.ZHEN_CHA_BING_SPEED;//侦察兵的速度
+				
+				this.txtNeedTime.text = DateFormatUtil.convertSecondToTime(WorldUtil.getDistanceTime(model.cityInfo.posX,model.cityInfo.posY,this.posX,this.posY,speed));	
+			}
+			
+			private function doMax():void{
+				var cityArmy:CityArmyVO = model.armyInfo.nosetArmyMap[ArmyConstant.ZHEN_CHA_BING] as CityArmyVO;
+				if(cityArmy){
+					txtNum.text = ""+cityArmy.num;
+					this.costMoney = parseInt(this.txtNum.text) * SPY_MONEY_COST;
+				}else{
+					txtNum.text = "0";
+					this.costMoney = 0;
+				}
+			}
+			
+			private function doRefreshCost():void{
+				if(this.txtNum.text.length == 0){
+					this.costMoney = 0;
+				}else{
+					this.costMoney = parseInt(this.txtNum.text) * SPY_MONEY_COST;
+				}
+				
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="侦 察" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="269.75" height="169" styleName="CanvasBorder">
+		<mx:Label x="10" y="42" text="目标位置：" height="22"/>
+		<mx:TextInput x="72" y="40" width="64" text="{posX}" maxChars="3" restrict="0-9" id="txtPosX" change="posChanged()"/>
+		<mx:TextInput x="147" y="40" width="64" text="{posY}" maxChars="3" restrict="0-9" id="txtPosY" change="posChanged()"/>
+		<mx:Label x="10" y="12" text="派遣数量：" width="65"/>
+		<mx:TextInput x="72" y="10" width="139" textAlign="right" restrict="0-9" id="txtNum" change="doRefreshCost()" maxChars="16"/>
+		<mx:Label x="213.5" y="10" text="最大" buttonMode="true" useHandCursor="true" mouseChildren="false" width="46" textAlign="center" click="doMax()"/>
+		<mx:Label x="10" y="100" text="所需时间："/>
+		<mx:Text x="71" y="100" width="140" id="txtNeedTime"/>
+		<mx:Label x="10" y="72" text="消   耗：" width="58" textAlign="center"/>
+		<mx:Button x="71" y="128" label="出征" click="doDepoy()" id="btnDepoy"/>
+		<mx:Image x="76" y="72" source="images/money.png" toolTip="金钱"/>
+		<mx:Text x="99" y="72" text="{costMoney}" id="txtCostMoney" width="85" height="19"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

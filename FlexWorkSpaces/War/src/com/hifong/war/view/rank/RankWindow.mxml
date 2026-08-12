@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="680" height="410" showCloseButton="false" close="doClose()" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.rank.GetCityNumEvent;
+			import com.hifong.war.events.rank.GetGuildNumEvent;
+			import com.hifong.war.events.rank.GetPlayerNumEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.util.WindowUtil;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.hifong.war.events.rank.ShowCityPopulationRankListByCityNameEvent;
+			import com.hifong.war.events.rank.ShowCityPopulationRankListByCityRankEvent;
+			import com.hifong.war.events.rank.ShowCityPopulationRankListEvent;
+			import com.hifong.war.events.rank.ShowCityTechnologyPointRankListByCityNameEvent;
+			import com.hifong.war.events.rank.ShowCityTechnologyPointRankListByCityRankEvent;
+			import com.hifong.war.events.rank.ShowCityTechnologyPointRankListEvent;
+			import com.hifong.war.events.rank.ShowCityConstructionPointRankListByCityNameEvent;
+			import com.hifong.war.events.rank.ShowCityConstructionPointRankListByCityRankEvent;
+			import com.hifong.war.events.rank.ShowCityConstructionPointRankListEvent;
+			import mx.utils.StringUtil;
+			import com.hifong.war.events.rank.ShowGuildRankListEvent;
+			import com.hifong.war.events.rank.ShowGuildRankListByGuildRankEvent;
+			import com.hifong.war.events.rank.ShowGuildRankListByGuildNameEvent;
+			import com.hifong.war.events.rank.ShowPlayerRankListByPlayerNameEvent;
+			import com.hifong.war.events.rank.ShowPlayerRankListByPlayerRankEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.rank.ShowPlayerRankListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var isPlayerNumKnown:Boolean = false,isGuildNumKnown:Boolean = false,isCityNumKnown:Boolean = false;
+			
+			[Bindable]
+			private var countryType:ArrayCollection = new ArrayCollection(new Array("","自由联邦","联合帝国"));
+			
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 显示玩家排名列表
+			 */
+			private function showPlayerRankList():void{
+				if(!isPlayerNumKnown){
+					this.getPlayerNum();
+					isPlayerNumKnown = true;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowPlayerRankListEvent(model.playerInfo.playerID));
+			}
+			
+			/**
+			 * 根据玩家排名显示玩家排名列表
+			 */
+			private function showPlayerRankListByPlayerRank():void{
+				if(textPlayerRank.text.length==0){
+					MsgBox.showMessage("请输入玩家排名");
+					return;
+				}
+				model.currentPlayerRank = parseInt(textPlayerRank.text);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowPlayerRankListByPlayerRankEvent(model.currentPlayerRank));
+			}
+			
+			/**
+			 * 根据玩家名称显示玩家排名列表
+			 */
+			private function showPlayerRankListByPlayerName():void{
+				if(StringUtil.trim(textPlayerName.text).length==0){
+					MsgBox.showMessage("请输入玩家名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowPlayerRankListByPlayerNameEvent(textPlayerName.text));
+			}
+			
+			/**
+			 * 显示玩家排名上一页列表
+			 */
+			private function showPlayerRankPreviousPageList():void{
+				if(model.currentPlayerRank>model.rankPageSize){
+					model.currentPlayerRank = model.currentPlayerRank-model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowPlayerRankListByPlayerRankEvent(model.currentPlayerRank));
+				}
+			}
+			
+			/**
+			 * 显示玩家排名下一页列表
+			 */
+			private function showPlayerRankNextPageList():void{
+				if(Math.ceil(model.currentPlayerRank/model.rankPageSize)<model.rankPlayerPageNum){
+					model.currentPlayerRank = model.currentPlayerRank+model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowPlayerRankListByPlayerRankEvent(model.currentPlayerRank));
+				}
+			}
+			
+			/**
+			 * 显示工会排名列表
+			 */
+			private function showGuildRankList():void{
+				if(!isGuildNumKnown){
+					this.getGuildNum();
+					isGuildNumKnown = true;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRankListEvent(model.playerInfo.guildID));
+			}
+			
+			/**
+			 * 根据工会排名显示工会排名列表
+			 */
+			private function showGuildRankListByGuildRank():void{
+				if(textGuildRank.text.length==0){
+					MsgBox.showMessage("请输入工会排名");
+					return;
+				}
+				model.currentGuildRank = parseInt(textGuildRank.text);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRankListByGuildRankEvent(model.currentGuildRank));
+			}
+			
+			/**
+			 * 根据工会名称显示工会排名列表
+			 */
+			private function showGuildRankListByGuildName():void{
+				if(StringUtil.trim(textGuildName.text).length==0){
+					MsgBox.showMessage("请输入工会名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRankListByGuildNameEvent(textGuildName.text));
+			}
+			
+			/**
+			 * 显示工会排名上一页列表
+			 */
+			private function showGuildRankPreviousPageList():void{
+				if(model.currentGuildRank>model.rankPageSize){
+					model.currentGuildRank = model.currentGuildRank-model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRankListByGuildRankEvent(model.currentGuildRank));
+				}
+			}
+			
+			/**
+			 * 显示工会排名下一页列表
+			 */
+			private function showGuildRankNextPageList():void{
+				if(Math.ceil(model.currentGuildRank/model.rankPageSize)<model.rankGuildPageNum){
+					model.currentGuildRank = model.currentGuildRank+model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowGuildRankListByGuildRankEvent(model.currentGuildRank));
+				}
+			}
+			
+			
+			
+			/**
+			 * 显示城市建设点数排名列表
+			 */
+			private function showCityConstructionPointRankList():void{
+				if(!isCityNumKnown){
+					this.getCityNum();
+					isCityNumKnown = true;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityConstructionPointRankListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市建设点数排名显示城市建设点数排名列表
+			 */
+			private function showCityConstructionPointRankListByCityRank():void{
+				if(textCityRank_CityConstructionPoint.text.length==0){
+					MsgBox.showMessage("请输入城市排名");
+					return;
+				}
+				model.currentCityConstructionPointRank = parseInt(textCityRank_CityConstructionPoint.text);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityConstructionPointRankListByCityRankEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市名称显示城市建设点数排名列表
+			 */
+			private function showCityConstructionPointRankListByCityName():void{
+				if(StringUtil.trim(textCityName_CityConstructionPoint.text).length==0){
+					MsgBox.showMessage("请输入城市名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityConstructionPointRankListByCityNameEvent(textCityName_CityConstructionPoint.text));
+			}
+			
+			/**
+			 * 显示城市建设点数排名上一页列表  
+			 */
+			private function showCityConstructionPointRankPreviousPageList():void{
+				if(model.currentCityConstructionPointRank>model.rankPageSize){
+					model.currentCityConstructionPointRank = model.currentCityConstructionPointRank-model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityConstructionPointRankListByCityRankEvent(model.currentCityConstructionPointRank));
+				}
+			}
+			
+			/**
+			 * 显示城市建设点数排名下一页列表
+			 */
+			private function showCityConstructionPointRankNextPageList():void{
+				if(Math.ceil(model.currentCityConstructionPointRank/model.rankPageSize)<model.rankCityPageNum){
+					model.currentCityConstructionPointRank = model.currentCityConstructionPointRank+model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityConstructionPointRankListByCityRankEvent(model.currentCityConstructionPointRank));
+				}
+			}
+			
+			
+			
+			/**
+			 * 显示城市科技点数排名列表
+			 */
+			private function showCityTechnologyPointRankList():void{
+				if(!isCityNumKnown){
+					this.getCityNum();
+					isCityNumKnown = true;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityTechnologyPointRankListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市科技点数排名显示城市科技点数排名列表
+			 */
+			private function showCityTechnologyPointRankListByCityRank():void{
+				if(textCityRank_CityTechnologyPoint.text.length==0){
+					MsgBox.showMessage("请输入城市排名");
+					return;
+				}
+				model.currentCityTechnologyPointRank = parseInt(textCityRank_CityTechnologyPoint.text);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityTechnologyPointRankListByCityRankEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市名称显示城市科技点数排名列表
+			 */
+			private function showCityTechnologyPointRankListByCityName():void{
+				if(StringUtil.trim(textCityName_CityTechnologyPoint.text).length==0){
+					MsgBox.showMessage("请输入城市名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityTechnologyPointRankListByCityNameEvent(textCityName_CityTechnologyPoint.text));
+			}
+			
+			/**
+			 * 显示城市科技点数排名上一页列表
+			 */
+			private function showCityTechnologyPointRankPreviousPageList():void{
+				if(model.currentCityTechnologyPointRank>model.rankPageSize){
+					model.currentCityTechnologyPointRank = model.currentCityTechnologyPointRank-model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityTechnologyPointRankListByCityRankEvent(model.currentCityTechnologyPointRank));
+				}
+			}
+			
+			/**
+			 * 显示城市科技点数排名下一页列表
+			 */
+			private function showCityTechnologyPointRankNextPageList():void{
+				if(Math.ceil(model.currentCityTechnologyPointRank/model.rankPageSize)<model.rankCityPageNum){
+					model.currentCityTechnologyPointRank = model.currentCityTechnologyPointRank+model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityTechnologyPointRankListByCityRankEvent(model.currentCityTechnologyPointRank));
+				}
+			}
+			
+			
+			
+			/**
+			 * 显示城市人口排名列表
+			 */
+			private function showCityPopulationRankList():void{
+				if(!isCityNumKnown){
+					this.getCityNum();
+					isCityNumKnown = true;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityPopulationRankListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市人口排名显示城市人口排名列表
+			 */
+			private function showCityPopulationRankListByCityRank():void{
+				if(textCityRank_CityPopulation.text.length==0){
+					MsgBox.showMessage("请输入城市排名");
+					return;
+				}
+				model.currentCityPopulationRank = parseInt(textCityRank_CityPopulation.text);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityPopulationRankListByCityRankEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 根据城市名称显示城市人口排名列表
+			 */
+			private function showCityPopulationRankListByCityName():void{
+				if(StringUtil.trim(textCityName_CityPopulation.text).length==0){
+					MsgBox.showMessage("请输入城市名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityPopulationRankListByCityNameEvent(textCityName_CityPopulation.text));
+			}
+			
+			/**
+			 * 显示城市人口排名上一页列表
+			 */
+			private function showCityPopulationRankPreviousPageList():void{
+				if(model.currentCityPopulationRank>model.rankPageSize){
+					model.currentCityPopulationRank = model.currentCityPopulationRank-model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityPopulationRankListByCityRankEvent(model.currentCityPopulationRank));
+				}
+			}
+			
+			/**
+			 * 显示城市人口排名下一页列表
+			 */
+			private function showCityPopulationRankNextPageList():void{
+				if(Math.ceil(model.currentCityPopulationRank/model.rankPageSize)<model.rankCityPageNum){
+					model.currentCityPopulationRank = model.currentCityPopulationRank+model.rankPageSize;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityPopulationRankListByCityRankEvent(model.currentCityPopulationRank));
+				}
+			}
+			
+			/**
+			 * 获得玩家数量
+			 */
+			private function getPlayerNum():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerNumEvent());
+			}
+			
+			/**
+			 * 获得工会数量
+			 */
+			private function getGuildNum():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildNumEvent());
+			}
+			
+			/**
+			 * 获得城市数量
+			 */
+			private function getCityNum():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityNumEvent());
+			}
+			
+			/**
+			 * 获得玩家阵营
+			 */
+			private function getPlayerCountry(item:Object, column:DataGridColumn):String{
+				return countryType.getItemAt(item['country']).toString();
+			}
+			
+			/**
+			 * 获得工会人数
+			 */
+			private function getGuildPopulation(item:Object, column:DataGridColumn):String{
+				return item['population'] + "/" + item['populationMax'];
+			}
+			
+		]]>
+	</mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="排名" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator x="25" y="37" width="630" height="345">
+		<mx:Canvas label="玩家排名" width="100%" height="100%" initialize="showPlayerRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.playerRankList}" x="10" y="10" width="608" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" textAlign="center" width="60" sortable="false" />
+					<mx:DataGridColumn headerText="玩家名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="城市名称" dataField="cityName" sortable="false" />
+					<mx:DataGridColumn headerText="军团" dataField="guildName" sortable="false" />
+					<mx:DataGridColumn headerText="国家" dataField="country" width="90" textAlign="center" sortable="false" labelFunction="getPlayerCountry"/>
+					<mx:DataGridColumn headerText="军衔" dataField="honor" width="80" sortable="false" />
+					<mx:DataGridColumn headerText="声望" dataField="renown" width="120" textAlign="right" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="47" y="286" id="textPlayerRank" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="92" y="285" label="查询" click="showPlayerRankListByPlayerRank()"/>
+			<mx:Label x="172" y="288" text="玩家名称："/>
+			<mx:TextInput x="232" y="286" id="textPlayerName" width="90" maxChars="8"/>
+			<mx:Button x="328" y="285" label="查询" click="showPlayerRankListByPlayerName()"/>
+			<mx:Label x="400" y="287" text="{Math.ceil(model.currentPlayerRank/model.rankPageSize)}/{model.rankPlayerPageNum}" textAlign="center" width="75"/>
+			<mx:Button x="474" y="284" label="上一页" click="showPlayerRankPreviousPageList()"/>
+			<mx:Button x="547" y="284" label="下一页" click="showPlayerRankNextPageList()"/>
+		</mx:Canvas>
+		<mx:Canvas label="军团排名" width="100%" height="100%" initialize="showGuildRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.guildRankList}" x="10" y="10" width="608" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" textAlign="center" width="60" sortable="false" />
+					<mx:DataGridColumn headerText="军团名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="创始人" dataField="chairmanName" sortable="false" />
+					<mx:DataGridColumn headerText="人数" dataField="population" textAlign="center" sortable="false" labelFunction="getGuildPopulation" />
+					<mx:DataGridColumn headerText="声望" dataField="renown" textAlign="right" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="47" y="286" id="textGuildRank" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="92" y="285" label="查询" click="showGuildRankListByGuildRank()"/>
+			<mx:Label x="172" y="288" text="军团名称："/>
+			<mx:TextInput x="232" y="286" id="textGuildName" width="90" maxChars="8"/>
+			<mx:Button x="328" y="285" label="查询" click="showGuildRankListByGuildName()"/>
+			<mx:Button x="474" y="284" label="上一页" click="showGuildRankPreviousPageList()"/>
+			<mx:Button x="547" y="284" label="下一页" click="showGuildRankNextPageList()"/>
+			<mx:Label x="400" y="287" text="{model.currentGuildRank==0?1:Math.ceil(model.currentGuildRank/model.rankPageSize)}/{model.rankGuildPageNum}" textAlign="center" width="75"/>
+		</mx:Canvas>
+		<mx:Canvas label="城市建设" width="100%" height="100%" initialize="showCityConstructionPointRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.cityConstructionPointRankList}" x="10" y="10" width="608" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" textAlign="center" width="60" sortable="false" />
+					<mx:DataGridColumn headerText="城市名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="玩家名称" dataField="playerName" sortable="false" />
+					<mx:DataGridColumn headerText="建设点数" dataField="constructionPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="科技点数" dataField="technologyPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="人口" dataField="populationTotal" textAlign="right" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="47" y="286" id="textCityRank_CityConstructionPoint" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="92" y="285" label="查询" click="showCityConstructionPointRankListByCityRank()"/>
+			<mx:Label x="172" y="288" text="城市名称："/>
+			<mx:TextInput x="232" y="286" id="textCityName_CityConstructionPoint" width="90" maxChars="8"/>
+			<mx:Button x="328" y="285" label="查询" click="showCityConstructionPointRankListByCityName()"/>
+			<mx:Button x="474" y="284" label="上一页" click="showCityConstructionPointRankPreviousPageList()"/>
+			<mx:Button x="547" y="284" label="下一页" click="showCityConstructionPointRankNextPageList()"/>
+			<mx:Label x="400" y="287" text="{Math.ceil(model.currentCityConstructionPointRank/model.rankPageSize)}/{model.rankCityPageNum}" textAlign="center" width="75"/>
+		</mx:Canvas>
+		<mx:Canvas label="城市科技" width="100%" height="100%" initialize="showCityTechnologyPointRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.cityTechnologyPointRankList}" x="10" y="10" width="608" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" textAlign="center" width="60" sortable="false" />
+					<mx:DataGridColumn headerText="城市名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="玩家名称" dataField="playerName" sortable="false" />
+					<mx:DataGridColumn headerText="建设点数" dataField="constructionPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="科技点数" dataField="technologyPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="人口" dataField="populationTotal" textAlign="right" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="47" y="286" id="textCityRank_CityTechnologyPoint" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="92" y="285" label="查询" click="showCityTechnologyPointRankListByCityRank()"/>
+			<mx:Label x="172" y="288" text="城市名称："/>
+			<mx:TextInput x="232" y="286" id="textCityName_CityTechnologyPoint" width="90" maxChars="8"/>
+			<mx:Button x="328" y="285" label="查询" click="showCityTechnologyPointRankListByCityName()"/>
+			<mx:Button x="474" y="284" label="上一页" click="showCityTechnologyPointRankPreviousPageList()"/>
+			<mx:Button x="547" y="284" label="下一页" click="showCityTechnologyPointRankNextPageList()"/>
+			<mx:Label x="400" y="287" text="{Math.ceil(model.currentCityTechnologyPointRank/model.rankPageSize)}/{model.rankCityPageNum}" textAlign="center" width="75"/>
+		</mx:Canvas>
+		<mx:Canvas label="城市人口" width="100%" height="100%" initialize="showCityPopulationRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.cityPopulationRankList}" x="10" y="10" width="608" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" textAlign="center" width="60" sortable="false" />
+					<mx:DataGridColumn headerText="城市名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="玩家名称" dataField="playerName" sortable="false" />
+					<mx:DataGridColumn headerText="建设点数" dataField="constructionPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="科技点数" dataField="technologyPoint" textAlign="right" sortable="false" />
+					<mx:DataGridColumn headerText="人口" dataField="populationTotal" textAlign="right" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="47" y="286" id="textCityRank_CityPopulation" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="92" y="285" label="查询" click="showCityPopulationRankListByCityRank()"/>
+			<mx:Label x="172" y="288" text="城市名称："/>
+			<mx:TextInput x="232" y="286" id="textCityName_CityPopulation" width="90" maxChars="8"/>
+			<mx:Button x="328" y="285" label="查询" click="showCityPopulationRankListByCityName()"/>
+			<mx:Button x="474" y="284" label="上一页" click="showCityPopulationRankPreviousPageList()"/>
+			<mx:Button x="547" y="284" label="下一页" click="showCityPopulationRankNextPageList()"/>
+			<mx:Label x="400" y="287" text="{Math.ceil(model.currentCityPopulationRank/model.rankPageSize)}/{model.rankCityPageNum}" textAlign="center" width="75"/>
+		</mx:Canvas>
+		<!-- <mx:Canvas label="指挥官排名" width="100%" height="100%" initialize="showCityPopulationRankList()" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.cityPopulationRankList}" x="10" y="10" width="588" height="266">
+				<mx:columns>
+					<mx:DataGridColumn headerText="排名" dataField="rank" sortable="false" />
+					<mx:DataGridColumn headerText="指挥官名称" dataField="name" sortable="false" />
+					<mx:DataGridColumn headerText="玩家名称" dataField="playerName" sortable="false" />
+					<mx:DataGridColumn headerText="城市名称" dataField="constructionPoint" sortable="false" />
+					<mx:DataGridColumn headerText="等级" dataField="technologyPoint" sortable="false" />
+					<mx:DataGridColumn headerText="人口" dataField="populationTotal" sortable="false" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="288" text="排名："/>
+			<mx:TextInput x="50" y="286" id="textHeroRank" width="40" maxChars="5" restrict="0-9"/>
+			<mx:Button x="98" y="285" label="查询" click="showCityPopulationRankListByCityRank()"/>
+			<mx:Button x="460" y="284" label="上一页" click="showCityPopulationRankPreviousPageList()"/>
+			<mx:Button x="533" y="284" label="下一页" click="showCityPopulationRankNextPageList()"/>
+			<mx:Label x="384" y="287" text="{Math.ceil(model.currentCityPopulationRank/model.rankPageSize)}/{model.rankCityPageNum}" textAlign="center" width="75"/>
+		</mx:Canvas> -->
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

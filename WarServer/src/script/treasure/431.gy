@@ -1,0 +1,31 @@
+/**
+ * 宝物编号:431
+ * 
+ * 名称： 新手卡
+ * 描述：获得
+					陈旧储物箱*5
+					高级移民*1
+					极效肥料*1
+					重型伐木机*1
+					巨型炼炉*1
+					巨型炼化塔*1
+					建筑队*3
+					巡逻队*1
+ * 类型：宝箱
+ */
+
+//出现的宝物
+int[] treasureList = [441,153,342, 312, 322, 332, 212, 111];
+String[] treasureName = ["陈旧储物箱", "高级移民" , "高效肥料", "中型伐木机", " 中型熔炉", "中型炼化塔","建筑队" ,"巡逻队"];
+String[] imgs = ["441.png","153.png","342.png",  "312.png", "322.png", "332.png", "212.png",  "111.png"];
+int[] treasureNum = [5, 1, 1,  1, 1, 1, 3, 1];
+String dirName = "treasure";
+
+StringBuffer retstr = new StringBuffer();
+
+for(int i=0; i<treasureList.length; i++){
+	context.rewardTreasure(treasureList[i],treasureNum[i]);
+	retstr.append("${treasureName[i]}:${dirName}/${imgs[i]}:${treasureNum[i]}:2:${treasureList[i]}|");
+}
+
+return retstr.substring(0,retstr.length()-1);

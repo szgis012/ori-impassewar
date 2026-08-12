@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="368" initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.guild.GetGuildListByGuildNameEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.guild.ApplyJoinGuildEvent;
+			import com.hifong.war.events.guild.GetGuildPageEvent;
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.guild.GetGuildListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var currentPage:int = 1;
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildListEvent(currentPage-1,model.guildPageSize));
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildPageEvent());
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 查看工会信息
+			 */
+			public function viewGuildInfo(guildID:int):void{
+				
+			}
+			
+			/**
+			 * 申请加入工会
+			 */
+			public function applyJoinGuild(guildID:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ApplyJoinGuildEvent(guildID,model.playerInfo.playerID));
+			}
+			
+			/**
+			 * 根据军团名称获得军团列表
+			 */
+			private function getGuildListByGuildName():void{
+				if(textGuildName.text.length==0){
+					MsgBox.showMessage("请输入军团名称");
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildListByGuildNameEvent(textGuildName.text));
+			}
+			
+			/**
+			 * 显示上一页
+			 */
+			private function showPreviousPageList():void{
+				if(currentPage<=1){
+					return;
+				}
+				currentPage--;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildListEvent(currentPage-1,model.guildPageSize));
+			}
+			
+			/**
+			 * 显示下一页
+			 */
+			private function showNextPageList():void{
+				if(currentPage>=model.guildPage){
+					return;
+				}
+				currentPage++;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetGuildListEvent(currentPage-1,model.guildPageSize));
+			}
+			
+			private function getGuildPopulation(item:Object, column:DataGridColumn):String{
+				return item['population'] + "/" + item['populationMax'];
+			}
+			
+		]]>
+	</mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="军团列表" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:DataGrid dataProvider="{model.guildList}" width="580" height="266" x="25" y="37">
+		<mx:columns>
+			<mx:DataGridColumn headerText="编号" dataField="guildID" width="40" sortable="false" />
+			<mx:DataGridColumn headerText="军团名称" dataField="name" sortable="false" />
+			<mx:DataGridColumn headerText="创始人" dataField="chairman.name" sortable="false" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn headerText="人数" dataField="population" sortable="false" labelFunction="getGuildPopulation" />
+			<mx:DataGridColumn headerText="声望" dataField="renown" sortable="false" />
+			<mx:DataGridColumn headerText="操作" dataField="guildID" width="130" sortable="false">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox>
+							<mx:Button height="22" width="60" label="查看" click="outerDocument.viewGuildInfo(data.guildID)" />
+							<mx:Button height="22" width="60" label="加入" click="outerDocument.applyJoinGuild(data.guildID)" />
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:Label x="25" y="321" text="军团名称："/>
+	<mx:TextInput x="89" y="319" id="textGuildName" width="90" maxChars="8"/>
+	<mx:Button x="187" y="318" label="查询" click="getGuildListByGuildName()"/>
+	<mx:Button x="457" y="316" label="上一页" click="showPreviousPageList()"/>
+	<mx:Button x="533" y="316" label="下一页" click="showNextPageList()"/>
+	<mx:Label x="381" y="319" text="{currentPage}/{model.guildPage}" textAlign="center" width="75"/>
+	
+</mx:TitleWindow>

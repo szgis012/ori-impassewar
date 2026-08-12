@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:671
+ * 
+ * 名称：战魂铜章
+ * 描述：品质为普通的指挥官可用，提高该指挥官军魄10点，100点军魄可以提高1点军魂。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.useFightSoulCopperMedal(params["cityHeroID"]);

@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>《绝地战争》--现代战争网页游戏开山之作</title>
+<script src="AC_OETags.js" type="text/javascript" language="javascript"></script>
+<script src="War.js" type="text/javascript" language="javascript"></script>
+<script language="JavaScript" type="text/javascript">
+var requiredMajorVersion = ${version_major};
+var requiredMinorVersion = ${version_minor};
+var requiredRevision = ${version_revision};
+</script>
+<link rel="stylesheet" type="text/css" href="styles/styles.css">
+</head>
+<body scroll="no">
+<div id="div_game">
+<script language="JavaScript" type="text/javascript">
+<!--
+var hasProductInstall = DetectFlashVer(6, 0, 65);
+var hasRequestedVersion = DetectFlashVer(requiredMajorVersion, requiredMinorVersion, requiredRevision);
+if ( hasProductInstall && !hasRequestedVersion ) {
+	var MMPlayerType = (isIE == true) ? "ActiveX" : "PlugIn";
+	var MMredirectURL = window.location;
+    document.title = document.title.slice(0, 47) + " - Flash Player Installation";
+    var MMdoctitle = document.title;
+
+	AC_FL_RunContent(
+		"src", "playerProductInstall",
+		"FlashVars", "MMredirectURL="+MMredirectURL+'&MMplayerType='+MMPlayerType+'&MMdoctitle='+MMdoctitle+"",
+		"width", "${width}",
+		"height", "${height}",
+		"align", "middle",
+		"id", "${application}",
+		"quality", "high",
+		"bgcolor", "${bgcolor}",
+		"name", "${application}",
+		"wmode", "Opaque",
+		"allowScriptAccess","sameDomain",
+		"type", "application/x-shockwave-flash",
+		"pluginspage", "http://www.adobe.com/go/getflashplayer"
+	);
+} else if (hasRequestedVersion) {
+	AC_FL_RunContent(
+			"src", "${swf}",
+			"width", "${width}",
+			"height", "${height}",
+			"align", "middle",
+			"id", "${application}",
+			"quality", "high",
+			"bgcolor", "${bgcolor}",
+			"name", "${application}",
+			"wmode", "Opaque",
+			"allowScriptAccess","sameDomain",
+			"type", "application/x-shockwave-flash",
+			"pluginspage", "http://www.adobe.com/go/getflashplayer"
+	);
+  } else {
+    var alternateContent = 'Alternate HTML content should be placed here. '
+  	+ 'This content requires the Adobe Flash Player. '
+   	+ '<a href=http://www.adobe.com/go/getflash/>Get Flash</a>';
+    document.write(alternateContent);
+  }
+// -->
+</script>
+<noscript>
+  	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+			id="${application}" width="${width}" height="${height}"
+			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
+			<param name="movie" value="${swf}.swf" />
+			<param name="quality" value="high" />
+			<param name="bgcolor" value="${bgcolor}" />
+			<param name="allowScriptAccess" value="sameDomain" />
+			<embed src="${swf}.swf" quality="high" bgcolor="${bgcolor}"
+				width="${width}" height="${height}" name="${application}" align="middle"
+				play="true"
+				loop="false"
+				quality="high"
+				wmode="Opaque"
+				allowScriptAccess="sameDomain"
+				type="application/x-shockwave-flash"
+				pluginspage="http://www.adobe.com/go/getflashplayer">
+			</embed>
+	</object>
+</noscript>
+</div>
+<div id="content" name="content"></div>
+<div style="display:none;"><script src="http://s65.cnzz.com/stat.php?id=1180340&web_id=1180340" language="JavaScript" charset="gb2312"></script></div>
+</body>
+</html>

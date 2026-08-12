@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="TreasureHistory">
+	<typeAlias alias="TreasureHistory" type="com.war.domain.TreasureHistory" />
+	
+	<insert id="createTreasureHistory" parameterClass="TreasureHistory">
+		INSERT INTO T_TREASURE_HISTORY(PLAYER_ID, TREASURE_ID, NUM, TYPE, CREATE_TIME) VALUES(#playerID#, #treasureID#, #num#, #type#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="treasureHistoryID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTreasureHistory" parameterClass="TreasureHistory">
+		UPDATE T_TREASURE_HISTORY SET TREASURE_HISTORY_ID=#treasureHistoryID#, PLAYER_ID=#playerID#, TREASURE_ID=#treasureID#, NUM=#num#, TYPE=#type#, CREATE_TIME=#createTime# WHERE TREASURE_HISTORY_ID=#treasureHistoryID#
+	</update>
+	
+	<delete id="deleteTreasureHistoryByID" parameterClass="Integer">
+		DELETE FROM T_TREASURE_HISTORY WHERE TREASURE_HISTORY_ID=#treasureHistoryID#
+	</delete>
+
+	<select id="getTreasureHistoryByID" parameterClass="Integer" resultClass="TreasureHistory">
+		SELECT TREASURE_HISTORY_ID AS treasureHistoryID, PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num, TYPE AS type, CREATE_TIME AS createTime FROM T_TREASURE_HISTORY WHERE TREASURE_HISTORY_ID=#treasureHistoryID#
+	</select>
+	
+	<select id="getTreasureHistoryList" resultClass="TreasureHistory">
+		SELECT TREASURE_HISTORY_ID AS treasureHistoryID, PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num, TYPE AS type, CREATE_TIME AS createTime FROM T_TREASURE_HISTORY
+	</select>
+ 
+	<select id="getTreasureHistoryListByPlayerIDAndTreasureIDAndType" parameterClass="java.util.Map" resultClass="TreasureHistory">
+		SELECT TREASURE_HISTORY_ID AS treasureHistoryID, PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num, TYPE AS type, CREATE_TIME AS createTime FROM T_TREASURE_HISTORY WHERE PLAYER_ID=#playerID# AND TREASURE_ID=#treasureID# AND TYPE=#type#
+	</select>
+
+	<select id="getDailyTreasureHistoryNumByPlayerIDAndTreasureIDAndType" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT SUM(NUM) FROM T_TREASURE_HISTORY WHERE CREATE_TIME > CURDATE() AND TREASURE_ID=#treasureID# AND TYPE=#type# AND PLAYER_ID=#playerID#
+	</select>
+	
+</sqlMap>

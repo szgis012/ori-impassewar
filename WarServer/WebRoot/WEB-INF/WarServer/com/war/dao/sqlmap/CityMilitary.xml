@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityMilitary">
+	<typeAlias alias="CityMilitary" type="com.war.domain.CityMilitary" />
+	<typeAlias alias="BattleMilitary" type="com.war.domain.BattleMilitary" />
+	
+	<insert id="createCityMilitary" parameterClass="CityMilitary">
+		INSERT INTO T_CITY_MILITARY(NAME, CITY_ID, CITY_HERO_ID, ARMY1, ARMY2, ARMY3, ARMY4, ARMY5, ARMY6, ARMY7, ARMY8, COST_OIL, COST_FOOD, COST_MONEY, STATE) VALUES(#name#, #cityID#, #cityHeroID#, #army1#, #army2#, #army3#, #army4#, #army5#, #army6#, #army7#, #army8#, #costOil#, #costFood#, #costMoney#, #state#)
+		<selectKey resultClass="Integer" keyProperty="cityMilitaryID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityMilitaryArmyByBattleMilitary" parameterClass="BattleMilitary">
+		UPDATE T_CITY_MILITARY SET ARMY1=#army1#, ARMY2=#army2#, ARMY3=#army3#, ARMY4=#army4#, ARMY5=#army5#, ARMY6=#army6#, ARMY7=#army7#, ARMY8=#army8# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<update id="updateNameByCityMilitaryID" parameterClass="java.util.Map">
+		UPDATE T_CITY_MILITARY SET NAME=#name# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<update id="updateCityHeroIDByCityMilitaryID" parameterClass="java.util.Map">
+		UPDATE T_CITY_MILITARY SET CITY_HERO_ID=#cityHeroID# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<update id="updateCityMilitary" parameterClass="CityMilitary">
+		UPDATE T_CITY_MILITARY SET NAME=#name#, CITY_ID=#cityID#, CITY_HERO_ID=#cityHeroID#, ARMY1=#army1#, ARMY2=#army2#, ARMY3=#army3#, ARMY4=#army4#, ARMY5=#army5#, ARMY6=#army6#, ARMY7=#army7#, ARMY8=#army8#, COST_OIL=#costOil#, COST_FOOD=#costFood#, COST_MONEY=#costMoney#, STATE=#state# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<update id="updateCityMilitaryConsume" parameterClass="java.util.Map">
+		UPDATE T_CITY_MILITARY SET COST_OIL=#costOil#, COST_FOOD=#costFood#, COST_MONEY=#costMoney# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<delete id="deleteCityMilitaryByID" parameterClass="Integer">
+		DELETE FROM T_CITY_MILITARY WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</delete>
+	
+	<delete id="deleteCityMilitaryByCityHeroID" parameterClass="Integer">
+		DELETE FROM T_CITY_MILITARY WHERE CITY_HERO_ID=#cityHeroID#
+	</delete>
+	
+	<select id="getCityMilitaryAsBattleMilitaryByID" parameterClass="Integer" resultClass="BattleMilitary">
+		SELECT (SELECT PLAYER_ID FROM T_CITY WHERE T_CITY.CITY_ID=T_CITY_MILITARY.CITY_ID) AS playerID, CITY_MILITARY_ID AS cityMilitaryID, NAME AS name, CITY_ID AS cityID, CITY_HERO_ID AS cityHeroID, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8,2 AS type FROM T_CITY_MILITARY WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</select>
+	
+	<select id="getCityMilitaryIDByCityHeroID" parameterClass="Integer" resultClass="Integer">
+		SELECT CITY_MILITARY_ID FROM T_CITY_MILITARY WHERE CITY_HERO_ID=#cityHeroID#
+	</select>
+	
+	<select id="getCityMilitaryByID" parameterClass="Integer" resultClass="CityMilitary">
+		SELECT CITY_MILITARY_ID AS cityMilitaryID, NAME AS name, CITY_ID AS cityID, CITY_HERO_ID AS cityHeroID, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, STATE AS state FROM T_CITY_MILITARY WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</select>
+	
+	<select id="getCityMilitaryListByCityID" parameterClass="Integer" resultClass="CityMilitary">
+		SELECT CITY_MILITARY_ID AS cityMilitaryID, NAME AS name, CITY_ID AS cityID, CITY_HERO_ID AS cityHeroID, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, STATE AS state FROM T_CITY_MILITARY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getNotNormalStateCityMilitaryNumByCityID" parameterClass="Integer" resultClass="Integer">
+		<![CDATA[SELECT COUNT(*) FROM T_CITY_MILITARY WHERE CITY_ID=#cityID# AND STATE <> 1]]>
+	</select>
+	
+	<update id="updateCityMilitaryState" parameterClass="java.util.Map">
+		UPDATE T_CITY_MILITARY SET STATE=#state# WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</update>
+	
+	<select id="existsStayMilitary" parameterClass="Integer" resultClass="Integer">
+	   SELECT COUNT(*) FROM T_CITY_MILITARY WHERE CITY_ID=#cityID# and STATE=4
+	</select>
+	
+	
+	
+</sqlMap>

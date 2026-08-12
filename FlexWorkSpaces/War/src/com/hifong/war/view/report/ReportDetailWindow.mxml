@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="550" height="385" showCloseButton="false" close="doClose()" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.report.DeleteReportEvent;
+			import com.hifong.war.events.report.SaveReportEvent;
+			import com.hifong.war.constant.ReportTypeConstant;
+			import com.hifong.war.vo.ReportVO;
+			import com.hifong.war.events.message.DeleteMessageEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.FlexEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import mx.managers.PopUpManager;
+			
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			
+			
+			private var _report:ReportVO;
+			private var dispathcer:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			
+			
+			[Bindable]
+			public function set report(rpt:ReportVO):void{
+				this._report = rpt;
+			}
+			
+			public function get report():ReportVO{
+				return this._report;
+			}
+			
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+			}
+			
+			//保存报告
+			private function saveReport():void{
+				dispathcer.dispatchEvent(new SaveReportEvent([report.reportID]));
+			}
+			
+			//删除报告
+			private function deleteReport():void{
+				dispathcer.dispatchEvent(new DeleteReportEvent([report.reportID]));
+				doClose();	
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="查看报告" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="500" height="320" styleName="CanvasBorder">
+		<mx:Label x="10" y="12" text="标   题："/>
+		<mx:TextInput id="textTitle" x="71" y="10" text="{report.title}" editable="false" width="419"/>
+		<mx:Label x="10" y="43" text="类   型："/>
+		<mx:TextInput id="textTitle0" x="71" y="41" text="{ReportTypeConstant.getTypeName(report.type)}" editable="false" width="419"/>
+		<mx:Label x="10" y="75" text="时   间："/>
+		<mx:TextInput x="71" y="73" text="{DateFormatUtil.formatDate(report.receiveTime)}" editable="false" width="419"/>
+		<mx:Label x="10" y="103" text="内   容："/>
+		<mx:TextArea id="textareaContent" x="71" y="102" width="419" height="170" htmlText="{report.content}" editable="false"/>
+		<mx:Button x="71" y="284" label="保存" click="saveReport()" width="60" height="26"/>
+		<mx:Button x="139" y="284" label="删除" click="deleteReport()" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

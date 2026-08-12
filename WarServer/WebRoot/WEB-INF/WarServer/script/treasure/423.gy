@@ -1,0 +1,32 @@
+/**
+ * 宝物编号:423
+ * 
+ * 名称：新手宝箱3
+ * 描述：获得
+					重型伐木机*1
+					巨型炼炉*1
+					巨型炼化塔*1
+					极效肥料*1
+					建筑承包商*3
+					建筑技工*1
+					征召命令*3
+					中级火药*1
+					中级护甲*1
+ * 类型：宝箱
+ */
+
+//出现的宝物
+int[] treasureList = [313, 323, 333, 343, 213, 214, 112, 512, 522];
+String[] treasureName = ["重型伐木机" , "巨型炼炉", "巨型炼化塔", "极效肥料", "建筑承包商", "建筑技工", "征召命令", "中级火药", "中级护甲"];
+String[] imgs = ["313.png", "323.png", "333.png", "343.png", "213.png", "214.png", "112.png", "512.png", "522.png"];
+int[] treasureNum = [1, 1, 1, 1, 3, 1, 3, 1, 1];
+String dirName = "treasure";
+
+StringBuffer retstr = new StringBuffer();
+
+for(int i=0; i<treasureList.length; i++){
+	context.rewardTreasure(treasureList[i],treasureNum[i]);
+	retstr.append("${treasureName[i]}:${dirName}/${imgs[i]}:${treasureNum[i]}|");
+}
+
+return retstr.substring(0,retstr.length()-1);

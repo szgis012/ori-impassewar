@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityDefense">
+	<typeAlias alias="CityDefense" type="com.war.domain.CityDefense" />
+	
+	<insert id="createCityDefense" parameterClass="CityDefense">
+		INSERT INTO T_CITY_DEFENSE(CITY_ID, DEFENSE_ID, NUM) VALUES( #cityID#, #defenseID#, #num#)
+		<selectKey resultClass="Integer" keyProperty="cityDefenseID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityDefense" parameterClass="CityDefense">
+		UPDATE T_CITY_DEFENSE SET CITY_DEFENSE_ID=#cityDefenseID#, CITY_ID=#cityID#, DEFENSE_ID=#defenseID#, NUM=#num# WHERE CITY_DEFENSE_ID=#cityDefenseID#
+	</update>
+	
+	<delete id="deleteCityDefenseByID" parameterClass="Integer">
+		DELETE FROM T_CITY_DEFENSE WHERE CITY_DEFENSE_ID=#cityDefenseID#
+	</delete>
+	
+	<select id="getCityDefenseByID" parameterClass="Integer" resultClass="CityDefense">
+		SELECT CITY_DEFENSE_ID AS cityDefenseID, CITY_ID AS cityID, DEFENSE_ID AS defenseID, NUM AS num FROM T_CITY_DEFENSE WHERE CITY_DEFENSE_ID=#cityDefenseID#
+	</select>
+	
+	<select id="getCityDefenseList" resultClass="CityDefense">
+		SELECT CITY_DEFENSE_ID AS cityDefenseID, CITY_ID AS cityID, DEFENSE_ID AS defenseID, NUM AS num FROM T_CITY_DEFENSE
+	</select>
+	
+	<select id="getCityDefense" parameterClass="java.util.Map" resultClass="CityDefense">
+		SELECT CITY_DEFENSE_ID AS cityDefenseID, CITY_ID AS cityID, DEFENSE_ID AS defenseID, NUM AS num FROM T_CITY_DEFENSE WHERE CITY_ID=#cityID# AND DEFENSE_ID=#defenseID#
+	</select>
+	
+	<select id="getCityDefenseListByCityID" parameterClass="Integer" resultClass="CityDefense">
+		SELECT CITY_DEFENSE_ID AS cityDefenseID, CITY_ID AS cityID, DEFENSE_ID AS defenseID, NUM AS num FROM T_CITY_DEFENSE  WHERE CITY_ID=#cityID#
+	</select>
+
+</sqlMap>

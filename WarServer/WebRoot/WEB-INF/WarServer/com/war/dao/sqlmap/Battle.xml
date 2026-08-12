@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Battle">
+	<typeAlias alias="Battle" type="com.war.domain.Battle" />
+	
+	<insert id="createBattle" parameterClass="Battle">
+		INSERT INTO T_BATTLE(MILITARY_ATTACKER_ID, MILITARY_DEFENDER_ID, ATTACKER_EXP, DEFENDER_EXP, CITY_DEFENSE_AMOUNT, STAGE_POSX, STAGE_POSY, ROUND, START_TIME, PRE_RND_FINISH_TIME, TYPE) VALUES(#militaryAttackerID#, #militaryDefenderID#, #attackerExp#, #defenderExp#, #cityDefenseAmount#, #stagePosX#, #stagePosY#, #round#, SYSDATE(), SYSDATE(), #type#)
+		<selectKey resultClass="Integer" keyProperty="battleID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateBattleRoundAndPreRoundFinishTime" parameterClass="java.util.Map">
+		UPDATE T_BATTLE SET ROUND=#round#, PRE_RND_FINISH_TIME=SYSDATE() WHERE BATTLE_ID=#battleID#
+	</update>
+	
+	<update id="updateBattleExp" parameterClass="java.util.Map">
+		UPDATE T_BATTLE SET ATTACKER_EXP=#attackerExp#, DEFENDER_EXP=#defenderExp# WHERE BATTLE_ID=#battleID#
+	</update>
+	
+	<update id="updateBattleCityDefenseAmount" parameterClass="java.util.Map">
+		UPDATE T_BATTLE SET CITY_DEFENSE_AMOUNT=#cityDefenseAmount# WHERE BATTLE_ID=#battleID#
+	</update>
+	
+	<update id="updateBattle" parameterClass="Battle">
+		UPDATE T_BATTLE SET MILITARY_ATTACKER_ID=#militaryAttackerID#, MILITARY_DEFENDER_ID=#militaryDefenderID#, ATTACKER_EXP=#attackerExp#, DEFENDER_EXP=#defenderExp#, CITY_DEFENSE_AMOUNT=#cityDefenseAmount#, STAGE_POSX=#stagePosX#, STAGE_POSY=#stagePosY#, ROUND=#round#, START_TIME=#startTime#, PRE_RND_FINISH_TIME=#preRoundFinishTime#, TYPE=#type# WHERE BATTLE_ID=#battleID#
+	</update>
+	
+	<delete id="deleteBattleByID" parameterClass="Integer">
+		DELETE FROM T_BATTLE WHERE BATTLE_ID=#battleID#
+	</delete>
+	
+	<select id="getBattleByID" resultClass="Battle">
+		SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type FROM T_BATTLE WHERE BATTLE_ID=#battleID#
+	</select>
+	
+	<select id="getAttackBattleListByCityID" parameterClass="Integer" resultClass="Battle">
+		SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type FROM T_BATTLE TB WHERE (SELECT CITY_ID FROM T_CITY_MILITARY TCM WHERE TCM.CITY_MILITARY_ID=TB.MILITARY_ATTACKER_ID)=#cityID#
+	</select>
+	
+	<select id="getDefenseBattleListByCityID" parameterClass="Integer" resultClass="Battle">
+		SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type FROM T_BATTLE TB WHERE (SELECT CITY_ID FROM T_CITY_MILITARY TCM WHERE TCM.CITY_MILITARY_ID=TB.MILITARY_DEFENDER_ID)=#cityID#
+	</select>
+	
+	<select id="getBattleListByCityID" parameterClass="Integer" resultClass="Battle">
+		SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type, BATTLE_TYPE AS battleType FROM
+		(
+		SELECT BATTLE_ID, MILITARY_ATTACKER_ID, MILITARY_DEFENDER_ID, ATTACKER_EXP, DEFENDER_EXP, CITY_DEFENSE_AMOUNT, STAGE_POSX, STAGE_POSY, ROUND , START_TIME, PRE_RND_FINISH_TIME, TYPE, 1 AS BATTLE_TYPE FROM T_BATTLE TB WHERE (SELECT CITY_ID FROM T_CITY_MILITARY TCM WHERE TCM.CITY_MILITARY_ID=TB.MILITARY_ATTACKER_ID)=#cityID#
+		UNION
+		SELECT BATTLE_ID, MILITARY_ATTACKER_ID, MILITARY_DEFENDER_ID, ATTACKER_EXP, DEFENDER_EXP, CITY_DEFENSE_AMOUNT, STAGE_POSX, STAGE_POSY, ROUND , START_TIME, PRE_RND_FINISH_TIME, TYPE, 2 AS BATTLE_TYPE FROM T_BATTLE TB WHERE (SELECT CITY_ID FROM T_CITY_MILITARY TCM WHERE TCM.CITY_MILITARY_ID=TB.MILITARY_DEFENDER_ID)=#cityID# AND TYPE=2
+		) T ORDER BY BATTLE_ID DESC
+	</select>
+	
+	<select id="getRoundFinishedBattleList" parameterClass="Integer" resultClass="Battle">
+		<![CDATA[SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type FROM T_BATTLE WHERE PRE_RND_FINISH_TIME<=SYSDATE() - INTERVAL #roundTime# SECOND]]>
+	</select>
+	
+	<select id="getBattleList" resultClass="Battle">
+		SELECT BATTLE_ID AS battleID, MILITARY_ATTACKER_ID AS militaryAttackerID, MILITARY_DEFENDER_ID AS militaryDefenderID, ATTACKER_EXP AS attackerExp, DEFENDER_EXP AS defenderExp, CITY_DEFENSE_AMOUNT AS cityDefenseAmount, STAGE_POSX AS stagePosX, STAGE_POSY AS stagePosY, ROUND AS round, START_TIME AS startTime, PRE_RND_FINISH_TIME AS preRoundFinishTime, TYPE AS type FROM T_BATTLE
+	</select>
+
+</sqlMap>

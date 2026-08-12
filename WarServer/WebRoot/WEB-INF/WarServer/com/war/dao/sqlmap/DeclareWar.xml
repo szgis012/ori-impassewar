@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DeclareWar">
+	<typeAlias alias="DeclareWar" type="com.war.domain.DeclareWar" />
+	
+	<insert id="createDeclareWar" parameterClass="DeclareWar">
+		INSERT INTO T_DECLARE_WAR(DECLARE_WAR_ID, PLAYER_ID, TARGET_PLAYER_ID, START_TIME, FINISH_TIME) VALUES(#declareWarID#, #playerID#, #targetPlayerID#, #startTime#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="declareWarID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateDeclareWar" parameterClass="DeclareWar">
+		UPDATE T_DECLARE_WAR SET DECLARE_WAR_ID=#declareWarID#, PLAYER_ID=#playerID#, TARGET_PLAYER_ID=#targetPlayerID#, START_TIME=#startTime#, FINISH_TIME=#finishTime# WHERE DECLARE_WAR_ID=#declareWarID#
+	</update>
+	
+	<delete id="deleteFinishedDeclareWarList">
+		<![CDATA[DELETE FROM T_DECLARE_WAR WHERE  FINISH_TIME<=SYSDATE()]]>
+	</delete>
+	
+	<delete id="deleteDeclareWarByID" parameterClass="Integer">
+		DELETE FROM T_DECLARE_WAR WHERE DECLARE_WAR_ID=#declareWarID#
+	</delete>
+	
+	<select id="getDeclareWarByID" parameterClass="Integer" resultClass="DeclareWar">
+		SELECT DECLARE_WAR_ID AS declareWarID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_DECLARE_WAR WHERE DECLARE_WAR_ID=#declareWarID#
+	</select>
+	
+	<select id="getDeclareWarByPlayerIDAndTargetPlayerID" parameterClass="java.util.Map" resultClass="DeclareWar">
+		SELECT DECLARE_WAR_ID AS declareWarID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_DECLARE_WAR WHERE PLAYER_ID=#playerID# AND TARGET_PLAYER_ID=#targetPlayerID#
+	</select>
+	
+	<select id="getDeclareWarListByPlayerID" parameterClass="Integer" resultClass="DeclareWar">
+		SELECT DECLARE_WAR_ID AS declareWarID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_DECLARE_WAR WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getDeclareWarCountByPlayerID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_DECLARE_WAR WHERE PLAYER_ID=#playerID# OR TARGET_PLAYER_ID=#playerID# 
+	</select>
+	
+</sqlMap>

@@ -1,0 +1,100 @@
+/**
+* 任务编号: 71
+*
+* 要求：木材厂20级，炼钢厂20级，农场20级，油井20级
+* 奖励：木材60w，钢铁50w，石油45w，食物55w，金钱6w
+* 后置任务：72
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 建筑编号为 4,5,6,7
+def buildingIDs = [4,5,6,7];
+
+// 1. 木材厂20级
+if(context.getBuildingMaxLevel(buildingIDs[0]) > 19)
+{
+	result += "木材厂20级<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "木材厂20级<a href='event:4'><font color='#ffff00'><b>[点击进入木材厂]</b></font></a><font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 2. 炼钢厂20级
+if(context.getBuildingMaxLevel(buildingIDs[1]) > 19)
+{
+	result += "炼钢厂20级<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "炼钢厂20级<a href='event:5'><font color='#ffff00'><b>[点击进入炼钢厂]</b></font></a><font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 3. 油井20级
+if(context.getBuildingMaxLevel(buildingIDs[2]) > 19)
+{
+	result += "油井20级<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "油井20级<a href='event:6'><font color='#ffff00'><b>[点击进入油井]</b></font></a><font color='#ff0000'>[未完成]</font><br/>";
+}	
+
+// 4. 农场20级
+if(context.getBuildingMaxLevel(buildingIDs[3]) > 19)
+{
+	result += "农场20级<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "农场20级<a href='event:7'><font color='#ffff00'><b>[点击进入农场]</b></font></a><font color='#ff0000'>[未完成]</font><br/>";
+}	
+
+
+if(count == 4)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+// 奖励：木材60w，钢铁50w，石油45w，食物55w，金钱6w
+context.rewardResource(600000,500000,450000,550000,60000);
+}

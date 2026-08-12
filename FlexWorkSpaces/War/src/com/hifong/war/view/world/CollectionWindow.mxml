@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="500" height="328" layout="absolute"  showCloseButton="false" close="doClose()" initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.DataGridUtil;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.hifong.war.view.building.commandcenter.MilitaryCommandWindow;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.events.world.DeleteMapFavouriteEvent;
+			import mx.containers.Canvas;
+			import com.hifong.war.events.world.GetMapFavouriteNumOfPlayerEvent;
+			import com.hifong.war.commands.world.GetMapFavouriteNumOfPlayerCommand;
+			import com.hifong.war.events.world.GetMapFavouritePagingListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.common.WorldInfo;
+			import com.hifong.war.model.ModelLocator;
+			[Bindable]
+			private var model:ModelLocator =  ModelLocator.getInstance();
+			private var worldInfo:WorldInfo = model.worldInfo;
+			/** 调用类型 */
+			public var type:int=0;
+			/** 调用控制器 */
+			public var controller:MilitaryCommandWindow;
+			
+			[Bindable]
+			/** 当前页数 */
+			private var currentPage:int=0;
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			private function doInit():void{
+				this.setFocus();
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetMapFavouriteNumOfPlayerEvent(model.playerInfo.playerID));
+				showMapFavourite(currentPage*model.mapCollectionPageSize,model.mapCollectionPageSize);
+				currentPage=1;
+			}
+			private function showMapFavourite(start:int,offset:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetMapFavouritePagingListEvent(model.playerInfo.playerID,start,offset));
+			}
+			/**
+			 * 上一页
+			 */
+			private function showPreviousPageList():void{
+				if(currentPage<=1) return ;
+				currentPage--;
+				showMapFavourite(currentPage*model.mapCollectionPageSize,model.mapCollectionPageSize);
+			}
+			/**
+			 * 下一页
+			 */
+			private function showNextPageList():void{
+				if(currentPage>=Math.ceil(model.mapCollectionNum/model.mapCollectionPageSize)) return;
+				currentPage++;
+				showMapFavourite(currentPage*model.mapCollectionPageSize,model.mapCollectionPageSize);
+			}
+			private function getPosXY(data:Object,column:DataGridColumn):String{
+				return data.map.posX+":"+data.map.posY;
+			}
+			/**
+			 * 删除收藏点
+			 */
+			public function deleteCollection(data:Object):void{ 
+				CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteMapFavouriteEvent(data.mapFavouriteID));
+			}
+			/**
+			 * 定位处理
+			 */
+			public function mapPostionPoint(posX:int,posY:int):void{
+				switch(type){
+					case 0:
+						//定位世界地图
+						model.worldPanel.callMapDataByCenterPoint(new Point(posX,posY),true);
+						doClose();
+					break;
+					case 1:
+						controller.setPosition(posX,posY);
+					break;
+				}
+			}
+		]]>
+	</mx:Script>	
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="地图收藏" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+		<mx:DataGrid x="25" y="37" width="449" height="228" dataProvider="{model.mapCollectionList}">
+			<mx:columns>
+				<!--<mx:DataGridColumn headerText="选择"  sortable="false" dataField="col1"/>-->
+				<mx:DataGridColumn headerText="名称"  sortable="false" dataField="map.name" labelFunction="{DataGridUtil.getColumnProperty}"/>
+				<mx:DataGridColumn headerText="坐标"  sortable="false" labelFunction="getPosXY"  textAlign="center"/>
+				<mx:DataGridColumn headerText="	操作"  sortable="false" >
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:HBox textAlign="center">
+								<mx:Button label="定位" styleName="DG" width="50" click="outerDocument.mapPostionPoint(data.map.posX,data.map.posY)" />
+								<mx:Button label="删除" styleName="DG" width="50"  click="outerDocument.deleteCollection(data)"/>
+							</mx:HBox>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label x="210.25" y="280" text="{currentPage}/{Math.ceil(model.mapCollectionNum/model.mapCollectionPageSize)}" textAlign="center" width="75"/>
+		<mx:Button x="137.25" y="277" label="上一页" click="showPreviousPageList()"/>
+		<mx:Button x="289.75" y="277" label="下一页" click="showNextPageList()"/>
+	
+</mx:TitleWindow>

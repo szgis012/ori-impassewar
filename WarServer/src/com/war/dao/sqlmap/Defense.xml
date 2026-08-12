@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Defense">
+	<typeAlias alias="Defense" type="com.war.domain.Defense" />
+
+	<insert id="createDefense" parameterClass="Defense">
+		INSERT INTO T_DEFENSE(DEFENSE_ID, NAME, IMAGE, DESCRIPTION, LIFE, ATTACK, DEFENSE, `RANGE` ) VALUES(#defenseID#, #name#, #image#, #description#, #life#, #attack#, #defense#, #range#)
+	</insert>
+
+	<update id="updateDefense" parameterClass="Defense">
+		UPDATE T_DEFENSE SET DEFENSE_ID=#defenseID#, NAME=#name#, IMAGE=#image#, DESCRIPTION=#description#, LIFE=#life#, ATTACK=#attack#, DEFENSE=#defense#, `RANGE`=#range# WHERE Defense_ID=#defenseID#
+	</update>
+
+	<delete id="deleteDefenseByID" parameterClass="Integer">
+		DELETE FROM T_DEFENSE WHERE Defense_ID=#defenseID#
+	</delete>
+
+	<select id="getDefenseByID" parameterClass="Integer" resultClass="Defense">
+		SELECT DEFENSE_ID AS defenseID, NAME AS name, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, `RANGE` AS `range` FROM T_DEFENSE WHERE Defense_ID=#defenseID#
+	</select>
+
+	<select id="getDefenseList" resultClass="Defense">
+		SELECT DEFENSE_ID AS defenseID, NAME AS name, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, `RANGE` AS `range` FROM T_DEFENSE
+	</select>
+
+</sqlMap> 

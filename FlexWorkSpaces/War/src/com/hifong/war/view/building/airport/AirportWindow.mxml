@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="630" height="480" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.*" xmlns:ns2="com.hifong.war.view.building.heavyfactory.*" xmlns:ns3="com.hifong.war.view.building.airport.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.building.BuildingGrid;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				_buildingGrid = bg;
+				 this.pnlBuilding.buildingGrid = bg;
+				  //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function doInit():void{
+				initPlaneItem();
+			}
+			
+			
+			private function initPlaneItem():void{
+				var list:ArrayCollection = model.armyInfo.planeList;
+				
+				if(list && list.length>0){
+					var army:ArmyVO;
+					var cityArmy:CityArmyVO;
+					var planeItem:PlaneItemPanel ;
+					
+					for(var i:int=0; i<list.length; i++){
+						army = list.getItemAt(i) as ArmyVO;
+						cityArmy = model.armyInfo.nosetArmyMap[army.armyID] as CityArmyVO;
+						
+						//如果没有对应的未编制军队记录
+						if(cityArmy == null){
+							cityArmy = new CityArmyVO();
+							cityArmy.armyID = army.armyID;
+							cityArmy.cityArmyID = 0;
+							cityArmy.cityID = model.cityInfo.cityID;
+							cityArmy.num = 0;
+							cityArmy.state = 0;
+						}
+						
+						planeItem = new PlaneItemPanel();
+						planeItem.army = army;
+						planeItem.cityArmy = cityArmy;
+						planeItem.x = 10;
+						planeItem.y = i * (planeItem.height+5) + 5;
+						
+						this.pnlPlane.addChild(planeItem);
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name + BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<ns1:BuildingItemPanel x="25" y="37" id="pnlBuilding" width="580">
+	</ns1:BuildingItemPanel>
+	<mx:Canvas x="25" y="129" width="580" height="325" id="pnlPlane" styleName="CanvasBorder" horizontalScrollPolicy="off" verticalScrollPolicy="on">
+		<!--
+		<ns3:PlaneItemPanel x="10" y="10">
+		</ns3:PlaneItemPanel>-->
+	</mx:Canvas>
+	
+</mx:TitleWindow>

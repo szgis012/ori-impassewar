@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SERVER_IP>127.0.0.1</SERVER_IP>
+<SERVER_ENDPOINT>http://127.0.0.1:8080/War/messagebroker/amf</SERVER_ENDPOINT>
+<LOGIN_WEBSERVICE_WSDL>http://127.0.0.1:8080/War/webservice/PayWS?wsdl</LOGIN_WEBSERVICE_WSDL>
+
+<PAY_URL>http://127.0.0.1:8080/pay/yeepay.action</PAY_URL>
+
+<REG_URL>http://127.0.0.1:8080/register</REG_URL>
+<WEBSITE_URL>http://jd.52wyyx.com</WEBSITE_URL>
+
+<HELP_URL>http://jd.52wyyx.com</HELP_URL>
+<BBS_URL>http://bbs.52wyyx.com</BBS_URL>
+
+<LOGIN_NOTICE><![CDATA[绝地战争内测服务器正式开启<br />官方网站：<a href='http://jd.52wyyx.com' target='_blank'>http://jd.52wyyx.com</a><br />官方论坛：<a href='http://bbs.52wyyx.com' target='_blank'>http://bbs.52wyyx.com</a>]]></LOGIN_NOTICE>

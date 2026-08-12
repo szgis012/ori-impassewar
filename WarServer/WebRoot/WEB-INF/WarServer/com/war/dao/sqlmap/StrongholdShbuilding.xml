@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="StrongholdShbuilding">
+	<typeAlias alias="StrongholdShbuilding" type="com.war.domain.StrongholdShbuilding" />
+	
+	<insert id="createStrongholdShbuilding" parameterClass="StrongholdShbuilding">
+		INSERT INTO T_SH_SHBUILDING(SH_SHBUILDING_ID, STRONGHOLD_ID, SHBUILDING_ID, POSITION, LEVEL, STATE) VALUES(#shShbuildingID#, #strongholdID#, #shbuildingID#, #position#, #level#, #state#)
+		<selectKey resultClass="Integer" keyProperty="shShbuildingID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateStrongholdShbuilding" parameterClass="StrongholdShbuilding">
+		UPDATE T_SH_SHBUILDING SET STRONGHOLD_ID=#strongholdID#, SHBUILDING_ID=#shbuildingID#, POSITION=#position#, LEVEL=#level#, STATE=#state# WHERE Sh_Shbuilding_ID=#shShbuildingID#
+	</update>
+	
+	<delete id="deleteStrongholdShbuildingByID" parameterClass="Integer">
+		DELETE FROM T_SH_SHBUILDING WHERE Sh_Shbuilding_ID=#shShbuildingID#
+	</delete>
+	
+	<select id="getStrongholdShbuildingByID" parameterClass="Integer" resultClass="StrongholdShbuilding">
+		SELECT SH_SHBUILDING_ID AS shShbuildingID, STRONGHOLD_ID AS strongholdID, SHBUILDING_ID AS shbuildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_SH_SHBUILDING WHERE Sh_Shbuilding_ID=#shShbuildingID#
+	</select>
+	
+	<select id="getStrongholdShbuildingList" resultClass="StrongholdShbuilding">
+		SELECT SH_SHBUILDING_ID AS shShbuildingID, STRONGHOLD_ID AS strongholdID, SHBUILDING_ID AS shbuildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_SH_SHBUILDING
+	</select>
+	
+	<select id="getStrongholdBuildingListByStrongholdID" parameterClass="Integer" resultClass="StrongholdShbuilding">
+		SELECT SH_SHBUILDING_ID AS shShbuildingID, STRONGHOLD_ID AS strongholdID, SHBUILDING_ID AS shbuildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_SH_SHBUILDING WHERE STRONGHOLD_ID=#strongholdID#
+	</select>
+
+</sqlMap>

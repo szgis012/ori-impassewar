@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="90" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.DefenseVO;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.tooltip.ConstraintDependTooltip;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.constant.GlobalConstant;
+			import com.hifong.war.util.CityDefenseUtil;
+			import com.hifong.war.constant.CityDefenseTypeConstant;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.BuildingVO;
+			import com.hifong.war.vo.CityDefenseVO;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.vo.OrdnanceVO;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			// 当前防御工事信息
+			[Bindable]
+			private var _cityDefense:CityDefenseVO;
+			
+			//建筑信息
+			[Bindable]
+			private var building:DefenseVO;
+			
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean;
+			
+			public function set cityDefense(cd:CityDefenseVO):void{
+				this._cityDefense = cd;
+				building = CityDefenseUtil.getDefenseBuilding(cd.defenseID);
+				canCreate = BuildingUtil.meetAllConditions(building.nextConstraintDepend); 
+				
+			}
+			
+			private function doProduce():void{
+				var win:BuildDefenseWindow = new BuildDefenseWindow();
+				win.cityDefense = this._cityDefense;
+				win.building = this.building;
+				win.initData();//初始化绑定数据
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function showTooltip(event:ToolTipEvent):void{
+				event.toolTip = new ConstraintDependTooltip("建造",building.name,building.nextConstraintDepend);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Button x="77" y="39" label="建造" id="btnProduce" enabled="{canCreate}" width="60" click="doProduce()"  toolTip=" " toolTipCreate="showTooltip(event)" height="26"/>
+	<mx:TextArea x="145" y="30" width="384" height="50" text="{building.description}" editable="false" id="txtDesc">
+	</mx:TextArea>
+	<mx:Label x="295" y="6" text="数量：" fontWeight="bold" textAlign="left"/>
+	<mx:Text x="333" y="6" text="{_cityDefense.num}" width="160" id="txtOrdnanceNum" fontWeight="bold" textAlign="left"/>
+	<mx:Image x="11" y="19" width="60" height="60" source="{GlobalConstant.BUILDING_DIR_PREFIX + model.playerInfo.country + '/'+building.image}" toolTip="{building.description}"/>
+	<mx:Label x="146" y="6" text="{building.name}" width="141" textAlign="left" fontWeight="bold"/>
+	
+</mx:Canvas>

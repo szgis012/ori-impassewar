@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildIncExpHistory">
+	<typeAlias alias="GuildIncExpHistory" type="com.war.domain.GuildIncExpHistory" />
+
+	<insert id="createGuildIncExpHistory" parameterClass="GuildIncExpHistory">
+		INSERT INTO T_GUILD_INC_EXP_HISTORY(GUILD_ID, PLAYER_ID, MONEY, ORIFLAMME_LOWER_NUM, ORIFLAMME_INTERMEDIATE_NUM, ORIFLAMME_ADVANCED_NUM, TYPE, CREATE_TIME) VALUES(#guildID#, #playerID#, #money#, #oriflammeLowerNum#, #oriflammeIntermediateNum#, #oriflammeAdvancedNum#, #type#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="guildIncExpHistoryID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateGuildIncExpHistory" parameterClass="GuildIncExpHistory">
+		UPDATE T_GUILD_INC_EXP_HISTORY SET GUILD_ID=#guildID#, PLAYER_ID=#playerID#, MONEY=#money#, ORIFLAMME_LOWER_NUM=#oriflammeLowerNum#, ORIFLAMME_INTERMEDIATE_NUM=#oriflammeIntermediateNum#, ORIFLAMME_ADVANCED_NUM=#oriflammeAdvancedNum#, TYPE=#type#, CREATE_TIME=#createTime# WHERE GUILD_INC_EXP_HISTORY_ID=#guildIncExpHistoryID#
+	</update>
+
+	<delete id="deleteGuildIncExpHistoryByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_INC_EXP_HISTORY WHERE GUILD_INC_EXP_HISTORY_ID=#guildIncExpHistoryID#
+	</delete>
+
+	<select id="getGuildIncExpHistoryByID" parameterClass="Integer" resultClass="GuildIncExpHistory">
+		SELECT GUILD_INC_EXP_HISTORY_ID AS guildIncExpHistoryID, GUILD_ID AS guildID, PLAYER_ID AS playerID, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_INC_EXP_HISTORY WHERE GUILD_INC_EXP_HISTORY_ID=#guildIncExpHistoryID#
+	</select>
+
+	<select id="getGuildIncExpHistoryList" resultClass="GuildIncExpHistory">
+		SELECT GUILD_INC_EXP_HISTORY_ID AS guildIncExpHistoryID, GUILD_ID AS guildID, PLAYER_ID AS playerID, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_INC_EXP_HISTORY
+	</select>
+
+	<select id="getGuildIncExpHistoryListByType" parameterClass="Map" resultClass="GuildIncExpHistory">
+		SELECT GUILD_INC_EXP_HISTORY_ID AS guildIncExpHistoryID, GUILD_ID AS guildID, PLAYER_ID AS playerID, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_INC_EXP_HISTORY WHERE GUILD_ID=#guildID# AND TYPE=#type#
+	</select>
+
+	<select id="getGuildIncExpHistoryListByGuildIDAndPlayerID" parameterClass="Map" resultClass="GuildIncExpHistory">
+		SELECT GUILD_INC_EXP_HISTORY_ID AS guildIncExpHistoryID, GUILD_ID AS guildID, PLAYER_ID AS playerID, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_INC_EXP_HISTORY WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID# AND TYPE=#type#
+	</select>
+
+	<select id="getTotalIncExpOfGuildMemberInGuild" parameterClass="Map" resultClass="GuildIncExpHistory">
+		SELECT  GUILD_ID AS guildID, PLAYER_ID AS playerID, 
+		SUM(MONEY) AS money , 
+		SUM(ORIFLAMME_LOWER_NUM) AS oriflammeLowerNum, 
+		SUM(ORIFLAMME_INTERMEDIATE_NUM) AS oriflammeIntermediateNum, 
+		SUM(ORIFLAMME_ADVANCED_NUM) AS oriflammeAdvancedNum
+		FROM T_GUILD_INC_EXP_HISTORY  
+		<dynamic prepend="where">
+			<isNotNull prepend="and" property="guildID">
+			   GUILD_ID=#guildID# 
+			</isNotNull>
+			<isNotNull prepend="and" property="playerID">
+				PLAYER_ID=#playerID#
+			</isNotNull>
+			<isNotNull prepend="and" property="type">
+				TYPE=#type#
+			</isNotNull>
+		</dynamic>
+		GROUP BY PLAYER_ID
+	</select>
+
+</sqlMap>

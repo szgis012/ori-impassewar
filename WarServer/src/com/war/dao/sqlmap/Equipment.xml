@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Equipment">
+	<typeAlias alias="Equipment" type="com.war.domain.Equipment" />
+	
+	<insert id="createEquipment" parameterClass="Equipment">
+		INSERT INTO T_EQUIPMENT(EQUIPMENT_ID, NAME, IMAGE, COMMAND, DEFENSE, MIND, EXECUTIVEPOWER, REQUIRED_LEVEL, CATEGORY) VALUES(#equipmentID#, #name#, #image#, #command#, #defense#, #mind#, #executivepower#, #requiredLevel#, #category#)
+		<selectKey resultClass="Integer" keyProperty="equipmentID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateEquipment" parameterClass="Equipment">
+		UPDATE T_EQUIPMENT SET EQUIPMENT_ID=#equipmentID#, NAME=#name#, IMAGE=#image#, COMMAND=#command#, DEFENSE=#defense#, MIND=#mind#, EXECUTIVEPOWER=#executivepower#, REQUIRED_LEVEL=#requiredLevel#, CATEGORY=#category# WHERE EQUIPMENT_ID=#equipmentID#
+	</update>
+	
+	<delete id="deleteEquipmentByID" parameterClass="Integer">
+		DELETE FROM T_EQUIPMENT WHERE EQUIPMENT_ID=#equipmentID#
+	</delete>
+	
+	<select id="getEquipmentByID" parameterClass="Integer" resultClass="Equipment">
+		SELECT EQUIPMENT_ID AS equipmentID, NAME AS name, IMAGE AS image, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, REQUIRED_LEVEL AS requiredLevel, CATEGORY AS category FROM T_EQUIPMENT WHERE EQUIPMENT_ID=#equipmentID#
+	</select>
+	
+	<select id="getEquipmentList" resultClass="Equipment">
+		SELECT EQUIPMENT_ID AS equipmentID, NAME AS name, IMAGE AS image, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, REQUIRED_LEVEL AS requiredLevel, CATEGORY AS category FROM T_EQUIPMENT
+	</select>
+
+</sqlMap>

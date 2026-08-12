@@ -1,0 +1,12 @@
+/**
+ * 宝物编号:622
+ * 
+ * 名称：再生药水
+ * 描述：指挥官使用后如获新生，该药水能使指挥官等级恢复至一级，返还全部经验，每十级需要1瓶药水。
+
+ * 类型：指挥官
+ */
+
+def params = context.getParams();
+
+context.useRebornMedicament(params["cityHeroID"]);

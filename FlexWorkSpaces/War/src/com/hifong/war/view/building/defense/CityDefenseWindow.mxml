@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" close="doClose()" initialize="init()" width="630" height="490" showCloseButton="false" xmlns:ns2="com.hifong.war.view.building.armory.*" xmlns:ns1="com.hifong.war.view.building.defense.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.util.CityDefenseUtil;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.vo.BuildingVO;
+			import com.hifong.war.common.CityDefenseInfo;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.constant.CityDefenseTypeConstant;
+			import com.hifong.war.vo.CityDefenseVO;
+			import com.hifong.war.model.ModelLocator;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 监视城防建造队列的改变*/
+			private var defenseProcessListWatcher:ChangeWatcher;
+			
+			/** 监视cityDefenseMap的改变*/
+			private var cityDefenseMapWatcher:ChangeWatcher;
+			
+			/** 计时器*/
+			private var processTimer:Timer;
+			
+			
+			private function init():void{
+				bindCityDefense();
+				tuneWindow();
+				
+				cityDefenseMapWatcher = ChangeWatcher.watch(model.cityDefenseInfo,"cityDefenseMap",onCityDefenseMapChange);
+				defenseProcessListWatcher = ChangeWatcher.watch(model.cityDefenseInfo,"defenseProcessList",onDefenseProcessListChange);
+			}
+			
+			private function bindCityDefense():void{
+				//防御工事
+				var cd:CityDefenseVO = model.cityDefenseInfo.cityDefenseMap[CityDefenseTypeConstant.ANTIGUN] as CityDefenseVO;
+				this.pnlAntigun.cityDefense = cd;
+				cd = model.cityDefenseInfo.cityDefenseMap[CityDefenseTypeConstant.GUN] as CityDefenseVO;
+				this.pnlGun.cityDefense = cd;
+				cd = model.cityDefenseInfo.cityDefenseMap[CityDefenseTypeConstant.BUNKER] as CityDefenseVO;
+				this.pnlBunker.cityDefense = cd;
+				cd = model.cityDefenseInfo.cityDefenseMap[CityDefenseTypeConstant.FENCE] as CityDefenseVO;
+				this.pnlFence.cityDefense = cd;
+			}
+			
+			//cityDefenseMap改变时的处理
+			private function onCityDefenseMapChange(event:Object):void{
+				//重新绑定
+				bindCityDefense();
+			}
+			
+			//建造进程更改时的处理 
+			private function onDefenseProcessListChange(event:Object):void{
+				tuneWindow();
+			}
+			
+			//根据是否有建筑进程调整窗口的大小
+			private function tuneWindow():void{
+				var dplist:ArrayCollection = model.cityDefenseInfo.defenseProcessList;
+				
+				//有建筑进程,显示进程进程面板
+				if(dplist && dplist.length>0){
+					var process:ProductionQueueVO = dplist.getItemAt(0) as ProductionQueueVO;
+					var cd:CityDefenseVO = model.cityDefenseInfo.getCityDefense(process.targetID) as CityDefenseVO;
+					this.pnlProcess.currentDefenseBuilding = CityDefenseUtil.getDefenseBuilding(cd.defenseID);
+					this.pnlProcess.currentDefenseProcess = process;
+					//先计算，避免时间显示延迟1秒钟
+					updateDefenseProcess();
+					startTimer();
+					this.pnlNoTask.visible = false;
+					this.pnlProcess.visible = true;
+					
+					this.pnlDefense.y =  246;
+					this.pnlDefense.height = 222;
+					
+				}else{
+					stopTimer();
+					this.pnlProcess.visible = false;
+					this.pnlNoTask.visible = true;
+					
+					this.pnlDefense.y =  200;
+					this.pnlDefense.height = 268;
+				}
+			}
+			
+			//启动计时器
+			private function startTimer():void{
+				if(processTimer){
+					return;
+				}
+				
+				processTimer = new Timer(1000);
+				processTimer.addEventListener(TimerEvent.TIMER,onTime);
+				processTimer.start();
+			}
+			
+			//更新进程时间
+			private function onTime(event:TimerEvent):void{
+				var defenseProcessList:ArrayCollection = model.cityDefenseInfo.defenseProcessList;
+				
+				if(defenseProcessList && defenseProcessList.length>0){
+					updateDefenseProcess();
+				}else{
+					//如果没有了进程就刷新界面显示
+					tuneWindow();
+				}
+			
+			}
+			
+			//更新进程信息
+			private function updateDefenseProcess():void{
+				var defenseProcessList:ArrayCollection = model.cityDefenseInfo.defenseProcessList;
+				//获得正在建造的进程
+				var process:ProductionQueueVO = defenseProcessList.getItemAt(0) as ProductionQueueVO;
+				
+				var str:String = "需时：";
+				var leavingSeconds:Number = Math.max(0,Math.floor((process.finishTime.time - model.serverTime.time )/1000));
+				str += DateFormatUtil.convertSecondToTime(Math.floor(leavingSeconds));
+				//获得最后的进程,根据最后建造时间计算总剩余时间
+				process = defenseProcessList.getItemAt(defenseProcessList.length - 1) as ProductionQueueVO;
+				var totalSeconds:Number = Math.max(0,Math.floor((process.finishTime.time - model.serverTime.time )/1000));
+				
+				this.pnlProcess.lblTotalTime.text = DateFormatUtil.convertSecondToTime(totalSeconds);
+				this.pnlProcess.lblNeedTime.text = str;
+			}
+				
+			
+			//关闭计时器
+			private function stopTimer():void{
+				if(processTimer){
+					processTimer.removeEventListener(TimerEvent.TIMER,onTime);
+					processTimer.stop();
+					processTimer = null;
+				}
+			}
+			
+			private function doClose():void{
+				stopTimer();
+				defenseProcessListWatcher.unwatch();
+				cityDefenseMapWatcher.unwatch();
+				WindowUtil.closeWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="防御工事" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="580" height="80" styleName="CanvasBorder">
+		<mx:TextArea x="10" y="10" width="560" height="60" text="城防是城市的防御利器，当城市受到攻击时，城防将会参加战斗，阻挡敌人进入城市，并攻击敌人的部队。如果城中没有军队，当城防被攻陷之后，城市也将被攻陷。&#xa;" editable="false"/>
+	</mx:Canvas>
+	<ns1:BuildDefenseProcessPanel x="25" y="168" id="pnlProcess"  visible="false">
+	</ns1:BuildDefenseProcessPanel>
+	<mx:Canvas x="25" y="157" width="580" height="306" id="pnlDefense" styleName="CanvasBorder" horizontalScrollPolicy="off" verticalScrollPolicy="on">
+		<ns1:DefenseItemPanel x="10" y="10" id="pnlFence">
+		</ns1:DefenseItemPanel>
+		<ns1:DefenseItemPanel x="10" y="108" id="pnlBunker">
+		</ns1:DefenseItemPanel>
+		<ns1:DefenseItemPanel x="10" y="206" id="pnlGun">
+		</ns1:DefenseItemPanel>
+		<ns1:DefenseItemPanel x="9" y="304" id="pnlAntigun">
+		</ns1:DefenseItemPanel>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="125" width="580" height="24" styleName="CanvasBorder" id="pnlNoTask" visible="true">
+		<mx:Text x="10" y="3" text="目前没有任何建造任务！" width="560"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

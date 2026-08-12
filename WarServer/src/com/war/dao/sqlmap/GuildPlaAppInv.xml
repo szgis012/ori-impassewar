@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildPlaAppInv">
+	<typeAlias alias="GuildPlaAppInv" type="com.war.domain.GuildPlaAppInv" />
+	
+	<insert id="createGuildPlaAppInv" parameterClass="GuildPlaAppInv">
+		INSERT INTO T_GUILD_PLA_APP_INV(GUILD_ID, PLAYER_ID, TYPE, CREATE_TIME) VALUES(#guildID#, #playerID#, #type#, SYSDATE())
+	</insert>
+	
+	<delete id="deleteGuildPlaAppInv" parameterClass="GuildPlaAppInv">
+		DELETE FROM T_GUILD_PLA_APP_INV WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID#
+	</delete>
+	
+	<delete id="deleteGuildPlaAppInvsByGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_PLA_APP_INV WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<delete id="deleteGuildPlaAppInvsByPlayerID" parameterClass="Integer">
+		DELETE FROM T_GUILD_PLA_APP_INV WHERE PLAYER_ID=#playerID#
+	</delete>
+	
+	<select id="getGuildPlaAppInvByGuildIDAndPlayerID" parameterClass="HashMap" resultClass="GuildPlaAppInv">
+		SELECT GUILD_ID AS guildID, PLAYER_ID AS playerID, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_PLA_APP_INV WHERE GUILD_ID=#guildID# AND PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getGuildPlaAppInvListByPlayerID" parameterClass="Integer" resultClass="GuildPlaAppInv">
+		SELECT GUILD_ID AS guildID, PLAYER_ID AS playerID, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_PLA_APP_INV WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getGuildPlaAppInvList" parameterClass="Integer" resultClass="GuildPlaAppInv">
+		SELECT GUILD_ID AS guildID, PLAYER_ID AS playerID, TYPE AS type, CREATE_TIME AS createTime FROM T_GUILD_PLA_APP_INV WHERE GUILD_ID=#guildID#
+	</select>
+
+</sqlMap>

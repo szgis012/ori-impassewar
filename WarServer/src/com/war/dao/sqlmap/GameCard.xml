@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GameCard">
+	<typeAlias alias="GameCard" type="com.war.domain.GameCard" />
+	
+	<insert id="createGameCard" parameterClass="GameCard">
+		INSERT INTO T_GAME_CARD(GAME_CARD_NO, TYPE, STATE) VALUES(#gameCardNO#, #type#, #state#)
+	</insert>
+	
+	<update id="updateStateByGameCardNOAndType" parameterClass="java.util.Map">
+		UPDATE T_GAME_CARD SET STATE=#state# WHERE GAME_CARD_NO=#gameCardNO# AND TYPE=#type#
+	</update>
+	
+	<select id="getMaxGameCardIDByType" parameterClass="Integer" resultClass="Integer">
+		SELECT SUBSTRING(GAME_CARD_NO,1,5) ID FROM T_GAME_CARD WHERE TYPE=#type# ORDER BY ID DESC LIMIT 0,1
+	</select>
+	
+	<select id="getGameCardByGameCardNOAndType" parameterClass="java.util.Map" resultClass="GameCard">
+		SELECT GAME_CARD_NO AS gameCardNO, TYPE AS type, STATE AS state FROM T_GAME_CARD WHERE GAME_CARD_NO=#gameCardNO# AND TYPE=#type#
+	</select>
+	
+</sqlMap>

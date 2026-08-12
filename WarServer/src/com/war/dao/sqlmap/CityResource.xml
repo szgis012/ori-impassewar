@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityResource">
+    <typeAlias alias="CityResource" type="com.war.domain.CityResource" />
+    <typeAlias alias="CityInfo" type="com.war.domain.CityInfo" />
+	
+	<insert id="createCityResource" parameterClass="CityResource">
+		INSERT INTO T_CITY_RESOURCE(CITY_ID, RESOURCE_NUM_MAX, WOOD_NUM, WOOD_OUTPUT, WOOD_WORKER_NUM, WOOD_BUILDING_ADD, WOOD_TECH_ADD, WOOD_FIELD_ADD, WOOD_OFFICER_ADD, WOOD_GUILD_ADD, WOOD_TREASURE_ADD, STEEL_NUM, STEEL_OUTPUT, STEEL_WORKER_NUM, STEEL_BUILDING_ADD, STEEL_TECH_ADD, STEEL_FIELD_ADD, STEEL_OFFICER_ADD, STEEL_GUILD_ADD, STEEL_TREASURE_ADD, OIL_NUM, OIL_OUTPUT, OIL_WORKER_NUM, OIL_BUILDING_ADD, OIL_TECH_ADD, OIL_FIELD_ADD, OIL_OFFICER_ADD, OIL_GUILD_ADD, OIL_TREASURE_ADD, OIL_CONSUME, FOOD_NUM, FOOD_OUTPUT, FOOD_WORKER_NUM, FOOD_BUILDING_ADD, FOOD_TECH_ADD, FOOD_FIELD_ADD, FOOD_OFFICER_ADD, FOOD_GUILD_ADD, FOOD_TREASURE_ADD, FOOD_CONSUME, MONEY_NUM, MONEY_OUTPUT, MONEY_TECH_ADD, MONEY_FIELD_ADD, MONEY_OFFICER_ADD, MONEY_GUILD_ADD, MONEY_TREASURE_ADD, MONEY_CONSUME) VALUES(#cityID#, #resourceNumMax#, #woodNum#, #woodOutput#, #woodWorkerNum#, #woodBuildingAdd#, #woodTechAdd#, #woodFieldAdd#, #woodOfficerAdd#, #woodGuildAdd#, #woodTreasureAdd#, #steelNum#, #steelOutput#, #steelWorkerNum#, #steelBuildingAdd#, #steelTechAdd#, #steelFieldAdd#, #steelOfficerAdd#, #steelGuildAdd#, #steelTreasureAdd#, #oilNum#, #oilOutput#, #oilWorkerNum#, #oilBuildingAdd#, #oilTechAdd#, #oilFieldAdd#, #oilOfficerAdd#, #oilGuildAdd#, #oilTreasureAdd#, #oilConsume#, #foodNum#, #foodOutput#, #foodWorkerNum#, #foodBuildingAdd#, #foodTechAdd#, #foodFieldAdd#, #foodOfficerAdd#, #foodGuildAdd#, #foodTreasureAdd#, #foodConsume#, #moneyNum#, #moneyOutput#, #moneyTechAdd#, #moneyFieldAdd#, #moneyOfficerAdd#, #moneyGuildAdd#, #moneyTreasureAdd#, #moneyConsume#)
+	</insert>
+
+	<update id="updateCityResource" parameterClass="CityResource">
+		UPDATE T_CITY_RESOURCE SET CITY_ID=#cityID#, RESOURCE_NUM_MAX=#resourceNumMax#, WOOD_NUM=#woodNum#, WOOD_OUTPUT=#woodOutput#, WOOD_WORKER_NUM=#woodWorkerNum#, WOOD_BUILDING_ADD=#woodBuildingAdd#, WOOD_TECH_ADD=#woodTechAdd#, WOOD_FIELD_ADD=#woodFieldAdd#, WOOD_OFFICER_ADD=#woodOfficerAdd#, WOOD_GUILD_ADD=#woodGuildAdd#, WOOD_TREASURE_ADD=#woodTreasureAdd#, STEEL_NUM=#steelNum#, STEEL_OUTPUT=#steelOutput#, STEEL_WORKER_NUM=#steelWorkerNum#, STEEL_BUILDING_ADD=#steelBuildingAdd#, STEEL_TECH_ADD=#steelTechAdd#, STEEL_FIELD_ADD=#steelFieldAdd#, STEEL_OFFICER_ADD=#steelOfficerAdd#, STEEL_GUILD_ADD=#steelGuildAdd#, STEEL_TREASURE_ADD=#steelTreasureAdd#, OIL_NUM=#oilNum#, OIL_OUTPUT=#oilOutput#, OIL_WORKER_NUM=#oilWorkerNum#, OIL_BUILDING_ADD=#oilBuildingAdd#, OIL_TECH_ADD=#oilTechAdd#, OIL_FIELD_ADD=#oilFieldAdd#, OIL_OFFICER_ADD=#oilOfficerAdd#, OIL_GUILD_ADD=#oilGuildAdd#, OIL_TREASURE_ADD=#oilTreasureAdd#, OIL_CONSUME=#oilConsume#, FOOD_NUM=#foodNum#, FOOD_OUTPUT=#foodOutput#, FOOD_WORKER_NUM=#foodWorkerNum#, FOOD_BUILDING_ADD=#foodBuildingAdd#, FOOD_TECH_ADD=#foodTechAdd#, FOOD_FIELD_ADD=#foodFieldAdd#, FOOD_OFFICER_ADD=#foodOfficerAdd#, FOOD_GUILD_ADD=#foodGuildAdd#, FOOD_TREASURE_ADD=#foodTreasureAdd#, FOOD_CONSUME=#foodConsume#, MONEY_NUM=#moneyNum#, MONEY_OUTPUT=#moneyOutput#, MONEY_TECH_ADD=#moneyTechAdd#, MONEY_FIELD_ADD=#moneyFieldAdd#, MONEY_OFFICER_ADD=#moneyOfficerAdd#, MONEY_GUILD_ADD=#moneyGuildAdd#, MONEY_TREASURE_ADD=#moneyTreasureAdd#, MONEY_CONSUME=#moneyConsume# WHERE City_ID=#cityID#
+	</update>
+
+	<delete id="deleteCityResourceByCityID" parameterClass="Integer">
+		DELETE FROM T_CITY_RESOURCE WHERE City_ID=#cityID#
+	</delete>
+
+	<select id="getCityResourceByCityID" parameterClass="Integer" resultClass="CityResource">
+		SELECT CITY_ID AS cityID, RESOURCE_NUM_MAX AS resourceNumMax, WOOD_NUM AS woodNum, WOOD_OUTPUT AS woodOutput, WOOD_WORKER_NUM AS woodWorkerNum, WOOD_BUILDING_ADD AS woodBuildingAdd, WOOD_TECH_ADD AS woodTechAdd, WOOD_FIELD_ADD AS woodFieldAdd, WOOD_OFFICER_ADD AS woodOfficerAdd, WOOD_GUILD_ADD AS woodGuildAdd, WOOD_TREASURE_ADD AS woodTreasureAdd, STEEL_NUM AS steelNum, STEEL_OUTPUT AS steelOutput, STEEL_WORKER_NUM AS steelWorkerNum, STEEL_BUILDING_ADD AS steelBuildingAdd, STEEL_TECH_ADD AS steelTechAdd, STEEL_FIELD_ADD AS steelFieldAdd, STEEL_OFFICER_ADD AS steelOfficerAdd, STEEL_GUILD_ADD AS steelGuildAdd, STEEL_TREASURE_ADD AS steelTreasureAdd, OIL_NUM AS oilNum, OIL_OUTPUT AS oilOutput, OIL_WORKER_NUM AS oilWorkerNum, OIL_BUILDING_ADD AS oilBuildingAdd, OIL_TECH_ADD AS oilTechAdd, OIL_FIELD_ADD AS oilFieldAdd, OIL_OFFICER_ADD AS oilOfficerAdd, OIL_GUILD_ADD AS oilGuildAdd, OIL_TREASURE_ADD AS oilTreasureAdd, OIL_CONSUME AS oilConsume, FOOD_NUM AS foodNum, FOOD_OUTPUT AS foodOutput, FOOD_WORKER_NUM AS foodWorkerNum, FOOD_BUILDING_ADD AS foodBuildingAdd, FOOD_TECH_ADD AS foodTechAdd, FOOD_FIELD_ADD AS foodFieldAdd, FOOD_OFFICER_ADD AS foodOfficerAdd, FOOD_GUILD_ADD AS foodGuildAdd, FOOD_TREASURE_ADD AS foodTreasureAdd, FOOD_CONSUME AS foodConsume, MONEY_NUM AS moneyNum, MONEY_OUTPUT AS moneyOutput, MONEY_TECH_ADD AS moneyTechAdd, MONEY_FIELD_ADD AS moneyFieldAdd, MONEY_OFFICER_ADD AS moneyOfficerAdd, MONEY_GUILD_ADD AS moneyGuildAdd, MONEY_TREASURE_ADD AS moneyTreasureAdd, MONEY_CONSUME AS moneyConsume FROM T_CITY_RESOURCE WHERE City_ID=#cityID#
+	</select>
+
+	<select id="getCityResourceList" resultClass="CityResource">
+		SELECT CITY_ID AS cityID, RESOURCE_NUM_MAX AS resourceNumMax, WOOD_NUM AS woodNum, WOOD_OUTPUT AS woodOutput, WOOD_WORKER_NUM AS woodWorkerNum, WOOD_BUILDING_ADD AS woodBuildingAdd, WOOD_TECH_ADD AS woodTechAdd, WOOD_FIELD_ADD AS woodFieldAdd, WOOD_OFFICER_ADD AS woodOfficerAdd, WOOD_GUILD_ADD AS woodGuildAdd, WOOD_TREASURE_ADD AS woodTreasureAdd, STEEL_NUM AS steelNum, STEEL_OUTPUT AS steelOutput, STEEL_WORKER_NUM AS steelWorkerNum, STEEL_BUILDING_ADD AS steelBuildingAdd, STEEL_TECH_ADD AS steelTechAdd, STEEL_FIELD_ADD AS steelFieldAdd, STEEL_OFFICER_ADD AS steelOfficerAdd, STEEL_GUILD_ADD AS steelGuildAdd, STEEL_TREASURE_ADD AS steelTreasureAdd, OIL_NUM AS oilNum, OIL_OUTPUT AS oilOutput, OIL_WORKER_NUM AS oilWorkerNum, OIL_BUILDING_ADD AS oilBuildingAdd, OIL_TECH_ADD AS oilTechAdd, OIL_FIELD_ADD AS oilFieldAdd, OIL_OFFICER_ADD AS oilOfficerAdd, OIL_GUILD_ADD AS oilGuildAdd, OIL_TREASURE_ADD AS oilTreasureAdd, OIL_CONSUME AS oilConsume, FOOD_NUM AS foodNum, FOOD_OUTPUT AS foodOutput, FOOD_WORKER_NUM AS foodWorkerNum, FOOD_BUILDING_ADD AS foodBuildingAdd, FOOD_TECH_ADD AS foodTechAdd, FOOD_FIELD_ADD AS foodFieldAdd, FOOD_OFFICER_ADD AS foodOfficerAdd, FOOD_GUILD_ADD AS foodGuildAdd, FOOD_TREASURE_ADD AS foodTreasureAdd, FOOD_CONSUME AS foodConsume, MONEY_NUM AS moneyNum, MONEY_OUTPUT AS moneyOutput, MONEY_TECH_ADD AS moneyTechAdd, MONEY_FIELD_ADD AS moneyFieldAdd, MONEY_OFFICER_ADD AS moneyOfficerAdd, MONEY_GUILD_ADD AS moneyGuildAdd, MONEY_TREASURE_ADD AS moneyTreasureAdd, MONEY_CONSUME AS moneyConsume FROM T_CITY_RESOURCE
+	</select>
+	
+	<update id="updateResources" parameterClass="CityResource">
+        UPDATE T_CITY_RESOURCE SET WOOD_NUM=#woodNum#, STEEL_NUM=#steelNum#, OIL_NUM=#oilNum#, FOOD_NUM=#foodNum#, MONEY_NUM=#moneyNum# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <update id="updateResourcesByCityID" parameterClass="HashMap">
+        UPDATE T_CITY_RESOURCE SET WOOD_NUM=#woodNum#, STEEL_NUM=#steelNum#, OIL_NUM=#oilNum#, FOOD_NUM=#foodNum#, MONEY_NUM=#moneyNum# WHERE CITY_ID=#cityID#
+    </update>
+
+    <update id="updateResourcesMaxByCityID" parameterClass="HashMap">
+        UPDATE T_CITY_RESOURCE SET RESOURCE_NUM_MAX=#resourceNumMax# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <update id="updateResourcesOutputByCityID" parameterClass="HashMap">
+        UPDATE T_CITY_RESOURCE SET WOOD_OUTPUT=#woodOutput#, STEEL_OUTPUT=#steelOutput#, OIL_OUTPUT=#oilOutput#, FOOD_OUTPUT=#foodOutput# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <update id="updateResourceConsumeByCityID" parameterClass="HashMap">
+    	UPDATE T_CITY_RESOURCE SET OIL_CONSUME=#oilConsume#, FOOD_CONSUME=#foodConsume#, MONEY_CONSUME=#moneyConsume# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <update id="addCityResourcesByCityID" parameterClass="HashMap">
+        UPDATE T_CITY_RESOURCE SET WOOD_NUM=WOOD_NUM+#woodNum#, STEEL_NUM=STEEL_NUM+#steelNum#, OIL_NUM=OIL_NUM+#oilNum#, FOOD_NUM=FOOD_NUM+#foodNum#, MONEY_NUM=MONEY_NUM+#moneyNum# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <update id="minusCityResourcesByCityID" parameterClass="HashMap">
+        UPDATE T_CITY_RESOURCE SET WOOD_NUM=WOOD_NUM-#woodNum#, STEEL_NUM=STEEL_NUM-#steelNum#, OIL_NUM=OIL_NUM-#oilNum#, FOOD_NUM=FOOD_NUM-#foodNum#, MONEY_NUM=MONEY_NUM-#moneyNum# WHERE CITY_ID=#cityID#
+    </update>
+    
+    <select id="getResourcesNumByCityID" parameterClass="Integer" resultClass="HashMap">
+        SELECT WOOD_NUM AS woodNum, STEEL_NUM AS steelNum, OIL_NUM AS oilNum, FOOD_NUM AS foodNum, MONEY_NUM AS moneyNum FROM T_CITY_RESOURCE WHERE CITY_ID=#cityID#
+    </select>
+    
+    <select id="getResourcesNumMaxByCityID" parameterClass="Integer" resultClass="java.lang.Long">
+        SELECT RESOURCE_NUM_MAX AS resourceNumMax FROM T_CITY_RESOURCE WHERE CITY_ID=#cityID#
+    </select>
+    
+    <select id="getResourcesOutputByCityID" parameterClass="Integer" resultClass="HashMap">
+        SELECT WOOD_OUTPUT AS woodOutput, STEEL_OUTPUT AS steelOutput, OIL_OUTPUT AS oilOutput, FOOD_OUTPUT AS foodOutput, MONEY_OUTPUT AS moneyOutput FROM T_CITY_RESOURCE WHERE CITY_ID=#cityID#
+    </select>
+    
+    <select id="getResourcesConsumeByCityID" parameterClass="Integer" resultClass="HashMap">
+        SELECT OIL_CONSUME AS oilConsume, FOOD_CONSUME AS foodConsume, MONEY_CONSUME AS moneyConsume FROM T_CITY_RESOURCE WHERE CITY_ID=#cityID#
+    </select>
+	
+    <update id="updateCityResourceParams" parameterClass="HashMap">
+    	UPDATE T_CITY_RESOURCE
+    	<dynamic prepend="SET">
+            <isNotNull prepend="," property="woodNum">
+                WOOD_NUM=#woodNum#
+            </isNotNull>
+            <isNotNull prepend="," property="resourceNumMax">
+                RESOURCE_NUM_MAX=#resourceNumMax#
+            </isNotNull>
+            <isNotNull prepend="," property="woodOutput">
+                WOOD_OUTPUT=#woodOutput#
+            </isNotNull>
+            <isNotNull prepend="," property="woodWorkerNum">
+                WOOD_WORKER_NUM=#woodWorkerNum#
+            </isNotNull>
+            <isNotNull prepend="," property="woodBuildingAdd">
+                WOOD_BUILDING_ADD=#woodBuildingAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="woodTechAdd">
+                WOOD_TECH_ADD=#woodTechAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="woodFieldAdd">
+                WOOD_FIELD_ADD=#woodFieldAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="woodOfficerAdd">
+                WOOD_OFFICER_ADD=#woodOfficerAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="woodGuildAdd">
+                WOOD_GUILD_ADD=#woodGuildAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="woodTreasureAdd">
+                WOOD_TREASURE_ADD=#woodTreasureAdd#
+            </isNotNull>
+    		<isNotNull prepend="," property="steelNum">
+                STEEL_NUM=#steelNum#
+            </isNotNull>
+            <isNotNull prepend="," property="steelOutput">
+                STEEL_OUTPUT=#steelOutput#
+            </isNotNull>
+    		<isNotNull prepend="," property="steelWorkerNum">
+    			STEEL_WORKER_NUM=#steelWorkerNum#
+    		</isNotNull>
+    		<isNotNull prepend="," property="steelBuildingAdd">
+                STEEL_BUILDING_ADD=#steelBuildingAdd#
+            </isNotNull>
+    		<isNotNull prepend="," property="steelTechAdd">
+                STEEL_TECH_ADD=#steelTechAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="steelFieldAdd">
+                STEEL_FIELD_ADD=#steelFieldAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="steelOfficerAdd">
+                STEEL_OFFICER_ADD=#steelOfficerAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="steelGuildAdd">
+                STEEL_GUILD_ADD=#steelGuildAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="steelTreasureAdd">
+                STEEL_TREASURE_ADD=#steelTreasureAdd#
+            </isNotNull>
+    		<isNotNull prepend="," property="oilNum">
+                OIL_NUM=#oilNum#
+            </isNotNull>
+            <isNotNull prepend="," property="oilOutput">
+                OIL_OUTPUT=#oilOutput#
+            </isNotNull>
+    		<isNotNull prepend="," property="oilWorkerNum">
+    			OIL_WORKER_NUM=#oilWorkerNum#
+    		</isNotNull>
+    		<isNotNull prepend="," property="oilBuildingAdd">
+                OIL_BUILDING_ADD=#oilBuildingAdd#
+            </isNotNull>
+    		<isNotNull prepend="," property="oilTechAdd">
+                OIL_TECH_ADD=#oilTechAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="oilFieldAdd">
+                OIL_FIELD_ADD=#oilFieldAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="oilOfficerAdd">
+                OIL_OFFICER_ADD=#oilOfficerAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="oilGuildAdd">
+                OIL_GUILD_ADD=#oilGuildAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="oilTreasureAdd">
+                OIL_TREASURE_ADD=#oilTreasureAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="oilConsume">
+                OIL_CONSUME=#oilConsume#
+            </isNotNull>
+    		<isNotNull prepend="," property="foodNum">
+                FOOD_NUM=#foodNum#
+            </isNotNull>
+            <isNotNull prepend="," property="foodOutput">
+                FOOD_OUTPUT=#foodOutput#
+            </isNotNull>
+    		<isNotNull prepend="," property="foodWorkerNum">
+    			FOOD_WORKER_NUM=#foodWorkerNum#
+    		</isNotNull>
+    		<isNotNull prepend="," property="foodBuildingAdd">
+                FOOD_BUILDING_ADD=#foodBuildingAdd#
+            </isNotNull>
+    		<isNotNull prepend="," property="foodTechAdd">
+                FOOD_TECH_ADD=#foodTechAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="foodFieldAdd">
+                FOOD_FIELD_ADD=#foodFieldAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="foodOfficerAdd">
+                FOOD_OFFICER_ADD=#foodOfficerAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="foodGuildAdd">
+                FOOD_GUILD_ADD=#foodGuildAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="foodTreasureAdd">
+                FOOD_TREASURE_ADD=#foodTreasureAdd#
+            </isNotNull>
+            <isNotNull prepend="," property="foodConsume">
+                FOOD_CONSUME=#foodConsume#
+            </isNotNull>
+    		<isNotNull prepend="," property="moneyNum">
+    			MONEY_NUM=#moneyNum#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyOutput">
+    			MONEY_OUTPUT=#moneyOutput#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyTechAdd">
+    			MONEY_TECH_ADD=#moneyTechAdd#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyFieldAdd">
+    			MONEY_FIELD_ADD=#moneyFieldAdd#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyOfficerAdd">
+    			MONEY_OFFICER_ADD=#moneyOfficerAdd#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyGuildAdd">
+    			MONEY_GUILD_ADD=#moneyGuildAdd#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyTreasureAdd">
+    			MONEY_TREASURE_ADD=#moneyTreasureAdd#
+    		</isNotNull>
+    		<isNotNull prepend="," property="moneyConsume">
+    			MONEY_CONSUME=#moneyConsume#
+    		</isNotNull>
+    	</dynamic>
+    	 WHERE CITY_ID=#cityID#
+    </update>
+    
+	<procedure id="computeCityResource">
+		<![CDATA[{CALL COMPUTE_CITY_RESOURCE() }]]>
+	</procedure>
+    
+    <select id="getCityListOfResourceZero" resultClass="CityInfo">
+        <![CDATA[
+        	SELECT c.CITY_ID AS cityID, c.PLAYER_ID AS playerID, c.POSX AS posX, c.POSY AS posY, c.NAME AS name, c.STATE AS state, c.CONSTRUCTION_POINT AS constructionPoint, c.TECHNOLOGY_POINT AS technologyPoint, c.POPULATION_FREE AS populationFree, c.POPULATION_TOTAL AS populationTotal, c.POPULATION_MAX AS populationMax, c.RECRUIT_NUM AS recruitNum, c.TAX AS tax, c.SECURITY AS security, c.OFFICER AS officer, c.DEFENSIVE_MILITARY AS defensiveMilitary, c.BUSINESSMAN_FREE AS businessmanFree, c.CREATETIME AS createtime FROM T_CITY c INNER JOIN T_CITY_RESOURCE r ON c.CITY_ID = r.CITY_ID WHERE MONEY_NUM<=0 OR FOOD_NUM<=0 OR OIL_NUM<=0
+        ]]>
+    </select>
+    
+</sqlMap>

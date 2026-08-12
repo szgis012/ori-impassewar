@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow layout="absolute" xmlns:mx="http://www.adobe.com/2006/mxml" width="310" height="165" styleName="SimpleBorder" initialize="doInit()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.CityHeroVO;
+			import com.hifong.war.events.building.militarycollege.HeroRenameEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			public var model:ModelLocator = ModelLocator.getInstance();
+			
+			private function doInit():void{
+				newHeroName.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function heroRename():void{
+				
+				if(StringUtil.trim(newHeroName.text).length==0){
+					MsgBox.showMessage("请输入指挥官新名称");
+					return;
+				}
+				model.currentCityHero.name = newHeroName.text;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new HeroRenameEvent(model.currentCityHero.cityHeroID,model.currentCityHero.name));
+				
+				doClose();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官改名" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="260" height="102" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="指挥官名称："/>
+		<mx:Label x="95" y="10" text="{model.currentCityHero.name}"/>
+		<mx:Label x="10" y="38" text="新   名   称："/>
+		<mx:TextInput id="newHeroName" x="95" y="37" width="155" maxChars="4"/>
+		<mx:Button x="180" y="67" label="确定" click="heroRename()"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

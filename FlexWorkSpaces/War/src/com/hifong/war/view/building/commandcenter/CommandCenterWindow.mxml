@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" initialize="doInit()" layout="absolute" width="650" height="450" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.*" xmlns:ns2="com.hifong.war.view.building.commandcenter.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.guild.GuildManageWindow;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.events.building.commandcenter.GetCityMilitaryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.building.BuildingGrid;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityHeroListEvent(model.cityInfo.cityID));
+			}
+
+			public function set buildingGrid(bg:BuildingGrid):void{
+				 this._buildingGrid = bg;
+				this.pnlBuilding.buildingGrid = bg;
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			private function doClose():void{
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doArmyOrgnization():void{
+				var win:MilitaryOrganization = new MilitaryOrganization();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doArmyManage():void{
+				var win:MilitaryManage = new MilitaryManage();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doArmyCommand():void{
+				var win:MilitaryCommandWindow = new MilitaryCommandWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doGuildManage():void{
+				var win:GuildManageWindow = new GuildManageWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doStayMilitary():void{
+				var win:StayMilitaryWindow = new StayMilitaryWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			/** 伤兵营 */
+			private function doSickArmy():void{
+				var win:WoundArmyWindow=new WoundArmyWindow();
+				WindowUtil.showModelWindow(win);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="指挥中心" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<ns1:BuildingItemPanel x="25" y="37" id="pnlBuilding" width="600" height="84">
+	</ns1:BuildingItemPanel>
+	<mx:Canvas x="25" y="129" width="600" height="45" styleName="CanvasBorder">
+		<mx:Button x="5" y="10" label="军队信息" width="80" height="26"/>
+		<mx:Button x="91" y="10" label="军队指挥" click="doArmyCommand()" width="80" height="26"/>
+		<mx:Button x="177" y="10" label="军队编制" click="doArmyOrgnization()" width="80" height="26"/>
+		<mx:Button x="263" y="10" label="军队管理" click="doArmyManage()" width="80" height="26"/>
+		<mx:Button x="351" y="10" label="留守军队" click="doStayMilitary()" width="80" height="26"/>
+		<mx:Button x="439" y="10" label="军团管理" click="doGuildManage()" width="80" height="26"/>
+		<!--新加的伤病营-->
+		<mx:Button x="526" y="10" label="伤病营" click="doSickArmy()" width="65" height="26"/>
+	</mx:Canvas>
+	
+	<ns2:CityMilitaryInfoPanel x="25" y="183" width="600" height="242">
+	</ns2:CityMilitaryInfoPanel>
+</mx:TitleWindow>

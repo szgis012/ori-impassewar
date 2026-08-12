@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="doInit()" close="doClose()" width="470" height="405" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.events.treasure.GetPlayerTreasureMapListEvent;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.treasure.CancelTreasureQueueEvent;
+			import com.hifong.war.util.DateFormatUtil;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.vo.TreasureQueueVO;
+			import com.hifong.war.util.WindowUtil;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.treasure.GetTreasureQueueListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var dispatcher:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			
+			//道具效果持续的时间
+			private var processTimer:Timer;
+			
+			
+			private function doInit():void{
+				//更新道具效果列表
+				dispatcher.dispatchEvent(new GetTreasureQueueListEvent());
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/* 
+			 * 得到指定类型道具的效果描述
+			 * type 在TreasureTypeConstant中定义
+			 */
+			private function getEffectDescription(item:Object, column:DataGridColumn):String{
+				var treasureQueue:TreasureQueueVO = item as TreasureQueueVO;
+				
+				var description:String;
+				
+				switch(treasureQueue.type){
+					case TreasureTypeConstant.TREASURE_FOOD_ADD:
+						description = "食物产量加成25%";
+						break;
+					case TreasureTypeConstant.TREASURE_WOOD_ADD:
+						description = "木材产量加成25%";
+						break;
+					case TreasureTypeConstant.TREASURE_STEEL_ADD:
+						description = "钢铁产量加成25%";
+						break;
+					case TreasureTypeConstant.TREASURE_OIL_ADD:
+						description = "石油产量加成25%";
+						break;
+					case TreasureTypeConstant.AVOID_WAR:
+						description = "免战状态";
+						break;	
+					case TreasureTypeConstant.MILITARY_ATTACK_ADD:
+						description =  "军队攻击加成20%";
+						break;	
+					case TreasureTypeConstant.MILITARY_DEFENSE_ADD:
+						description =  "军队防御加成20%";
+						break;		
+					case TreasureTypeConstant.STRATEGY_CAMOUFLAGE:
+						description = "战略伪装";
+						break;		
+					case TreasureTypeConstant.STRATEGY_CHEAT:
+						description = "战略欺骗";
+						break;	
+					case TreasureTypeConstant.COMMANDER_EXP_ADD:
+						description = "指挥官获得经验加成20%";
+						break;	
+					case TreasureTypeConstant.SUPPRESS_RIOT:
+						description = "镇压暴乱";
+						break;	
+					case TreasureTypeConstant.STORAGE_ADD:
+						description = "仓库容量提高25%";
+						break;	
+					case TreasureTypeConstant.POPULATION_MAX_ADD:
+						description = "人口上限增加10%";
+						break;	
+					default:
+						description = "未知";
+						break;
+				}
+				
+				return description ;
+			}
+			
+			//获得道具效果的有效时间
+			private function getActiveTime(item:Object, column:DataGridColumn):String{
+				var treasureQueue:TreasureQueueVO = item as TreasureQueueVO;
+				
+				return DateFormatUtil.formatTime(treasureQueue.finishTime);
+			}
+			
+			//延长道具效果
+			public function doLengthen(data:Object):void{
+				var treasureQueue:TreasureQueueVO = data as TreasureQueueVO;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTreasureMapListByTypeEvent(treasureQueue.category,treasureQueue.type));
+				var params:Object = {queueID:treasureQueue.treasureQueueID};
+				var win:UseTreasureWindow = new UseTreasureWindow();
+				win.params = params;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			public function doCancel(data:Object):void{
+				var treasureQueue:TreasureQueueVO = data as TreasureQueueVO;
+				MsgBox.showConfirm("取消后将没有相应的辅助效果，您确认要取消吗？",function():void{
+					dispatcher.dispatchEvent(new CancelTreasureQueueEvent(treasureQueue));
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="道具状态" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:DataGrid x="25" y="37" width="420" height="340" dataProvider="{model.treasureQueueList}" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="道具效果" labelFunction="getEffectDescription" width="160"/>
+			<mx:DataGridColumn headerText="结束时间" labelFunction="getActiveTime" width="120"/>
+			<mx:DataGridColumn headerText="操作" dataField="treasureQueueID" >
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox horizontalScrollPolicy="off" verticalScrollPolicy="off" paddingLeft="10">
+							<mx:Script>
+								<![CDATA[
+									import com.hifong.war.constant.TreasureTypeConstant;
+								]]>
+							</mx:Script>
+							<mx:Button width="56" height="20" label="延长" click="outerDocument.doLengthen(data)" enabled="{data.type != TreasureTypeConstant.SUPPRESS_RIOT}"/>
+							<mx:Button width="56" height="20" label="取消" click="outerDocument.doCancel(data)" enabled="{data.type != TreasureTypeConstant.SUPPRESS_RIOT}"/>
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:TitleWindow>

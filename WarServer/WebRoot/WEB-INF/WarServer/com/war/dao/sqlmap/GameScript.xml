@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GameScript">
+
+	 <select id="getBuildingMaxLevel" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT MAX(LEVEL) FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID=#buildingID#
+	</select>
+	
+	 <select id="getBuildingNum" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID=#buildingID# AND LEVEL>0
+	</select>
+	
+	<select id="getBuildingNumWithLevel" parameterClass="java.util.Map"  resultClass="Integer">
+		<![CDATA[SELECT COUNT(*) FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID = #buildingID# AND LEVEL >= #level#]]>
+	</select>
+
+	<select id="getCityArmyNum" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT SUM(NUM) FROM T_CITY_ARMY WHERE CITY_ID=#cityID# AND ARMY_ID=#armyID#
+	</select>
+	
+	<select id="getCityDefenseNum" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT SUM(NUM) FROM T_CITY_DEFENSE WHERE CITY_ID=#cityID# AND DEFENSE_ID=#defenseID#
+	</select>
+	
+	<select id="getCityHeroNum" parameterClass="Integer"  resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY_HERO WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityMilitaryNum" parameterClass="Integer"  resultClass="Integer">
+	   SELECT COUNT(*) FROM T_CITY_MILITARY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getTechnologyLevel" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT LEVEL FROM T_CITY_TECHNOLOGY WHERE CITY_ID=#cityID# AND TECHNOLOGY_ID=#technologyID#
+	</select>
+	
+	 <select id="getCityOrdnanceNum" parameterClass="java.util.Map"  resultClass="Integer">
+	 	SELECT NUM FROM T_CITY_ORDNANCE WHERE CITY_ID=#cityID# AND ORDNANCE_ID=#ordnanceID#
+	</select>
+	
+	<select id="getBuildingMaxLevelAndStateByBuildingIDAndCityID" parameterClass="java.util.Map" resultClass="java.util.HashMap">
+		SELECT LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE BUILDING_ID=#buildingID# AND CITY_ID=#cityID#
+	</select>
+	
+</sqlMap>

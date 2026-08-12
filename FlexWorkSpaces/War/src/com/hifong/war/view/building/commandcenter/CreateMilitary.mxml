@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="330" height="220" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.commandcenter.GetFreeCityHeroListCommandEvent;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.commandcenter.CreateCityMilitaryEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityID:int = model.cityInfo.cityID;
+			
+			/** 是否用于已编辑过军队名称 */
+			private var hasEditName:Boolean = false;
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetFreeCityHeroListCommandEvent(cityID));
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 生成军队名称
+			 */
+			private function generateMilitaryName():void{
+
+				if(!hasEditName){
+					textCityMilitaryName.text = comboMilitaryOfficer.selectedItem.name + "的军队";
+				}
+				
+			}
+			
+			/**
+			 * 创建军队
+			 */
+			private function createCityMilitary():void{
+				
+				var cityMilitaryName:String = textCityMilitaryName.text;
+				if(StringUtil.trim(cityMilitaryName).length==0){
+					MsgBox.showMessage("请输入军队名称");
+					return;
+				}
+				
+				if(comboMilitaryOfficer.selectedItem==null){
+					MsgBox.showMessage("请选择指挥官");
+					return;
+				}
+				var cityHeroID:int = comboMilitaryOfficer.selectedItem.cityHeroID;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CreateCityMilitaryEvent(cityID,cityMilitaryName,cityHeroID));
+			
+				doClose();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="25" y="80" width="280" height="109" styleName="CanvasBorder">
+		<mx:Label x="10" y="13" text="指 挥 官 ：" width="77" fontWeight="bold"/>
+		<mx:ComboBox x="84" y="10" dataProvider="{model.freeCityHeroList}" prompt="请选择" id="comboMilitaryOfficer" labelField="name" width="176" change="generateMilitaryName()">
+		</mx:ComboBox>
+		<mx:Label x="10" y="41" text="军队名称：" fontWeight="bold" width="77"/>
+		<mx:TextInput x="84" y="39" id="textCityMilitaryName" keyDown="hasEditName=true" width="176" maxChars="8"/>
+		<mx:Button x="200" y="69" label="创建" click="createCityMilitary()" width="60" height="26"/>
+	</mx:Canvas>
+	<mx:Button x="283" y="27" styleName="closeWindow" click="doClose()" width="22" height="22"/>
+	<mx:Label x="39.25" y="26" text="创建军队" width="251.5" styleName="windowTitle"/>
+	<mx:Image x="73" y="57" source="{WarAssets.titleLine}" width="184"/>
+	
+</mx:TitleWindow>

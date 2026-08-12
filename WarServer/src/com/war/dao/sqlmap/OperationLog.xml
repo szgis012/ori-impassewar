@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="OperationLog">
+	<typeAlias alias="OperationLog" type="com.war.domain.OperationLog" />
+
+	<insert id="createOperationLog" parameterClass="OperationLog">
+		INSERT INTO T_OPERATION_LOG(PLAYER_ID, OPERATION, TARGET, CREATE_TIME) VALUES(#playerID#, #operation#, #target#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="operationLogID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateOperationLog" parameterClass="OperationLog">
+		UPDATE T_OPERATION_LOG SET PLAYER_ID=#playerID#, OPERATION=#operation#, TARGET=#target#, CREATE_TIME=#createTime# WHERE OPERATION_LOG_ID=#operationLogID#
+	</update>
+
+	<delete id="deleteOperationLogByID" parameterClass="Integer">
+		DELETE FROM T_OPERATION_LOG WHERE OPERATION_LOG_ID=#operationLogID#
+	</delete>
+
+	<select id="getOperationLogByID" parameterClass="Integer" resultClass="OperationLog">
+		SELECT OPERATION_LOG_ID AS operationLogID, PLAYER_ID AS playerID, OPERATION AS operation, TARGET AS target, CREATE_TIME AS createTime FROM T_OPERATION_LOG WHERE OPERATION_LOG_ID=#operationLogID#
+	</select>
+
+	<select id="getOperationLogList" resultClass="OperationLog">
+		SELECT OPERATION_LOG_ID AS operationLogID, PLAYER_ID AS playerID, OPERATION AS operation, TARGET AS target, CREATE_TIME AS createTime FROM T_OPERATION_LOG
+	</select>
+	
+	<select id="getOperationLogNumByPlayerIDAndOperation" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_OPERATION_LOG WHERE PLAYER_ID=#playerID# AND OPERATION=#operation#
+	</select>
+	
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+	~~用于获得玩家对指定等级的目标进行侦查和掠夺的操作记录数量(target 为指定的等级)~~
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  --> 
+	<select id="getOperationLogNumForSpy" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(*) FROM T_OPERATION_LOG WHERE CREATE_TIME > #time# AND OPERATION=#operation# AND TARGET=#target# AND PLAYER_ID=#playerID#
+		]]>
+	</select>
+
+</sqlMap>

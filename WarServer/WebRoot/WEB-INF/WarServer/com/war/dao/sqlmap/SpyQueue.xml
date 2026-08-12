@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SpyQueue">
+	<typeAlias alias="SpyQueue" type="com.war.domain.SpyQueue" />
+	
+	<insert id="createSpyQueue" parameterClass="SpyQueue">
+		INSERT INTO T_SPY_QUEUE(SPY_QUEUE_ID, CITY_ID, MAP_ID, NUM, STATE, FINISH_TIME) VALUES(#spyQueueID#, #cityID#, #mapID#, #num#, #state#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="spyQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateSpyQueue" parameterClass="SpyQueue">
+		UPDATE T_SPY_QUEUE SET SPY_QUEUE_ID=#spyQueueID#, CITY_ID=#cityID#, MAP_ID=#mapID#, NUM=#num#, STATE=#state#, FINISH_TIME=#finishTime# WHERE SPY_QUEUE_ID=#spyQueueID#
+	</update>
+	
+	<delete id="deleteSpyQueueByID" parameterClass="Integer">
+		DELETE FROM T_SPY_QUEUE WHERE SPY_QUEUE_ID=#spyQueueID#
+	</delete>
+	
+	<select id="getSpyQueueByID" parameterClass="Integer" resultClass="SpyQueue">
+		SELECT SPY_QUEUE_ID AS spyQueueID, CITY_ID AS cityID, MAP_ID AS mapID, NUM AS num, STATE AS state, FINISH_TIME AS finishTime FROM T_SPY_QUEUE WHERE SPY_QUEUE_ID=#spyQueueID#
+	</select>
+	
+	<select id="getSpyQueueListByCityID" parameterClass="Integer" resultClass="SpyQueue">
+		SELECT SPY_QUEUE_ID AS spyQueueID, CITY_ID AS cityID, MAP_ID AS mapID, NUM AS num, STATE AS state, FINISH_TIME AS finishTime FROM T_SPY_QUEUE WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getSpyQueueList" resultClass="SpyQueue">
+		SELECT SPY_QUEUE_ID AS spyQueueID, CITY_ID AS cityID, MAP_ID AS mapID, NUM AS num, STATE AS state, FINISH_TIME AS finishTime FROM T_SPY_QUEUE
+	</select>
+
+	<select id="getFinishSpyQueueList" resultClass="SpyQueue">
+		<![CDATA[ SELECT SPY_QUEUE_ID AS spyQueueID, CITY_ID AS cityID, MAP_ID AS mapID, NUM AS num, STATE AS state, FINISH_TIME AS finishTime FROM T_SPY_QUEUE WHERE FINISH_TIME<=SYSDATE()]]>
+	</select>
+	
+</sqlMap>

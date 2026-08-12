@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="360" height="140" initialize="doInit()" close="doClose()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private function doInit():void{
+				textReceiverName.setFocus();
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function doCommit():void{
+				if(StringUtil.trim(textReceiverName.text).length==0){
+					MsgBox.showMessage("请输入玩家名称");
+					textReceiverName.setFocus();
+					return;
+				}else if(StringUtil.trim(textReceiverName.text)==model.playerInfo.name){
+					MsgBox.showMessage("您不能与自己聊天");
+					return;
+				}else{
+					model.app.chatToolbar.textChatMessage.text = "/" + textReceiverName.text + " ";
+					doClose();
+					model.app.chatToolbar.textChatMessage.setFocus();
+					model.app.chatToolbar.textChatMessage.setSelection(model.app.chatToolbar.textChatMessage.text.length,model.app.chatToolbar.textChatMessage.text.length);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Label x="80" y="26" text="私聊" width="200" styleName="windowTitle"/>
+	<mx:Image x="80" y="53" source="{WarAssets.titleLine}" width="200"/>
+	<mx:Button x="308" y="26" styleName="closeWindow" click="doClose()" width="22" height="22"/>
+	<mx:Canvas x="31" y="77" width="299" height="40" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="玩家名称："/>
+		<mx:TextInput x="70" y="9" id="textReceiverName" maxChars="16" enter="doCommit()" width="149"/>
+		<mx:Button x="230" y="8" label="确定" click="doCommit()" width="58" height="24"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

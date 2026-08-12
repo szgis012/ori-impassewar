@@ -1,0 +1,64 @@
+/**
+ * 任务编号:1002
+ *
+ * 要求：打开新手礼包。
+ * 奖励：木材100，钢铁100，石油100，食物100，金钱100。
+ * 后置任务：1003,1004
+ */
+ 
+// 如果为领取奖励操作
+if (context.getProcessType() == 1) 
+{
+	doReceiveReward();
+} 
+else	// 这里为检查任务完成情况的操作
+{	
+ 	return checkTask();
+}
+
+/*
+ * 检查任务完成情况
+ *
+ */
+def checkTask() 
+{
+
+ 	// flag为0表示没有完成任务，flag=1表示完成了任务。
+	def flag = 0;
+	
+	// 返回结果
+	def result = "";
+	
+ 	// 宝物编号为421
+	def treasureID = 421;
+	
+	// 如果打开新手礼包，就算完成任务。
+	if(context.hasUsedTreasure(treasureID))
+	{
+		flag = 1;
+	}
+	
+	//如果打开新手礼包的任务
+	if(flag == 1)
+	{
+		result = "打开新手礼包<font color='#00ff00'>[已完成]</font>";
+	}
+	else	// 未完成打开新手礼包的任务
+	{
+		result = "打开新手礼包<font color='#ff0000'>[未完成]</font>";
+	}
+	
+	//返回格式:任务是否完成标志+任务完成情况字符串
+	return context.getEncodingText(flag+result);
+}
+ 
+/*
+ * 领取奖励
+ *
+ */
+def doReceiveReward() 
+{
+ 	// 木材100，钢铁100，石油100，食物100，金钱100。
+ 	context.rewardResource(100,100,100,100,100);
+}
+

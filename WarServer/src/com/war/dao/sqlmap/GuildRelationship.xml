@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildRelationship">
+	<typeAlias alias="GuildRelationship" type="com.war.domain.GuildRelationship" />
+	
+	<insert id="createGuildRelationship" parameterClass="GuildRelationship">
+		INSERT INTO T_GUILD_RELATIONSHIP(GUILD_ID, TARGET_GUILD_ID, TYPE) VALUES(#guildID#, #targetGuildID#, #type#)
+		<selectKey resultClass="Integer" keyProperty="guildRelationshipID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<select id="getGuildRelationshipCountByGuildID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD_RELATIONSHIP WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<delete id="deleteGuildRelationshipByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_RELATIONSHIP WHERE GUILD_RELATIONSHIP_ID=#guildRelationshipID#
+	</delete>
+	
+	<delete id="deleteGuildRelationshipsByGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_RELATIONSHIP WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<delete id="deleteGuildRelationshipsByTargetGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_RELATIONSHIP WHERE TARGET_GUILD_ID=#guildID#
+	</delete>
+	
+	<delete id="deleteGuildRelationshipsByGuildIDAndTargetGuildID" parameterClass="HashMap">
+		DELETE FROM T_GUILD_RELATIONSHIP WHERE GUILD_ID=#guildID# AND TARGET_GUILD_ID=#targetGuildID#
+	</delete>
+
+	<select id="getGuildRelationshipByGuildIDAndTargetGuildID" parameterClass="HashMap" resultClass="GuildRelationship">
+		SELECT GUILD_RELATIONSHIP_ID AS guildRelationshipID, GUILD_ID AS guildID, TARGET_GUILD_ID AS targetGuildID, TYPE AS type FROM T_GUILD_RELATIONSHIP WHERE GUILD_ID=#guildID# AND TARGET_GUILD_ID=#targetGuildID#
+	</select>
+	
+	<select id="getGuildRelationshipByID" parameterClass="Integer" resultClass="GuildRelationship">
+		SELECT GUILD_RELATIONSHIP_ID AS guildRelationshipID, GUILD_ID AS guildID, TARGET_GUILD_ID AS targetGuildID, TYPE AS type FROM T_GUILD_RELATIONSHIP WHERE GUILD_RELATIONSHIP_ID=#guildRelationshipID#
+	</select>
+	
+	<select id="getGuildRelationshipListByGuildID" resultClass="GuildRelationship">
+		SELECT GUILD_RELATIONSHIP_ID AS guildRelationshipID, GUILD_ID AS guildID, TARGET_GUILD_ID AS targetGuildID, TYPE AS type FROM T_GUILD_RELATIONSHIP WHERE GUILD_ID=#guildID#
+	</select>
+
+</sqlMap>

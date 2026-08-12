@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:617
+ * 
+ * 名称：宣誓旗
+ * 描述：军队成员集体宣誓，一次性提高指挥官领导30点，可连续使用。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroLeadership(params["cityHeroID"], 30);

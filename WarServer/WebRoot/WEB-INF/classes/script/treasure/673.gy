@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:673
+ * 
+ * 名称：战魂金章
+ * 描述：品质为史诗的指挥官可用，提高该指挥官军魄10点，100点军魄可以提高1点军魂。(也可提高稀有指挥官20点军魄，普通指挥官30点军魄)
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.useFightSoulGoldMedal(params["cityHeroID"]);

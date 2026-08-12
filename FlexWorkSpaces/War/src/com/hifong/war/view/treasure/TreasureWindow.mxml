@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="650" height="469" showCloseButton="false" close="doClose()" xmlns:ns1="toy.treasure.*" initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import com.hifong.war.util.ConfigUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.treasure.GetPlayerTreasureMapListEvent;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import mx.collections.ArrayCollection;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.binding.utils.ChangeWatcher;
+			
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			private var treasureListWatcher:ChangeWatcher;
+			//当前选择的选项卡 
+			private var curpanel:Canvas;
+			//当前显示的道具类型
+			private var curCategory:int;
+			
+			//初始化
+			private function doInit():void{
+				treasureListWatcher = ChangeWatcher.watch(model,"treasureList",doListChanged);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerTreasureMapListEvent(TreasureCategoryConstant.NORMAL));
+				//设置默认选项卡
+				curpanel = this.treasurePanel;
+				curCategory = 1;
+			}
+			
+			private function doClose():void{
+				treasureListWatcher.unwatch();
+				WindowUtil.closeWindow(this);
+			}
+			
+			//更新数据
+			private function doListChanged(arg:Object):void{
+				showTreasure();
+				
+				if(model.treasureList){
+					model.treasureList.addEventListener(CollectionEvent.COLLECTION_CHANGE,refreshPanel);
+				}
+			}
+			
+			//如果内容变化刷新视图
+			private function refreshPanel(arg:Object):void{
+				showTreasure();
+			}
+			
+			//在canva容器内显示指定类型的道具
+			private function showTreasure():void{
+				var len:int = model.treasureList.length;
+				var tivo:TreasureItemVO;
+				var row:int;
+				var col:int;
+				var j:int  = 0;
+				var colsPerRow:int = 6;//一行显示多少列
+				var offsetX:int = 5;
+				var offsetY:int = 5;
+				var ti:TreasureItem;
+				
+				var treasureList:ArrayCollection = model.treasureList;
+				
+				if(!treasureList || treasureList.length==0){
+					curpanel.removeAllChildren();
+					return;
+				}
+					
+				//缓存当前面板已经加载的道具信息
+				var cacheMap:Object = {};
+				var itemNum:int = curpanel.numChildren;
+				
+				for(var k:int=0; k<itemNum;k++	){
+					ti = curpanel.getChildAt(k) as TreasureItem;
+					//key为道具编号
+					cacheMap[ti.treasureItem.treasureID] = ti;
+					ti.visible = false;
+				}
+				
+				for(var i:int=0; i<len; i++){
+					//TreasureItemVO对象
+					tivo = model.treasureList.getItemAt(i)as TreasureItemVO ;
+					
+					//只显示有的道具
+					if(tivo.num <= 0){
+						continue;
+					}
+					
+					//从缓存中取
+					ti = cacheMap[tivo.treasureID] as TreasureItem;
+					
+					if(ti){
+						ti.visible = true;
+						cacheMap[tivo.treasureID] = null;
+					}else{
+						ti = new TreasureItem();
+						curpanel.addChild(ti);
+					}
+					
+					//部分道具不可直接使用
+					ti.canUse = false;
+					ti.treasureItem = tivo;
+					//calc x,y
+					row = j / colsPerRow;
+					col = j % colsPerRow;
+					
+					ti.x = (ti.width * col) + offsetX * col + offsetX;
+					ti.y = (ti.height * row) + offsetY * row + offsetY;
+					
+					j++;
+				}
+			}
+			
+			public function pay():void{
+				ExternalInterface.call('window.open',ConfigUtil.getProperty("PAY_URL"),'_blank');
+			}
+			
+			private function doSelectChanged(event:IndexChangedEvent):void{
+				this.curpanel = event.relatedObject as Canvas;
+				curCategory = event.newIndex + 1;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerTreasureMapListEvent(curCategory));
+			}
+			
+			/**
+			 * 显示激活游戏卡窗口
+			 */
+			private function showActivateGameCardWindow():void{
+				var win:ActivateGameCardWindow = new ActivateGameCardWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 显示道具状态窗口
+			 */
+			private function showTreasureStateWindow():void{
+				var win:TreasureStateWindow = new TreasureStateWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 显示商城窗口
+			 */
+			private function showTreasureShopWindow():void{
+				var win:TreasureShopWindow = new TreasureShopWindow();
+				this.doClose();
+				WindowUtil.showWindow(UIComponent(win));
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="我的道具" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator width="600" height="352" change="doSelectChanged(event)" x="25" y="47">
+		<mx:Canvas label="宝物" width="100%" height="100%" id="treasurePanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="加速" width="100%" height="100%" styleName="BugFixBorder" verticalScrollPolicy="on" id="speedupPanel">
+		</mx:Canvas>
+		<mx:Canvas label="生产" width="100%" height="100%" id="productionPanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="宝箱" width="100%" height="100%" id="boxPanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="军事" width="100%" height="100%" id="militaryPanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="指挥官" width="100%" height="100%" id="commanderPanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="任务" width="100%" height="100%" id="taskPanel" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Canvas x="25" y="409" width="600" height="35" styleName="CanvasBorder">
+		<mx:Label x="10" y="8" text="金币数量：" fontWeight="bold"/>
+		<mx:TextInput x="88" y="7" width="72" editable="false" textAlign="right" text="{int(model.playerInfo.money)}"/>
+		<mx:Button x="168" y="6" label="充值" click="pay()"/>
+		<mx:Button x="431" y="6" label="道具状态" click="showTreasureStateWindow()"/>
+		<mx:Button x="517" y="6" label="道具商城" click="showTreasureShopWindow()"/>
+		<mx:Button x="290" y="6" label="游戏卡奖励激活" click="showActivateGameCardWindow()"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

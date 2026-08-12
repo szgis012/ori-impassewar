@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="170" initialize="doInit()">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.core.DragSource;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			public var text:String;
+			
+			/** 回调方法 */
+			public var callback:Function;
+
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private function doInit():void{
+				this.addEventListener(KeyboardEvent.KEY_DOWN,onKeyDown);
+				this.setFocus();
+			}
+
+			private function doOK(isYes:Boolean):void{
+				
+				callback(isYes);
+				
+				doCancel();
+			}
+			
+
+			private function doCancel():void{
+				WindowUtil.closeWindow(this);
+				model.maskCanvas.removeChild(this);
+				if(model.maskCanvas.getChildren().length==0){
+					PopUpManager.removePopUp(model.maskCanvas);
+					model.maskCanvas = null;
+				}
+			}
+
+			private function onKeyDown(event:KeyboardEvent):void{
+				if(event.charCode==Keyboard.ESCAPE){
+					doCancel();
+				}
+			}
+			
+			private function onMouseUp(event:MouseEvent):void{
+				this.alpha = 1;
+				this.stopDrag();
+			}
+
+			private function onMouseDown(event:MouseEvent):void{
+				this.alpha = 0.8;
+				this.startDrag(false,new Rectangle(0,0,600,450));
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Canvas x="0" y="0" width="400" height="170" id="mainCanvas" mouseDown="onMouseDown(event)" mouseUp="onMouseUp(event)">
+		<mx:backgroundImage>@Embed(source='images/msgbox_bg.png')</mx:backgroundImage>
+	</mx:Canvas>
+	
+	<mx:Image x="30" y="30" source="images/msgbox_confirm.png"/>
+	<mx:Text x="115" y="30" id="labelContent" text="{text}" width="265" height="87" fontSize="14"/>
+	<mx:Button x="240" y="115" label="是" height="25" width="60" click="doOK(true)"/>
+	<mx:Button x="320" y="115" label="否" height="25" width="60" click="doOK(false)"/>
+	
+</mx:Canvas>

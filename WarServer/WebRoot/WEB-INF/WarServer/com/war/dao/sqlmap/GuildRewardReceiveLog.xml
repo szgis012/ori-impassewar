@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildRewardReceiveLog">
+	<typeAlias alias="GuildRewardReceiveLog" type="com.war.domain.GuildRewardReceiveLog" />
+
+	<insert id="createGuildRewardReceiveLog" parameterClass="GuildRewardReceiveLog">
+		INSERT INTO T_GUILD_REWARD_RECEIVE_LOG(PLAYER_ID, RECEIVE_TIME) VALUES(#playerID#, #receiveTime#)
+	</insert>
+
+	<update id="updateGuildRewardReceiveLog" parameterClass="GuildRewardReceiveLog">
+		UPDATE T_GUILD_REWARD_RECEIVE_LOG SET PLAYER_ID=#playerID#, RECEIVE_TIME=#receiveTime# WHERE PLAYER_ID=#playerID#
+	</update>
+
+	<delete id="deleteGuildRewardReceiveLogByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_REWARD_RECEIVE_LOG WHERE PLAYER_ID=#playerID#
+	</delete>
+
+	<select id="getGuildRewardReceiveLogByID" parameterClass="Integer" resultClass="GuildRewardReceiveLog">
+		SELECT PLAYER_ID AS playerID, RECEIVE_TIME AS receiveTime FROM T_GUILD_REWARD_RECEIVE_LOG WHERE PLAYER_ID=#playerID#
+	</select>
+
+	<select id="getGuildRewardReceiveLogList" resultClass="GuildRewardReceiveLog">
+		SELECT PLAYER_ID AS playerID, RECEIVE_TIME AS receiveTime FROM T_GUILD_REWARD_RECEIVE_LOG
+	</select>
+
+</sqlMap>

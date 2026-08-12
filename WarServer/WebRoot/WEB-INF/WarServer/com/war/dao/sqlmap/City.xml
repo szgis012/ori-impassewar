@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="City">
+	<typeAlias alias="City" type="com.war.domain.City" />
+	<typeAlias alias="CityInfo" type="com.war.domain.CityInfo" />
+	
+	<insert id="createCity" parameterClass="City">
+		INSERT INTO T_CITY( PLAYER_ID, MAP_ID, POSX, POSY, NAME, STATE, CONSTRUCTION_POINT, TECHNOLOGY_POINT, POPULATION_FREE, POPULATION_TOTAL, POPULATION_MAX, RECRUIT_NUM, TAX, SECURITY, BUSINESSMAN_FREE, CREATE_TIME) VALUES(#playerID#, #mapID#, #posX#, #posY#, #name#, #state#, #constructionPoint#, #technologyPoint#, #populationFree#, #populationTotal#, #populationMax#,#recruitNum#, #tax#, #security#, #businessmanFree#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="cityID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updatePopulationMaxByCityID" parameterClass="HashMap">
+		UPDATE T_CITY SET POPULATION_MAX=#populationMax# WHERE CITY_ID=#cityID#
+	</update>
+	
+	<update id="updateStateByCityID" parameterClass="HashMap">
+		UPDATE T_CITY SET STATE=#state# WHERE CITY_ID=#cityID#
+	</update>
+	
+	<procedure id="batchAddCitySecurity">
+		<![CDATA[ 
+			{CALL ADD_CITY_SECURITY()}
+		]]>
+	</procedure>
+	
+	<update id="updateCity" parameterClass="City">
+		UPDATE T_CITY SET PLAYER_ID=#playerID#, MAP_ID=#mapID#, POSX=#posX#, POSY=#posY#, NAME=#name#, STATE=#state#, CONSTRUCTION_POINT=#constructionPoint#, TECHNOLOGY_POINT=#technologyPoint#, POPULATION_FREE=#populationFree#, POPULATION_TOTAL=#populationTotal#, POPULATION_MAX=#populationMax#, RECRUIT_NUM=#recruitNum#, TAX=#tax#, SECURITY=#security#, OFFICER=#officer#, DEFENSIVE_MILITARY=#defensiveMilitary#, BUSINESSMAN_FREE=#businessmanFree# WHERE CITY_ID=#cityID#
+	</update>
+	
+	<delete id="deleteCityByID" parameterClass="Integer">
+		DELETE FROM T_CITY WHERE CITY_ID=#cityID#
+	</delete>
+	
+	<select id="getPopulationByCityID" parameterClass="Integer" resultClass="HashMap">
+		SELECT POPULATION_FREE AS populationFree, POPULATION_TOTAL AS populationTotal, POPULATION_MAX AS populationMax FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getBusinessFreeByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT BUSINESSMAN_FREE FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityTaxAndSecurity" parameterClass="Integer" resultClass="HashMap">
+		SELECT TAX AS tax, SECURITY AS security FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getPlayerIDByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT PLAYER_ID FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityIDByPlayerID" parameterClass="Integer" resultClass="Integer">
+		SELECT CITY_ID FROM T_CITY WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getCityIDByCityName" parameterClass="String" resultClass="Integer">
+		SELECT CITY_ID FROM T_CITY WHERE NAME=#cityName#
+	</select>
+	
+	<select id="getCityNameByCityID" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityByPlayerID" parameterClass="Integer" resultClass="City">
+		SELECT CITY_ID AS cityID, PLAYER_ID AS playerID, MAP_ID AS mapID, POSX AS posX, POSY AS posY, NAME AS name, STATE AS state, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_FREE AS populationFree, POPULATION_TOTAL AS populationTotal, POPULATION_MAX AS populationMax, RECRUIT_NUM AS recruitNum, TAX AS tax, SECURITY AS security, OFFICER AS officer, DEFENSIVE_MILITARY AS defensiveMilitary, BUSINESSMAN_FREE AS businessmanFree, CREATE_TIME AS createTime FROM T_CITY WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getCityByPosXAndPosY" parameterClass="HashMap" resultClass="City">
+		SELECT CITY_ID AS cityID, PLAYER_ID AS playerID, POSX AS posX, POSY AS posY, NAME AS name, STATE AS state, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_FREE AS populationFree, POPULATION_TOTAL AS populationTotal, POPULATION_MAX AS populationMax, RECRUIT_NUM AS recruitNum, TAX AS tax, SECURITY AS security, OFFICER AS officer, DEFENSIVE_MILITARY AS defensiveMilitary, BUSINESSMAN_FREE AS businessmanFree, CREATE_TIME AS createTime FROM T_CITY WHERE POSX=#posX# AND POSY=#posY#
+	</select>
+	
+	<select id="getCityIDByPosXAndPosY" parameterClass="HashMap" resultClass="Integer">
+		SELECT CITY_ID FROM T_CITY WHERE POSX=#posX# AND POSY=#posY#
+	</select>
+	
+	<select id="getCityPosXAndPosYByCityID" parameterClass="Integer" resultClass="HashMap">
+		SELECT POSX AS posX, POSY AS posY FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityByID" parameterClass="Integer" resultClass="City">
+		SELECT CITY_ID AS cityID, PLAYER_ID AS playerID, MAP_ID AS mapID, POSX AS posX, POSY AS posY, NAME AS name, STATE AS state, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_FREE AS populationFree, POPULATION_TOTAL AS populationTotal, POPULATION_MAX AS populationMax, RECRUIT_NUM AS recruitNum, TAX AS tax, SECURITY AS security, OFFICER AS officer, DEFENSIVE_MILITARY AS defensiveMilitary, BUSINESSMAN_FREE AS businessmanFree, CREATE_TIME AS createTime FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityInfoByCityID" parameterClass="Integer" resultClass="CityInfo">
+		SELECT CITY_ID AS cityID, PLAYER_ID AS playerID, (SELECT COUNTRY FROM T_PLAYER WHERE T_PLAYER.PLAYER_ID=T_CITY.PLAYER_ID) AS country, NAME AS name, POSX AS posX, POSY AS posY, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_TOTAL AS populationTotal, OFFICER AS officer, DEFENSIVE_MILITARY AS defensiveMilitary FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+
+	<select id="getCityList" resultClass="City">
+		SELECT CITY_ID AS cityID, PLAYER_ID AS playerID, POSX AS posX, POSY AS posY, NAME AS name, STATE AS state, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_FREE AS populationFree, POPULATION_TOTAL AS populationTotal, POPULATION_MAX AS populationMax, RECRUIT_NUM AS recruitNum, TAX AS tax, SECURITY AS security, OFFICER AS officer, DEFENSIVE_MILITARY AS defensiveMilitary, BUSINESSMAN_FREE AS businessmanFree, CREATE_TIME AS createTime FROM T_CITY
+	</select>
+	
+	<update id="updateCityParams" parameterClass="HashMap"> 
+		UPDATE T_CITY
+		<dynamic prepend="SET">
+			<isNotNull prepend="," property="playerID">
+				PLAYER_ID=#playerID#
+			</isNotNull>
+			<isNotNull prepend="," property="mapID">
+				MAP_ID=#mapID#
+			</isNotNull>
+			<isNotNull prepend="," property="posX">
+				POSX=#posX#
+			</isNotNull>
+			<isNotNull prepend="," property="posY">
+				POSY=#posY#
+			</isNotNull>
+			<isNotNull prepend="," property="name">
+				NAME=#name#
+			</isNotNull>
+			<isNotNull prepend="," property="state">
+				STATE=#state#
+			</isNotNull>
+			<isNotNull prepend="," property="constructionPoint">
+				CONSTRUCTION_POINT=#constructionPoint#
+			</isNotNull>
+			<isNotNull prepend="," property="technologyPoint">
+				TECHNOLOGY_POINT=#technologyPoint#
+			</isNotNull>
+			<isNotNull prepend="," property="populationFree">
+				POPULATION_FREE=#populationFree#
+			</isNotNull>
+			<isNotNull prepend="," property="populationTotal">
+				POPULATION_TOTAL=#populationTotal#
+			</isNotNull>
+			<isNotNull prepend="," property="populationMax">
+				POPULATION_MAX=#populationMax#
+			</isNotNull>
+			<isNotNull prepend="," property="recruitNum">
+				RECRUIT_NUM=#recruitNum#
+			</isNotNull>
+			<isNotNull prepend="," property="tax">
+				TAX=#tax#
+			</isNotNull>
+			<isNotNull prepend="," property="security">
+				SECURITY=#security#
+			</isNotNull>
+			<isPropertyAvailable property="officer" prepend=",">
+				OFFICER=#officer#
+			</isPropertyAvailable>
+			<isPropertyAvailable property="defensiveMilitary" prepend=",">
+				DEFENSIVE_MILITARY=#defensiveMilitary#
+			</isPropertyAvailable>
+			<isNotNull prepend="," property="businessmanFree">
+				BUSINESSMAN_FREE=#businessmanFree#
+			</isNotNull>
+		</dynamic>
+		WHERE CITY_ID=#cityID#
+	</update>
+
+	<procedure id="updateSecurityOfResourceEffect" >
+		<![CDATA[ 
+			{CALL UPDATE_SECURITYOFRESOURCE_EFFECT()}
+		]]>
+	</procedure>
+	
+</sqlMap>

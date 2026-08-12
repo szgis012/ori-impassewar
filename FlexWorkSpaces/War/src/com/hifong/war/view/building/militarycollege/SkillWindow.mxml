@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="440" height="433" initialize="doInit()" close="doClose()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.militarycollege.GetSkillListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var skillListWatcher:ChangeWatcher;
+			
+			private function doInit():void{
+				
+				if(model.skillList==null){
+					skillListWatcher = ChangeWatcher.watch(model,"skillList",onSkillListChanged);
+					CairngormEventDispatcher.getInstance().dispatchEvent(new GetSkillListEvent());
+				}else{
+					onSkillListChanged(null);
+				}
+				
+ 			}
+ 			
+ 			private function doClose():void{
+ 				if(skillListWatcher!=null){
+ 					skillListWatcher.unwatch();
+ 				}
+				WindowUtil.closeModelWindow(this);
+			}
+			
+ 			private function onSkillListChanged(arg:Object):void{
+ 				if(skillListWatcher!=null){
+ 					skillListWatcher.unwatch();
+ 				}
+ 				for(var i:int=0;i<model.skillList.length;i++){
+					
+					var skillItemPanel:SkillItemPanel = new SkillItemPanel();
+					skillItemPanel.skill = model.skillList.getItemAt(i);
+					skillItemPanel.x = 10;
+					skillItemPanel.y = i*90+10;
+					
+					canvasSkillList.addChild(skillItemPanel);
+				}
+ 			}
+			
+		]]>
+	</mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="技能列表" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="390" height="370" id="canvasSkillList" styleName="CanvasBorder" verticalScrollPolicy="on">
+	</mx:Canvas>
+	
+</mx:TitleWindow>

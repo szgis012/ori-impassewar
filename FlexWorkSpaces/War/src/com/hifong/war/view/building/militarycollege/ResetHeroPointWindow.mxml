@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="350" height="375" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.ResetHeroPointEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var unsetPoint:int;
+			[Bindable]
+			private var changedPoint:int;
+			[Bindable]
+			private var currentCommand:int;
+			[Bindable]
+			private var currentDefense:int;
+			[Bindable]
+			private var currentMind:int;
+			[Bindable]
+			private var currentExecutivePower:int;
+			
+			private function doInit():void {
+				currentCommand = model.currentCityHero.command;
+				currentDefense = model.currentCityHero.defense;
+				currentMind = model.currentCityHero.mind;
+				currentExecutivePower = model.currentCityHero.executivepower;
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 设置点数
+			 */
+			private function setPoint(type:int, num:int):void {
+				
+				if(unsetPoint<num) {
+					MsgBox.showMessage("空闲点数不足。");
+					return;
+				}
+						
+				switch(type){
+					case 1:
+						if(currentCommand+num<0) {
+							MsgBox.showMessage("指挥点数不能小于0。");
+							return;
+						}
+						currentCommand += num;
+						break;
+					case 2:
+						if(currentDefense+num<0) {
+							MsgBox.showMessage("防护点数不能小于0。");
+							return;
+						}
+						currentDefense += num;
+						break;
+					case 3:
+						if(currentMind+num<0) {
+							MsgBox.showMessage("思维点数不能小于0。");
+							return;
+						}
+						currentMind += num;
+						break;
+					case 4:
+						if(currentExecutivePower+num<0) {
+							MsgBox.showMessage("行政点数不能小于0。");
+							return;
+						}
+						currentExecutivePower += num;
+						break;
+					default:
+						break;
+				}
+				
+				unsetPoint += -num;
+				
+				changedPoint = 0;
+				changedPoint += Math.max(model.currentCityHero.command-currentCommand, 0);
+				changedPoint += Math.max(model.currentCityHero.defense-currentDefense, 0);
+				changedPoint += Math.max(model.currentCityHero.mind-currentMind, 0);
+				changedPoint += Math.max(model.currentCityHero.executivepower-currentExecutivePower, 0);
+			}
+			
+			private function onReset():void {
+				currentCommand = model.currentCityHero.command;
+				currentDefense = model.currentCityHero.defense;
+				currentMind = model.currentCityHero.mind;
+				currentExecutivePower = model.currentCityHero.executivepower;
+				unsetPoint = 0;
+				changedPoint = 0;
+			}
+			
+			private function onSave():void {
+				
+				if(changedPoint==0) {
+					MsgBox.showMessage("当前属性点未发生任何变化。");
+					return;
+				}
+				
+				if(unsetPoint>0) {
+					MsgBox.showMessage("当前仍有 " + unsetPoint + " 点属性未分配。");
+					return;
+				}
+				
+				MsgBox.showConfirm("您确定要重置指挥官属性吗？\n此次共重置 " + changedPoint + " 点属性，将使用 " + Math.ceil(changedPoint/10) + " 个重塑药水。", function ():void {
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ResetHeroPointEvent(model.playerInfo.playerID, model.currentCityHero.cityHeroID, currentCommand, currentDefense, currentMind, currentExecutivePower));
+					doClose();
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官属性重置" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="27" y="37" width="294" height="55" styleName="CanvasBorder">
+		<mx:Text x="10" y="10" text="每重置10点指挥官输将将花费1个重塑药水。个位不足10点将按10点计算。" width="274"/>
+	</mx:Canvas>
+	
+	<mx:Canvas x="27.5" y="102" width="295" height="245" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="名称：{model.currentCityHero.name}"/>
+		<mx:Label x="12" y="38" text="等级：{model.currentCityHero.level}"/>
+		<mx:Label x="10" y="66" text="空闲点数：{unsetPoint}"/>
+		<mx:Label x="167" y="66" text="重置点数：{changedPoint}"/>
+		
+		<mx:Label x="10" y="94" text="指挥：{currentCommand}  (原：{model.currentCityHero.command})" width="140"/>
+		<mx:Label x="138" y="94" text="(-1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(1, -1)"/>
+		<mx:Label x="164" y="94" text="(+1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(1, 1)"/>
+		<mx:Label x="194" y="94" text="(-10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(1, -10)"/>
+		<mx:Label x="228" y="94" text="(+10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(1, 10)"/>
+		
+		<mx:Label x="10" y="122" text="防护：{currentDefense}  (原：{model.currentCityHero.defense})" width="120"/>
+		<mx:Label x="138" y="122" text="(-1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(2, -1)"/>
+		<mx:Label x="164" y="122" text="(+1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(2, 1)"/>
+		<mx:Label x="194" y="122" text="(-10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(2, -10)"/>
+		<mx:Label x="228" y="122" text="(+10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(2, 10)"/>
+		
+		<mx:Label x="10" y="150" text="思维：{currentMind}  (原：{model.currentCityHero.mind})" width="120"/>
+		<mx:Label x="138" y="150" text="(-1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(3, -1)"/>
+		<mx:Label x="164" y="150" text="(+1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(3, 1)"/>
+		<mx:Label x="194" y="150" text="(-10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(3, -10)"/>
+		<mx:Label x="228" y="150" text="(+10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(3, 10)"/>
+		
+		<mx:Label x="10" y="178" text="行政：{currentExecutivePower}  (原：{model.currentCityHero.executivepower})" width="120"/>
+		<mx:Label x="138" y="178" text="(-1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(4, -1)"/>
+		<mx:Label x="164" y="178" text="(+1) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(4, 1)"/>
+		<mx:Label x="194" y="178" text="(-10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(4, -10)"/>
+		<mx:Label x="228" y="178" text="(+10) " useHandCursor="true" buttonMode="true" mouseChildren="false" click="setPoint(4, 10)"/>
+		
+		<mx:Button x="157" y="210" label="恢复" click="onReset()"/>
+		<mx:Button x="225" y="210" label="保存" click="onSave()"/>
+		
+	</mx:Canvas>
+	
+</mx:TitleWindow>

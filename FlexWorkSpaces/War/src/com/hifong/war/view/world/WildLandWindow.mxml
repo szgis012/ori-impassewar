@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--野地窗口-->
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="430" height="210"  layout="absolute">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.constant.MapCategoryConstant;
+			import com.hifong.war.view.building.commandcenter.SpyWindow;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.building.commandcenter.MilitaryCommandWindow;
+			import com.hifong.war.util.WorldUtil;
+			import com.hifong.war.constant.WildLandTypeConstant;
+			import com.hifong.war.vo.MapVO;
+			import com.hifong.war.common.WorldInfo;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			
+			private var worldInfo:WorldInfo = ModelLocator.getInstance().worldInfo;
+			
+			[Bindable]
+			private var _gridInfo:MapVO;
+						
+			public function set gridInfo(map:MapVO):void{
+				this._gridInfo = map;
+				
+				this.pnlImg.setStyle("backgroundImage",worldInfo.worldAssets.backgroundImage);
+				this.titleBtn.label = getMapTitle(map);
+				this.txtDesc.htmlText = WorldUtil.getWildLandDescription(map);
+				var cate:int=map.category;
+				if(cate==11) cate=0;
+				this.img.source = new worldInfo.worldAssets.terrainImages[cate+"_"+map.type]();
+			}
+
+			//得到标题文字,WorldMapAssets
+			private function getMapTitle(map:MapVO):String{
+				
+				var title:String = WildLandTypeConstant.getTypeName(map.category);
+				title += "("+map.posX+","+map.posY+")";
+				
+				return title;
+			}
+			
+			private function doSpy():void{
+				var win:SpyWindow = new SpyWindow();
+				win.posX = _gridInfo.posX;
+				win.posY = _gridInfo.posY;
+				win.level = _gridInfo.mapMonster.level;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doAttack():void{
+				var win:MilitaryCommandWindow = new MilitaryCommandWindow();
+				win.posX = _gridInfo.posX;
+				win.posY = _gridInfo.posY;
+				win.commandSelectedIndex = 0;
+				
+				WindowUtil.showModelWindow(win);
+			}
+
+			private function doClose():void{
+				worldInfo.hasDisplayedWindow = false;
+				this.visible = false;
+//				WindowUtil.closeWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="野地" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="380" height="93" styleName="CanvasBorder">
+		<mx:TextArea x="118" y="10" width="252" height="75" id="txtDesc" editable="false"/>
+		<mx:Canvas x="10" y="10" width="100" height="75" id="pnlImg">
+			<mx:Image x="0" y="0" width="100" height="75" id="img" />
+		</mx:Canvas>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="138" width="380" height="48" styleName="CanvasBorder">
+		<mx:Button x="10" y="12" label="侦察" click="doSpy()" width="60" height="26" enabled="{_gridInfo.category == MapCategoryConstant.MONSTERFIELD}"/>
+		<mx:Button x="78" y="12" label="攻击" click="doAttack()" width="60" height="26"  enabled="{_gridInfo.category == MapCategoryConstant.MONSTERFIELD}"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

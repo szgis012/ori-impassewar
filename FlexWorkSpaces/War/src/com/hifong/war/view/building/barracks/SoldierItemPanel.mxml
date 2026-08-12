@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="90" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.tooltip.ArmyTooltip;
+			import com.hifong.war.util.ArmyUtil;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.tooltip.BuildArmyTooltip;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.building.barracks.ArmSoldierWindow;
+			import com.hifong.war.view.building.barracks.DisarmSoldierWindow;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var _army:ArmyVO;
+			
+			[Bindable]
+			public var cityArmy:CityArmyVO;
+			
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean;
+			
+			
+			[Bindable]
+			public function set army(a:ArmyVO):void{
+				this._army = a;
+				canCreate = ArmyUtil.meetArmyDepend(a);
+			}
+			
+			public function get army():ArmyVO{
+				return this._army;
+			}
+			
+			private function doArm():void{
+				var win:ArmSoldierWindow = new ArmSoldierWindow();
+				win.army = army;
+				win.cityArmy = cityArmy;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doDisarm():void{
+				var win:DisarmSoldierWindow = new DisarmSoldierWindow();
+				win.army = army;
+				win.cityArmy = cityArmy;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function showTooltip(event:ToolTipEvent):void{
+				canCreate = ArmyUtil.meetArmyDepend(army);
+				event.toolTip = new BuildArmyTooltip("武装",army);
+			}
+			
+			private function showArmyTooltip(event:ToolTipEvent):void{
+				event.toolTip = new ArmyTooltip(army);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Button x="80" y="31" label="武装" enabled="{canCreate}" id="btnArm" click="doArm()" width="60"  toolTip=" " toolTipCreate="showTooltip(event)" height="24"/>
+	<mx:Button x="80" y="59" label="解除" id="btnDisarm" click="doDisarm()" enabled="{cityArmy.num>0}" width="60" height="24"/>
+	<mx:TextArea x="150" y="32" width="380" height="50" text="{army.description}" editable="false">
+	</mx:TextArea>
+	<mx:Label x="298" y="11" text="数量：" fontWeight="bold"/>
+	<mx:Text x="342" y="10" text="{cityArmy.num}" width="160" id="txtSoldierNum" fontWeight="bold"/>
+	<mx:Image x="10" y="23" width="60" height="60" source="{ImagePathUtil.getBuildArmyPath(army.image)}" toolTip=" " toolTipCreate="showArmyTooltip(event)"/>
+	<mx:Label x="151" y="10" text="{army.name}" width="144" textAlign="left" fontWeight="bold"/>
+</mx:Canvas>

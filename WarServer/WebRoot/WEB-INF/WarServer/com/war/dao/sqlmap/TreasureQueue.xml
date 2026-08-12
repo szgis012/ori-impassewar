@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="TreasureQueue">
+	<typeAlias alias="TreasureQueue" type="com.war.domain.TreasureQueue" />
+	
+	<insert id="createTreasureQueue" parameterClass="TreasureQueue">
+		INSERT INTO T_TREASURE_QUEUE(TREASURE_QUEUE_ID, TARGET_ID, CATEGORY, TYPE, FINISH_TIME) VALUES(#treasureQueueID#, #targetID#, #category#, #type#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="treasureQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTreasureQueue" parameterClass="TreasureQueue">
+		UPDATE T_TREASURE_QUEUE SET TREASURE_QUEUE_ID=#treasureQueueID#, TARGET_ID=#targetID#, CATEGORY=#category#, TYPE=#type#, FINISH_TIME=#finishTime# WHERE TREASURE_QUEUE_ID=#treasureQueueID#
+	</update>
+	
+	<delete id="deleteTreasureQueueByID" parameterClass="Integer">
+		DELETE FROM T_TREASURE_QUEUE WHERE TREASURE_QUEUE_ID=#treasureQueueID#
+	</delete>
+	
+	<select id="getTreasureQueueByID" parameterClass="Integer" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE TREASURE_QUEUE_ID=#treasureQueueID#
+	</select>
+	
+	<select id="getTreasureQueueList" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE
+	</select>
+	
+	<select id="getFinishedTreasureQueueList" resultClass="TreasureQueue">
+		 <![CDATA[ SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID,CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE FINISH_TIME<=SYSDATE()]]>
+	</select>
+	
+	<select id="getTreasureQueueByType" parameterClass="java.util.Map" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE TARGET_ID=#targetID# AND CATEGORY=#category# AND TYPE=#type#
+	</select>
+	
+	<select id="getTreasureQueueListByTargetID" parameterClass="Integer" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE TARGET_ID=#targetID# ORDER BY FINISH_TIME
+	</select>
+	
+	<select id="getTreasureQueueListByCityID" parameterClass="Integer" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE ( CATEGORY=1 OR CATEGORY=3 OR CATEGORY=5) AND TARGET_ID=#cityID# ORDER BY FINISH_TIME
+	</select>
+		
+	<select id="getTreasureQueueListByCityHeroID" parameterClass="Integer" resultClass="TreasureQueue">
+		SELECT TREASURE_QUEUE_ID AS treasureQueueID, TARGET_ID AS targetID, CATEGORY AS category, TYPE AS type, FINISH_TIME AS finishTime FROM T_TREASURE_QUEUE WHERE CATEGORY=6 AND TARGET_ID=#cityHeroID# ORDER BY FINISH_TIME
+	</select>
+
+</sqlMap>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="360" height="368" initialize="doInit()" layout="absolute">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.guild.GuildMemberGrantEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.GuildPlayerVO;
+		
+			import com.hifong.war.util.WindowUtil;
+
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+
+			[Bindable]
+			public var guildPlayer:GuildPlayerVO;
+		
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				
+				//初始化权限复选框
+				var permission:String = guildPlayer.permission;
+				
+				if(permission.charAt(0)=='1')
+					permission1.selected = true;
+				if(permission.charAt(1)=='1')
+					permission2.selected = true;
+				if(permission.charAt(2)=='1')
+					permission3.selected = true;
+				if(permission.charAt(3)=='1')
+					permission4.selected = true;
+				
+			}
+		
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function memberGrant(playerID:int):void{
+				var permission:String = new String();
+
+				if(permission1.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+				permission+="-";
+				if(permission2.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+				permission+="-";
+				
+				if(permission3.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+				permission+="-";
+				
+				if(permission4.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+				permission+="-";
+				if(permission5.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+				permission+="-";
+				if(permission6.selected){
+					permission = permission + "1";
+				}else{
+					permission = permission + "0";
+				}
+
+	
+				var updateGuildPlayer:GuildPlayerVO = new GuildPlayerVO();
+				updateGuildPlayer.guildID = model.playerInfo.guildID;
+				updateGuildPlayer.playerID = playerID;
+				updateGuildPlayer.dutyName = textDutyName.text;
+				updateGuildPlayer.permission = permission;
+
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GuildMemberGrantEvent(updateGuildPlayer));
+
+				doClose(); 
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="成员授权" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="35.5" y="37" width="289" height="302" styleName="InnerBorder">
+		<mx:Label x="10" y="10" text="玩      家："/>
+		<mx:Label x="80" y="10" text="{guildPlayer.player.name}" width="199"/>
+		<mx:Label x="10" y="38" text="当前职位："/>
+		<mx:TextInput x="80" y="36" id="textDutyName" text="{guildPlayer.dutyName}"  width="199"/>
+		<mx:Label x="10" y="70" text="权      限："/>
+		<mx:CheckBox id="permission1" name="permission1" x="80" y="68" label="审核邀请成员" selected="{model.manageGuildMemberAppInvPermission}"/>
+		<mx:CheckBox id="permission2" name="permission2" x="80" y="100" label="移除军团成员" selected="{model.manageGuildMemberRemovePermission}"/>
+		<mx:CheckBox id="permission3" name="permission3" x="80" y="132" label="维护军团信息" selected="{model.manageGuildInfoPermission}"/>
+		<mx:CheckBox id="permission4" name="permission4" x="80" y="164" label="管理军团关系" selected="{model.manageGuildRelationshipPermission}"/>
+		<mx:CheckBox id="permission5" name="permission5" x="80" y="196" label="军团消息群发" selected="{model.manageGuildMessagePermission}"/>
+		<mx:CheckBox id="permission6" name="permission6" x="80" y="228" label="军团官员辞职" selected="{model.manageOfficerResignPermission}"/>
+		<mx:Button x="200.5" y="266" label="确定" click="memberGrant(guildPlayer.playerID)" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

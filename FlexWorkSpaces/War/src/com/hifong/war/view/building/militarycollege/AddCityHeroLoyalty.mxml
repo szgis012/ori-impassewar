@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="285">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.AddCityHeroLoyaltyEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var costMoney:int = 0;
+			
+			private function doClose():void {
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 计算花费
+			 */
+			private function calcCost():void {
+				var addLoyaltyNum:int = int(textAddLoyaltyNum.text);
+				if(addLoyaltyNum>100-model.currentCityHero.loyalty) {
+					addLoyaltyNum = 100-model.currentCityHero.loyalty;
+					textAddLoyaltyNum.text = addLoyaltyNum.toString();
+				}
+				costMoney = model.currentCityHero.level*100*addLoyaltyNum;
+			}
+			
+			/**
+			 * 增加忠诚
+			 */
+			private function addLoyalty():void {
+				var addLoyaltyNum:int = int(textAddLoyaltyNum.text);
+				if(!addLoyaltyNum>0) {
+					MsgBox.showMessage("请输入要提升的忠诚点数。");
+					textAddLoyaltyNum.setFocus();
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AddCityHeroLoyaltyEvent(model.currentCityHero.cityHeroID, addLoyaltyNum));
+				model.currentCityHero.loyalty = model.currentCityHero.loyalty+int(textAddLoyaltyNum.text);
+				doClose();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Button x="351" y="28" styleName="closeWindow" click="doClose()" width="22" height="22"/>
+	<mx:Label x="72" y="27" text="提升忠诚" width="256" styleName="windowTitle"/>
+	<mx:Image x="75" y="58" source="{WarAssets.titleLine}" width="250"/>
+	<mx:Canvas x="27" y="82" width="346" height="175" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="名称：  {model.currentCityHero.name}"/>
+		<mx:Label x="10" y="38" text="忠诚：  {model.currentCityHero.loyalty}"/>
+		<mx:Label x="10" y="66" text="提升："/>
+		<mx:TextInput x="57" y="65" width="60" id="textAddLoyaltyNum" maxChars="2" textAlign="right" text="0" keyUp="calcCost()"/>
+		<mx:Label x="125" y="66" text="(共需要 {costMoney} 金钱)" width="143"/>
+		<mx:Button x="276" y="63" label="确定" click="addLoyalty()"/>
+		<mx:Canvas x="10" y="94" width="326" height="70" styleName="InnerBorder">
+			<mx:Label x="10" y="10" text="每提升1点忠诚消耗 指挥官等级*100 金钱"/>
+			<mx:Label x="10" y="38" text="指挥官忠诚最高为100"/>
+		</mx:Canvas>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

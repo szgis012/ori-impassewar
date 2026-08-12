@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Technology">
+	<typeAlias alias="Technology" type="com.war.domain.Technology" />
+	
+	<insert id="createTechnology" parameterClass="Technology">
+		INSERT INTO T_TECHNOLOGY(NAME, IMAGE, MAX_LEVEL, DESCRIPTION, TYPE) VALUES(#name#, #image#, #maxLevel#, #description#, #type#)
+		<selectKey resultClass="Integer" keyProperty="technologyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTechnology" parameterClass="Technology">
+		UPDATE T_TECHNOLOGY SET TECHNOLOGY_ID=#technologyID#, NAME=#name#, IMAGE=#image#, MAX_LEVEL=#maxLevel#, DESCRIPTION=#description#, TYPE=#type# WHERE TECHNOLOGY_ID=#technologyID#
+	</update>
+	
+	<delete id="deleteTechnologyByID" parameterClass="Integer">
+		DELETE FROM T_TECHNOLOGY WHERE TECHNOLOGY_ID=#technologyID#
+	</delete>
+	
+	<select id="getTechnologyByID" parameterClass="Integer" resultClass="Technology">
+		SELECT TECHNOLOGY_ID AS technologyID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, TYPE AS type FROM T_TECHNOLOGY WHERE TECHNOLOGY_ID=#technologyID#
+	</select>
+	
+	<select id="getTechnologyListByType" parameterClass="Integer" resultClass="Technology">
+		SELECT TECHNOLOGY_ID AS technologyID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, TYPE AS type FROM T_TECHNOLOGY WHERE TYPE=#type#
+	</select>
+
+	<select id="getTechnologyList" resultClass="Technology">
+		SELECT TECHNOLOGY_ID AS technologyID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, TYPE AS type FROM T_TECHNOLOGY
+	</select>
+
+</sqlMap>

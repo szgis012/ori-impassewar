@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:651
+ * 
+ * 名称：普通记忆胶囊
+ * 描述：增加指挥官1技能学习数量
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroMaxSkillNum(params["cityHeroID"],1);

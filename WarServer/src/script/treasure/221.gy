@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:221
+ * 
+ * 名称：计算机
+ * 描述：缩短科技研究时间30分钟。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceTechResearchCostTime(params["queueID"], 30*60);

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityHero">
+	<typeAlias alias="CityHero" type="com.war.domain.CityHero" />
+	
+	<insert id="createCityHero" parameterClass="CityHero">
+		INSERT INTO T_CITY_HERO(CITY_ID, NAME, GENDER, HEAD, LEVEL, EXP, STAR, STAMINA, STAMINA_MAX, COMMAND, DEFENSE, MIND, EXECUTIVEPOWER, UNSET_POINT, MILITARY_SPIRIT, MILITARY_SOUL, ADDED_MILITARY_SPIRIT, REIN, LEADERSHIP, LOYALTY, MAX_SKILL_NUM, EQUIPMENT_EPAULET, EQUIPMENT_CAP, EQUIPMENT_CLOTHES, EQUIPMENT_SHOE, EQUIPMENT_WEAPON, QUALITY, STATE) VALUES(#cityID#, #name#, #gender#, #head#, #level#, #exp#, #star#, #stamina#, #staminaMax#, #command#, #defense#, #mind#, #executivepower#, #unsetPoint#,  #militarySpirit#, #militarySoul#, #addedMilitarySpirit#, #rein#, #leadership#, #loyalty#, #maxSkillNum#, #equipmentEpaulet#, #equipmentCap#, #equipmentClothes#, #equipmentShoe#, #equipmentWeapon#, #quality#, #state#)
+		<selectKey resultClass="Integer" keyProperty="cityHeroID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="addExpByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET EXP=EXP+#exp# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateStaminaByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET STAMINA=#stamina# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<procedure id="batchAddCityHeroStamina">
+		<![CDATA[ 
+			{CALL ADD_CITY_HERO_STAMINA()}
+		]]>
+	</procedure>
+	
+	<update id="updateMaxSkillNumByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET MAX_SKILL_NUM=#maxSkillNum# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updatePointByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET COMMAND=#command#, DEFENSE=#defense#, MIND=#mind#, EXECUTIVEPOWER=#executivepower#, UNSET_POINT=#unsetPoint# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateLeadershipByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET LEADERSHIP=#leadership# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateLoyaltyByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET LOYALTY=#loyalty# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateStateByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET STATE=#state# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateReinByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET REIN=#rein# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateStarByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET STAR=#star# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateAddedMilitarySpiritByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET ADDED_MILITARY_SPIRIT=#addedMilitarySpirit# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateMilitarySpiritByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET MILITARY_SPIRIT=#militarySpirit# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateQualityByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET QUALITY=#quality# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateNameByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET NAME=#name# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateMilitarySoulByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET MILITARY_SOUL=#militarySoul# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateStaminaMaxByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET STAMINA_MAX=#staminaMax# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateHeroEquipmentByCityHeroID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO
+		<dynamic prepend="SET">
+			<isPropertyAvailable prepend="," property="equipmentEpaulet">
+				EQUIPMENT_EPAULET=#equipmentEpaulet#
+			</isPropertyAvailable>
+			<isPropertyAvailable prepend="," property="equipmentCap">
+				EQUIPMENT_CAP=#equipmentCap#
+			</isPropertyAvailable>
+			<isPropertyAvailable prepend="," property="equipmentClothes">
+				EQUIPMENT_CLOTHES=#equipmentClothes#
+			</isPropertyAvailable>
+			<isPropertyAvailable prepend="," property="equipmentShoe">
+				EQUIPMENT_SHOE=#equipmentShoe#
+			</isPropertyAvailable>
+			<isPropertyAvailable prepend="," property="equipmentWeapon">
+				EQUIPMENT_WEAPON=#equipmentWeapon# 
+			</isPropertyAvailable>
+		</dynamic>
+		WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<procedure id="updateCityHeroExpBatch">
+		<![CDATA[ 
+			{CALL ADD_CITY_OFFICER_EXP()}
+		]]>
+	</procedure>
+	
+	<update id="updateCityHero" parameterClass="CityHero">
+		UPDATE T_CITY_HERO SET CITY_HERO_ID=#cityHeroID#, CITY_ID=#cityID#, NAME=#name#, GENDER=#gender#, HEAD=#head#, LEVEL=#level#, EXP=#exp#, STAR=#star#, STAMINA=#stamina#, STAMINA_MAX=#staminaMax#, COMMAND=#command#, DEFENSE=#defense#, MIND=#mind#, EXECUTIVEPOWER=#executivepower#, UNSET_POINT=#unsetPoint#, MILITARY_SPIRIT=#militarySpirit#, MILITARY_SOUL=#militarySoul#, ADDED_MILITARY_SPIRIT=#addedMilitarySpirit#, REIN=#rein#, LEADERSHIP=#leadership#, LOYALTY=#loyalty#, MAX_SKILL_NUM=#maxSkillNum#, EQUIPMENT_EPAULET=#equipmentEpaulet#, EQUIPMENT_CAP=#equipmentCap#, EQUIPMENT_CLOTHES=#equipmentClothes#, EQUIPMENT_SHOE=#equipmentShoe#, EQUIPMENT_WEAPON=#equipmentWeapon#, QUALITY=#quality#, STATE=#state# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="addReinByCityIDWithMultiple" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO SET REIN=REIN+TRUNCATE(REIN*(#percent#/100),0) WHERE CITY_ID=#cityID#
+	</update>
+	
+	<delete id="deleteCityHeroByID" parameterClass="Integer">
+		DELETE FROM T_CITY_HERO WHERE CITY_HERO_ID=#cityHeroID#
+	</delete>
+	
+	<select id="getCityHeroNameByCityHeroID" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_CITY_HERO WHERE CITY_HERO_ID=#cityHeroID#
+	</select>
+	
+	<select id="getUnsetPointByCityHeroID" parameterClass="Integer" resultClass="Integer">
+		SELECT UNSET_POINT FROM T_CITY_HERO WHERE CITY_HERO_ID=#cityHeroID#
+	</select>
+	
+	<select id="getCityHeroNumByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY_HERO WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityHeroByID" parameterClass="Integer" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO WHERE CITY_HERO_ID=#cityHeroID#
+	</select>
+	
+	<select id="getCityHeroListByCityIDAndState" parameterClass="java.util.Map" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO WHERE CITY_ID=#cityID# AND STATE=#state#
+	</select>
+	
+	<select id="getCityHeroListByCityID" parameterClass="Integer" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityHeroListByState" parameterClass="Integer" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO WHERE STATE=#state#
+	</select>
+	
+	<select id="getCityHeroList" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO
+	</select>
+
+	<select id="existsCityOfficer" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY_HERO WHERE CITY_ID=#cityID# and STATE=5
+	</select>
+	
+	<select id="getEquipedCityHeroNumByCityID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_CITY_HERO WHERE ( EQUIPMENT_EPAULET IS NOT NULL OR EQUIPMENT_CAP IS NOT NULL OR EQUIPMENT_CLOTHES IS NOT NULL OR EQUIPMENT_SHOE IS NOT NULL OR EQUIPMENT_WEAPON IS NOT NULL ) AND CITY_ID=#cityID#
+	</select>
+	
+	<select id="getBugCityHeroList" resultClass="CityHero">
+		SELECT CITY_HERO_ID AS cityHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, EXP AS exp, STAR AS star, STAMINA AS stamina, STAMINA_MAX AS staminaMax, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, UNSET_POINT AS unsetPoint, MILITARY_SPIRIT AS militarySpirit, MILITARY_SOUL AS militarySoul, ADDED_MILITARY_SPIRIT AS addedMilitarySpirit, REIN AS rein, LEADERSHIP AS leadership, LOYALTY AS loyalty, MAX_SKILL_NUM AS maxSkillNum, EQUIPMENT_EPAULET AS equipmentEpaulet, EQUIPMENT_CAP AS equipmentCap, EQUIPMENT_CLOTHES AS equipmentClothes, EQUIPMENT_SHOE AS equipmentShoe, EQUIPMENT_WEAPON AS equipmentWeapon, QUALITY AS quality, STATE AS state FROM T_CITY_HERO WHERE (T_CITY_HERO.COMMAND + T_CITY_HERO.DEFENSE + T_CITY_HERO.MIND + T_CITY_HERO.EXECUTIVEPOWER)>((T_CITY_HERO.LEVEL-1)*6+140)
+	</select>
+	
+</sqlMap>

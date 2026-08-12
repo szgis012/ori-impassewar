@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityCandidacyHero">
+	<typeAlias alias="CityCandidacyHero" type="com.war.domain.CityCandidacyHero" />
+	
+	<insert id="createCityCandidacyHero" parameterClass="CityCandidacyHero">
+		INSERT INTO T_CITY_CANDIDACY_HERO(CITY_ID, NAME, GENDER, HEAD, LEVEL, COMMAND, DEFENSE, MIND, EXECUTIVEPOWER, MILITARY_SPIRIT, STATE) VALUES(#cityID#, #name#, #gender#, #head#, #level#, #command#, #defense#, #mind#, #executivepower#, #militarySpirit#, #state#)
+		<selectKey resultClass="Integer" keyProperty="cityCandidacyHeroID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityCandidacyHeroState" parameterClass="java.util.Map">
+		UPDATE T_CITY_CANDIDACY_HERO SET STATE=#state# WHERE CITY_CAND_HERO_ID=#cityCandidacyHeroID#
+	</update>
+	
+	<update id="updateCityCandidacyHero" parameterClass="CityCandidacyHero">
+		UPDATE T_CITY_CANDIDACY_HERO SET CITY_CAND_HERO_ID=#cityCandidacyHeroID#, CITY_ID=#cityID#, NAME=#name#, GENDER=#gender#, HEAD=#head#, LEVEL=#level#, COMMAND=#command#, DEFENSE=#defense#, MIND=#mind#, EXECUTIVEPOWER=#executivepower#, MILITARY_SPIRIT=#militarySpirit#, STATE=#state# WHERE CITY_CAND_HERO_ID=#cityCandidacyHeroID#
+	</update>
+	
+	<delete id="deleteCityCandidacyHeroByID" parameterClass="Integer">
+		DELETE FROM T_CITY_CANDIDACY_HERO WHERE CITY_CAND_HERO_ID=#cityCandidacyHeroID#
+	</delete>
+	
+	<delete id="deleteCityCandidacyHeroListByCityID" parameterClass="Integer">
+		DELETE FROM T_CITY_CANDIDACY_HERO WHERE CITY_ID=#cityID#
+	</delete>
+	
+	<delete id="deleteCityCandidacyHeroList">
+		DELETE FROM T_CITY_CANDIDACY_HERO
+	</delete>
+	
+	<select id="getCityCandidacyHeroNum" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY_CANDIDACY_HERO WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityCandidacyHeroByID" parameterClass="Integer" resultClass="CityCandidacyHero">
+		SELECT CITY_CAND_HERO_ID AS cityCandidacyHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, MILITARY_SPIRIT AS militarySpirit, STATE AS state FROM T_CITY_CANDIDACY_HERO WHERE CITY_CAND_HERO_ID=#cityCandidacyHeroID#
+	</select>
+	
+	<select id="getCityCandidacyHeroListByCityID" parameterClass="Integer" resultClass="CityCandidacyHero">
+		SELECT CITY_CAND_HERO_ID AS cityCandidacyHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, MILITARY_SPIRIT AS militarySpirit, STATE AS state FROM T_CITY_CANDIDACY_HERO WHERE CITY_ID=#cityID# AND STATE=1
+	</select>
+	
+	<select id="getCityCandidacyHeroList" resultClass="CityCandidacyHero">
+		SELECT CITY_CAND_HERO_ID AS cityCandidacyHeroID, CITY_ID AS cityID, NAME AS name, GENDER AS gender, HEAD AS head, LEVEL AS level, COMMAND AS command, DEFENSE AS defense, MIND AS mind, EXECUTIVEPOWER AS executivepower, MILITARY_SPIRIT AS militarySpirit, STATE AS state FROM T_CITY_CANDIDACY_HERO
+	</select>
+
+</sqlMap>

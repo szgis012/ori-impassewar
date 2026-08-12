@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Guildtechnology">
+	<typeAlias alias="Guildtechnology" type="com.war.domain.GuildTechnology" />
+
+	<insert id="createGuildtechnology" parameterClass="Guildtechnology">
+		INSERT INTO T_GUILDTECHNOLOGY(GUILDTECHNOLOGY_ID, NAME, DESCRIPTION, MAX_LEVEL, TYPE) VALUES(#guildtechnologyID#, #name#, #description#, #maxLevel#, #type#)
+		<selectKey resultClass="Integer" keyProperty="guildtechnologyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateGuildtechnology" parameterClass="Guildtechnology">
+		UPDATE T_GUILDTECHNOLOGY SET GUILDTECHNOLOGY_ID=#guildtechnologyID#, NAME=#name#, DESCRIPTION=#description#,  MAX_LEVEL=#maxLevel#, TYPE=#type# WHERE GUILDTECHNOLOGY_ID=#guildtechnologyID#
+	</update>
+
+	<delete id="deleteGuildtechnologyByID" parameterClass="Integer">
+		DELETE FROM T_GUILDTECHNOLOGY WHERE GUILDTECHNOLOGY_ID=#guildtechnologyID#
+	</delete>
+
+	<select id="getGuildtechnologyByID" parameterClass="Integer" resultClass="Guildtechnology">
+		SELECT GUILDTECHNOLOGY_ID AS guildtechnologyID, NAME AS name, DESCRIPTION AS description, MAX_LEVEL AS maxLevel, TYPE AS type FROM T_GUILDTECHNOLOGY WHERE GUILDTECHNOLOGY_ID=#guildtechnologyID#
+	</select>
+
+	<select id="getGuildtechnologyList" resultClass="Guildtechnology">
+		SELECT GUILDTECHNOLOGY_ID AS guildtechnologyID, NAME AS name, DESCRIPTION AS description, MAX_LEVEL AS maxLevel, TYPE AS type FROM T_GUILDTECHNOLOGY
+	</select>
+
+</sqlMap>

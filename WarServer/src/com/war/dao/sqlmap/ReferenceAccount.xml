@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ReferenceAccount">
+    <typeAlias alias="ReferenceAccount" type="com.war.domain.ReferenceAccount" />
+	
+    <insert id="createReferenceAccount" parameterClass="ReferenceAccount">
+        INSERT INTO T_REFERENCE_ACCOUNT(ID, ACCOUNT_NAME) VALUES(#id#, #accountName#)
+        <selectKey resultClass="Integer" keyProperty="id" >
+            SELECT @@IDENTITY AS ID
+        </selectKey> 
+    </insert>
+	
+    <update id="updateReferenceAccount" parameterClass="ReferenceAccount">
+        UPDATE T_REFERENCE_ACCOUNT SET ID=#id#, ACCOUNT_NAME=#accountName# WHERE ID=#id#
+    </update>
+    
+    <delete id="deleteReferenceAccountByID" parameterClass="Integer">
+        DELETE FROM T_REFERENCE_ACCOUNT WHERE ID=#id#
+    </delete>
+    
+    <select id="getReferenceAccountByID" parameterClass="Integer" resultClass="ReferenceAccount">
+        SELECT ID AS id, ACCOUNT_NAME AS accountName FROM T_REFERENCE_ACCOUNT WHERE ID=#id#
+    </select>
+    
+    <select id="getReferenceAccountByAccountName" parameterClass="String" resultClass="ReferenceAccount">
+        SELECT ID AS id, ACCOUNT_NAME AS accountName FROM T_REFERENCE_ACCOUNT WHERE ACCOUNT_NAME=#accountName#
+    </select>
+
+</sqlMap>

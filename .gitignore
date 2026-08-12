@@ -1,0 +1,43 @@
+# ============ IDE 配置 ============
+.metadata/
+.settings/
+.project
+.classpath
+.jupiter
+.mymetadata
+.myumldata
+.springBeans
+.flexProperties
+.actionScriptProperties
+.cairngen/
+configuration/
+
+# ============ 旧版本控制 ============
+.svn/
+
+# ============ 编译/构建产物 ============
+bin-debug/
+bin-release/
+*.class
+*.swf
+
+# ============ 依赖库（改用Maven/npm） ============
+WEB-INF/lib/
+*.jar
+*.swc
+libs/
+
+# ============ 嵌套旧版本（只保留 WarServer/src） ============
+# WarServer/War/ 及所有更深层的 War/War/War... 都是旧版本
+WarServer/War/
+
+# ============ 备份 ============
+bak/
+backup/
+*.rar
+*.zip
+review/
+
+# ============ 操作系统 ============
+Thumbs.db
+.DS_Store

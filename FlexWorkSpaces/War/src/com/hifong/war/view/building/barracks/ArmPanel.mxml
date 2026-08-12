@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580"  horizontalScrollPolicy="off"  height="260" initialize="doInit()" xmlns:ns2="com.hifong.war.view.building.barracks.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.view.building.barracks.SoldierItemPanel;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			
+			private function doInit():void{
+				initSoldierItem();
+			}
+			
+			
+			private function initSoldierItem():void{
+				var list:ArrayCollection = model.armyInfo.soldierList;
+				
+				if(list && list.length>0){
+					var army:ArmyVO;
+					var cityArmy:CityArmyVO;
+					var soldierItem:SoldierItemPanel ;
+					
+					for(var i:int=0; i<list.length; i++){
+						army = list.getItemAt(i) as ArmyVO;
+						cityArmy = model.armyInfo.nosetArmyMap[army.armyID] as CityArmyVO;
+						
+						//如果没有对应的未编制军队记录
+						if(cityArmy == null){
+							cityArmy = new CityArmyVO();
+							cityArmy.armyID = army.armyID;
+							cityArmy.cityArmyID = 0;
+							cityArmy.cityID = model.cityInfo.cityID;
+							cityArmy.num = 0;
+							cityArmy.state = 0;
+						}
+						
+						soldierItem = new SoldierItemPanel();
+						soldierItem.army = army;
+						soldierItem.cityArmy = cityArmy;
+						soldierItem.x = 10;
+						soldierItem.y = i * (soldierItem.height+5) + 5;
+						
+						this.addChild(soldierItem);
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	<!--
+	<ns2:SoldierItemPanel x="10" y="60">
+	</ns2:SoldierItemPanel>-->
+	
+</mx:Canvas>

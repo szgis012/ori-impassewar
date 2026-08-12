@@ -1,0 +1,843 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="1000" height="600" styleName="" initialize="doInit()" backgroundAlpha="0" backgroundColor="0">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			import com.adobe.serialization.json.JSONEncoder;
+			import mx.managers.CursorManager;
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Linear;
+			import com.hifong.war.vo.CityDefenseVO;
+			import com.hifong.war.util.tooltip.BattleArmyTooltip;
+			import com.hifong.war.util.tooltip.CityDefenseTooltip;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.common.GlobalTimer;
+			import com.hifong.war.events.common.GetServerTimeEvent;
+			import com.hifong.war.events.battle.GetBattleInfoEvent;
+			import flash.utils.setTimeout;
+			import flash.utils.setInterval;
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.util.MsgBox;
+			import mx.controls.Image;
+			import mx.controls.Text;
+			import mx.containers.Canvas;
+			import mx.utils.ObjectProxy;
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.business.Services;
+			import com.hifong.war.control.WarController;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import flash.events.Event;
+			import flash.net.Socket;
+			
+			/** 军队网格大小 */
+			private static var GRID_SIZE:int = 50;
+			
+			/** X(横向)网格数量 */
+			private static var X_GRID_AMOUNT:int = 15 - 2;
+			/** Y(纵向)网格数量 */
+			private static var Y_GRID_AMOUNT:int = 8 - 2;
+			/** 战场宽度 */
+			private static var STAGE_WIDTH:int = 900;
+			/** 可用路线网格图片路径 */
+			[Embed(source="images/battle/route.png")]
+			public static var ROUTE_GRID_IMAGE:Class;
+			/** 攻击范围网格图片路径 */
+			[Embed(source="images/battle/range.png")]
+			public static var RANGE_GRID_IMAGE:Class;
+			/** 军队图片路径前缀 */
+			private static var ARMY_IMAGE_PATH_PREFIX:String = "images/battle/army/";
+			
+			/** 围墙图片路径 */
+			private static var FENCE_IMAGE_PATH:String = "images/battle/fence.png";
+			/** 碉堡图片路径 */
+			private static var BUNKER_IMAGE_PATH:String = "images/battle/bunker.png";
+			/** 火炮图片路径 */
+			private static var GUN_IMAGE_PATH:String = "images/battle/gun.png";
+			/** 防空炮图片路径 */
+			private static var ANTIGUN_IMAGE_PATH:String = "images/battle/antigun.png";
+			
+			/** 回合时间 */
+			private static const ROUND_TIME:int = 150;
+			/** 野怪自动战斗间隔 */
+			private static const MAP_MONSTER_INTERVAL:int = 5000;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var battleSocket:Socket = new Socket();
+			
+			/** 战斗编号 */
+			public var battleID:int;
+			
+			[Bindable]
+			/** 战斗信息 */
+			public var battleInfo:Object;
+			
+			/** 当前操作者(1.进攻方 2.防守方)默认为1 */
+			private var currentOperator:int = 1;
+			
+			[Bindable]
+			/** 玩家势力(1.进攻方 2.防守方) */
+			public var playerForce:int;
+			
+			[Bindable]
+			/** 战场X坐标 */
+			private var stagePosX:int;
+			[Bindable]
+			/** 战场Y坐标 */
+			private var stagePosY:int;
+			[Bindable]
+			/** 回合 */
+			private var round:int;
+			/** 回合时间 */
+			private var roundTime:int = ROUND_TIME;
+			[Bindable]
+			/** 回合时间格式化字符串 */
+			private var roundTimeFormatted:String;
+			/** 回合时间Timer */
+			private var timer:Timer;
+			
+			/** 是否正在攻击 */
+			private var isAttacking:Boolean;
+			
+			/** 战斗Watcher(初始化时使用) */
+			private var battleWatcher:ChangeWatcher;
+			[Bindable]
+			/** 是否释放技能 */
+			public var isCastingSkill:Boolean = false;
+			/** 释放指挥官技能编号 */
+			public var castingHeroSkillID:int;
+			/** 释放技能消耗体力 */
+			public var castingSkillCostStamina:int;
+			/** 当前回合是否已经释放技能 */
+			public var haveCastedSkill:Boolean;
+			
+			/** 是否自动战斗 */
+			private var isAutoBattle:Boolean = false;
+			/** 自动战斗响应编号 */
+			private var autoBattleHandleID:int;
+			
+			/** 自动战斗时间间隔(单位：秒) */
+			private static const autoBattleInterval:int = 9;
+			[Bindable]
+			/** 自动战斗间隔剩余秒数 */
+			private var autoBattleLeftSecond:int;
+			
+			/** 行动延迟(毫秒) */
+			private static const actionDelay:int = 2000;
+
+			
+			[Bindable]
+			/** 进攻方军队信息 */
+			private var military_attacker:Object;
+			[Bindable]
+			/** 防守方军队信息 */
+			private var military_defender:Object;
+			
+			[Bindable]
+			/** 围墙信息 */
+			private var fence:CityDefenseVO;
+			/** 碉堡(上) */
+			private var bunkerTop:CityDefenseVO;
+			/** 碉堡(下) */
+			private var bunkerBottom:CityDefenseVO;
+			/** 火炮(上) */
+			private var gunTop:CityDefenseVO;
+			/** 火炮(下) */
+			private var gunBottom:CityDefenseVO;
+			/** 防空炮(上) */
+			private var antigunTop:CityDefenseVO;
+			/** 防空炮(下) */
+			private var antigunBottom:CityDefenseVO;
+			
+			/** 进攻方军队Canvas引用列表 */
+			private var battleArmyCanvasList_attacker:ArrayCollection = new ArrayCollection();
+			/** 防守方军队Canvas引用列表 */
+			private var battleArmyCanvasList_defender:ArrayCollection = new ArrayCollection();
+			/** 城市防御Canvas引用列表 */
+			private var battleCityDefenseCanvasList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			/** 进攻方军队兵力列表 */
+			private var battleArmyList_attacker:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			/** 防守方军队兵力列表 */
+			private var battleArmyList_defender:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			/** 城防列表 */
+			private var cityDefenseList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			/** 当前军队信息(鼠标移上) */
+			private var currentArmyInfo:Object;
+			[Bindable]
+			/** 当前城防信息(鼠标移上) */
+			private var currentCityDefense:Object;
+			
+			[Bindable]
+			/** 当前军队Canvas */
+			private var currentArmyCanvas:Object;
+			[Bindable]
+			/** 当前城市防御Canvas */
+			private var currentCityDefenseCanvas:Object;
+			
+			[Bindable]
+			/** 选中军队信息 */
+			private var selectedArmyInfo:Object;
+			[Bindable]
+			/** 选中城防信息 */
+			private var selectedCityDefense:Object;
+			/** 自动战斗军队信息 */
+			private var autoBattleArmyInfo:Object;
+			
+			
+			/** 当前路径网格列表 */
+			private var currentRouteGridList:ArrayCollection = new ArrayCollection();
+			/** 当前攻击范围网格列表 */
+			private var currentRangeGridList:ArrayCollection = new ArrayCollection();
+			/** 当前城市防御攻击范围网格列表 */
+			private var currentCityDefenseGridList:ArrayCollection = new ArrayCollection();
+			
+			/** 高亮滤镜 */
+			private static var hilightFilter:ColorMatrixFilter = new ColorMatrixFilter([1, 0, 0, 0, 50, 0, 1, 0, 0, 50, 0, 0, 1, 0, 50, 0, 0, 0, 1, 0]);
+			/** 灰色滤镜 */
+			private static var greyFilter:ColorMatrixFilter = new ColorMatrixFilter([0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 1, 0]);
+			/** 攻击效果文件路径 */
+			private static var ATTACK_EFFECT_PATH:String = "media/battle/effect/attack.swf";
+			/** 技能效果文件路径前缀 */
+			private static var MAGIC_EFFECT_PATH_PREFIX:String = "media/battle/effect/magic/";
+			
+			public var cursorID:Number;
+			/** 攻击鼠标指针样式 */
+			[Embed(source="images/battle/attack.png")]
+			private var attackCursor:Class;
+			/** 技能鼠标指针样式 */
+			[Embed(source="images/battle/magic.png")]
+			public var magicCursor:Class;
+			
+			/** 野怪自动战斗句柄编号 */
+			public var mapMonsterAutoBattleHandleID:Number;
+			
+			
+			private var sound:Sound = new Sound();
+			
+			private var soundChannel:SoundChannel = new SoundChannel();
+			
+			private var soundURLRequest:URLRequest;
+			
+			private function doInit():void{
+
+				//初始化BattleSocket
+				initBattleSocket();
+				/**
+				 * 向服务器发送数据
+				 */
+				 var message:Object=new Object();
+				 message.battleID=battleID;
+				 message.operator=playerForce;
+				 message.type=30;
+				 this.sendData(JSON.encode(message));
+
+				battleWatcher = BindingUtils.bindSetter(initBattleInfo,model,"battleInfo");
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetBattleInfoEvent(battleID));
+				
+				//soundURLRequest = new URLRequest("media/battle/battle2.mp3");
+				//sound.load(soundURLRequest);
+				//soundChannel = sound.play();
+			}
+			
+			/**
+			 * 处理回合时间
+			 */
+			private function handleRoundTime(event:TimerEvent):void{
+				roundTime--;
+				
+				if(roundTime<=-1){
+					roundTime = 0;
+				}
+				
+				roundTimeFormatted = "0" + int(roundTime/60) + ":" + String(roundTime%60<10?"0"+roundTime%60:roundTime%60);
+			}
+			
+			/**
+			 * 显示军队ToolTip
+			 */
+			private function showArmyTooltip(event:ToolTipEvent):void{
+				if(event.currentTarget.data==1){
+					currentArmyInfo = battleArmyList_attacker.getItemAt(event.currentTarget.name);
+				}else if(event.currentTarget.data==2){
+					currentArmyInfo = battleArmyList_defender.getItemAt(event.currentTarget.name);
+				}
+				event.toolTip = new BattleArmyTooltip(currentArmyInfo);
+			}
+			
+			/**
+			 * 军队鼠标移上
+			 */
+			private function armyMouseOver(event:MouseEvent):void{
+				if(event.currentTarget.data==1){
+					currentArmyInfo = battleArmyList_attacker.getItemAt(event.currentTarget.name);
+				}else if(event.currentTarget.data==2){
+					currentArmyInfo = battleArmyList_defender.getItemAt(event.currentTarget.name);
+				}
+				//如多当前军队已经行动则不高亮
+				if(currentArmyInfo.attackType==0){
+					event.currentTarget.filters = [hilightFilter];
+				}
+				//如果当前非正在释放技能并且目标为对方士兵，则显示攻击鼠标指针
+				if(!isCastingSkill && isAttacking && playerForce!=event.currentTarget.data){
+					cursorID = CursorManager.setCursor(attackCursor,2,-20,-20);
+				}
+			}
+			
+			/**
+			 * 军队鼠标移开
+			 */
+			private function armyMouseOut(event:MouseEvent):void{
+				if(event.currentTarget.data==1){
+					currentArmyInfo = battleArmyList_attacker.getItemAt(event.currentTarget.name);
+				}else if(event.currentTarget.data==2){
+					currentArmyInfo = battleArmyList_defender.getItemAt(event.currentTarget.name);
+				}
+				//如多当前军队未操作则恢复滤镜
+				if(currentArmyInfo.attackType==0 && currentArmyInfo!=selectedArmyInfo){
+					event.currentTarget.filters = null;
+				}
+				currentArmyInfo = selectedArmyInfo;
+				
+				if(!isCastingSkill){
+					CursorManager.removeCursor(cursorID);
+				}
+			}
+			
+			/**
+			 * 回合结束
+			 */
+			private function roundFinished():void{
+				
+				roundTime = ROUND_TIME;
+			
+				var i:int;
+				
+				if(currentOperator==1){
+					
+					//进攻方行动(新回合)
+					imageStarAttacker.visible = true;
+					imageStarDefender.visible = false;
+					imageLightAttacker.visible = true;
+					imageLightDefender.visible = false;
+					
+					//初始进攻方军队
+					for(i=0;i<battleArmyList_attacker.length;i++){
+						if(battleArmyList_attacker[i]!=null){
+							battleArmyList_attacker[i].haveMoved = 0;
+							battleArmyList_attacker[i].attackType = 0;
+							battleArmyCanvasList_attacker[i].filters = null;
+						}
+					}
+					
+					addTextareaRound(round);
+					
+					imageAttackersTrun.visible = true;
+					imageDefendersTrun.visible = false;
+					flash.utils.setTimeout(function ():void{
+						imageAttackersTrun.visible = false;
+					},3000);
+					
+					//如果是掠夺战，停止野怪自动战斗
+					if(battleInfo.type==1){
+						clearInterval(mapMonsterAutoBattleHandleID);
+					}
+					
+				}else if(currentOperator==2){
+					
+					//防守方行动
+					imageStarAttacker.visible = false;
+					imageStarDefender.visible = true;
+					imageLightAttacker.visible = false;
+					imageLightDefender.visible = true;
+					
+					for(i=0;i<battleArmyList_attacker.length;i++){
+						if(battleArmyList_attacker[i]!=null){
+							battleArmyList_attacker[i].haveMoved = 1;
+							battleArmyList_attacker[i].attackType = 2;
+							battleArmyCanvasList_attacker[i].filters = [greyFilter];
+						}
+					}
+					
+					//初始化防守方军队
+					for(i=0;i<battleArmyList_defender.length;i++){
+						if(battleArmyList_defender[i]!=null){
+							battleArmyList_defender[i].haveMoved = 0;
+							battleArmyList_defender[i].attackType = 0;
+							battleArmyCanvasList_defender[i].filters = null;
+						}
+					}
+					
+					//如果是攻城战，初始化城市防御信息
+					if(battleInfo.type==2){
+						for(i=0;i<cityDefenseList.length;i++){
+							if(cityDefenseList[i]!=null){
+								cityDefenseList[i].haveAttacked = 0;
+							}
+						}
+						for(i=0;i<battleCityDefenseCanvasList.length;i++){
+							if(battleCityDefenseCanvasList[i]!=null){
+								battleCityDefenseCanvasList[i].filters = null;
+							}
+						}
+					}
+					
+					imageAttackersTrun.visible = false;
+					imageDefendersTrun.visible = true;
+					flash.utils.setTimeout(function ():void{
+						imageDefendersTrun.visible = false;
+					},3000);
+
+					//如果是掠夺战，开启野怪自动战斗
+					if(battleInfo.type==1){
+						mapMonsterAutoBattleHandleID = setInterval(mapMonsterAutoBattle,MAP_MONSTER_INTERVAL);
+					}
+					
+				}
+				
+				//清空相关属性
+				currentArmyInfo = null;
+				currentArmyCanvas = null;
+				selectedArmyInfo = null;
+				
+				//移除网格
+				removeRouteGrid();
+				removeRangeGrid();
+				hidePopupCanvas();
+				
+				haveCastedSkill = false;
+			}
+			
+			
+			/**
+			 * 添加文本区域事件
+			 */
+			private function addTextareaEvent(event:String,type:int):void{
+				
+				var htmlText:String;
+				
+				if(type==1){
+					//绿色字体
+					htmlText = "<font size=\"12\" color=\"#60bb59\">[攻]" + event + "</font>" + "\n";
+				}else if(type==2){
+					//红色字体
+					htmlText = "<font size=\"12\" color=\"#ec6666\">[守]" + event + "</font>" + "\n";
+				}
+				
+				textareaEvent.htmlText += htmlText;
+				//滚至底部
+				textareaEvent.validateNow();
+				textareaEvent.verticalScrollPosition = textareaEvent.maxVerticalScrollPosition+20;
+				
+				textEvent.htmlText = htmlText;
+			}
+			
+			/**
+			 * 添加文本区域回合
+			 */
+			private function addTextareaRound(round:int):void{
+				textareaEvent.htmlText += "<p align=\"center\"><font size=\"14\"><b>" + "第" + round + "回合" + "</b></font></p>";
+
+				//滚至底部
+				textareaEvent.validateNow();
+				textareaEvent.verticalScrollPosition = textareaEvent.maxVerticalScrollPosition;
+			}
+			
+			/**
+			 * 点击主Canvas
+			 */
+			private function clickCanvasMain(event:MouseEvent):void{
+
+				//如果选中士兵则移除移动线路、攻击范围
+				if(selectedArmyInfo!=null){
+					removeRouteGrid();
+					removeRangeGrid();
+					hidePopupCanvas();
+					if(this.selectedArmyInfo.haveMoved==0){
+						currentArmyInfo = null;
+						selectedArmyInfo = null;
+						currentArmyCanvas.filters = null;
+						currentArmyCanvas = null;
+					}
+				}
+				
+				//如果选中城市防御则移除城市防御攻击范围
+				if(selectedCityDefense!=null){
+					removeCityDefenseRangeGrid();
+					selectedCityDefense = null;
+				}
+				
+			}
+			
+			/**
+			 * 显示弹出Canvas
+			 */
+			private function showPopupCanvas():void{
+				
+				if(currentArmyCanvas==null){
+					return;
+				}
+				
+				var x:int;
+				if(currentArmyCanvas.x<STAGE_WIDTH){
+					x = currentArmyCanvas.x + 60;
+				}else{
+					x = currentArmyCanvas.x - 55;
+				}
+				var y:int = currentArmyCanvas.y + 60;
+				
+				if(x==(X_GRID_AMOUNT+2)*GRID_SIZE){
+					canvasPopup.x = currentArmyCanvas.x - 60 + 10;
+				}else{
+					canvasPopup.x = x + 10;
+				}
+				
+				if(y==(Y_GRID_AMOUNT+2)*GRID_SIZE){
+					canvasPopup.y = currentArmyCanvas.y + 60 + 10;
+				}else{
+					canvasPopup.y = y + 60 + 10;
+				}
+				
+				canvasPopup.visible = true;
+			}
+			
+			/**
+			 * 隐藏弹出Canvas
+			 */
+			private function hidePopupCanvas():void{
+				canvasPopup.visible = false;
+			}
+			
+			
+			/**
+			 * 显示/隐藏战斗事件
+			 */
+			private function toggleBattleEvent():void{
+				if(textareaEvent.visible){
+					textareaEvent.visible = false;
+				}else{
+					textareaEvent.visible = true;
+				}
+			}
+			
+			/**
+			 * 显示战斗效果
+			 */
+			private function showEffect(type:int,posX:int,posY:int,callback:Function):void{
+				
+				effectSWFLoader.visible = true;
+				
+				effectSWFLoader.x = posX+canvasArmy.x;
+				effectSWFLoader.y = posY+canvasArmy.y;
+				
+				if(type==0){
+					effectSWFLoader.source = ATTACK_EFFECT_PATH;
+				}else{
+					effectSWFLoader.source = MAGIC_EFFECT_PATH_PREFIX + type + ".swf";
+				}
+				
+				effectSWFLoader.load();
+				
+				setTimeout(callback,actionDelay);
+			}
+			
+			/**
+			 * 战斗帮助
+			 */
+			private function battleHelp():void{
+				
+			}
+			
+			/**
+			 * 结束回合
+			 */
+			private function finishRound():void{
+				if(this.currentOperator==playerForce){
+					/**
+					 * 向服务器发送数据
+					 */
+					 var message:Object=new Object();
+					 message.battleID=battleID;
+					 message.operator=playerForce;
+					 message.type=11;
+					 sendData(JSON.encode(message));
+				}else{
+					MsgBox.showMessage("当前回合为对方行动");
+				}
+			}
+			
+			/**
+			 * 野怪自动战斗结束回合
+			 */
+			private function mapMonsterFinishRound():void{
+					/**
+					 * 向服务器发送数据
+					 */
+					 var message:Object=new Object();
+					 message.battleID=battleID;
+					 message.operator=2;
+					 message.type=11;
+					 this.sendData(JSON.encode(message));
+			}
+			
+			/**
+			 * 全军撤退
+			 */
+			private function retreat():void{
+				if(currentOperator!=playerForce){
+					MsgBox.showMessage("当前回合为对方行动");
+					return;
+				}
+				
+				if(playerForce==2){
+					MsgBox.showMessage("城市防守战无法撤退");
+					return;
+				}
+				
+				MsgBox.showConfirm("您确定要撤退吗？\n撤退将会损失目前兵力的一半，并且降低指挥官忠诚20。",function ():void{
+					/**
+					 * 向服务器发送数据
+					 */
+					 var message:Object=new Object();
+					 message.battleID=battleID;
+					 message.operator=playerForce;
+					 message.type=12;
+					 sendData(JSON.encode(message));
+				});
+			}
+			 
+			/**
+			 * 离开战场
+			 */
+			private function exitBattle():void{
+				
+				//sound.close();
+				//soundURLRequest = null;
+				
+				try{
+					
+					CursorManager.removeCursor(cursorID);
+					
+					clearInterval(mapMonsterAutoBattleHandleID);
+					clearInterval(autoBattleHandleID);
+					
+					timer.stop();
+					timer = null;
+					
+					model.battleInfo = null;
+					/**
+					 * 向服务器发送数据
+					 */
+					 var message:Object=new Object();
+					 message.battleID=battleID;
+					 message.operator=playerForce;
+					 message.type=15;
+					sendData(JSON.encode(message));
+					battleSocket.close();
+					battleSocket = null;
+					
+				}catch(e:Error){}
+				
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 释放技能
+			 */
+			private function castSkill():void{
+				
+				//如果当前行动方与玩家势力不同，则终止操作
+				if(currentOperator!=playerForce){
+					MsgBox.showMessage("当前回合为对方行动");
+					return;
+				}
+				
+				if(haveCastedSkill){
+					MsgBox.showMessage("我方当前回合已经释放过技能。");
+					return;
+				}
+				
+				var win:CastSkillWindow = new CastSkillWindow();
+				if(playerForce==1){
+					win.cityHero = military_attacker.cityHero;
+				}else if(playerForce==2){
+					win.cityHero = military_defender.cityHero;
+				}
+				WindowUtil.showModelWindow(win);
+				
+			}
+			
+			/**
+			 * 取消释放技能
+			 */
+			private function cancelCastSkill():void{
+				isCastingSkill = false;
+				CursorManager.removeCursor(cursorID);
+				
+				btnCastSkill.visible = true;
+				btnCancelCastSkill.visible = false;
+			}
+			/**
+			 * 获取相对方位（进攻者和被进攻者）
+			 */
+			 private function getDirection(sourceX:Number,sourceY:Number,targetX:Number,targetY:Number):int{
+			 	var direction:int=0;
+			 	var atan:Number=Math.atan2(targetY-sourceY,targetX-sourceX);
+			 	var angle:int=Math.round(atan *180 /Math.PI/45);
+			 	switch(angle){
+			 			case 0:
+							direction=1;
+							break;
+						case -1:
+						case -2:
+							direction=2;
+							break;
+						case -3:
+						case 3:
+						case 4:
+						case -4:
+							direction=3;
+							break;
+						case 1:
+						case 2:
+							direction=0;
+							break;
+			 	}
+			 	return direction;
+			 }
+		]]>
+	</mx:Script>
+	
+	<mx:Script source="InitMilitary.as"></mx:Script>
+	<mx:Script source="BattleSocket.as"></mx:Script>
+	<mx:Script source="Army.as"></mx:Script>
+	<mx:Script source="Grid.as"></mx:Script>
+	<mx:Script source="CityDefence.as"></mx:Script>
+	
+	<mx:Style>
+        
+		Canvas.Top
+		{
+			backgroundImage: Embed(source="images/battle/bg_top.jpg");
+		}
+		
+		Canvas.Bottom
+		{
+			backgroundImage: Embed(source="images/battle/bg_bottom.jpg");
+		}
+		
+		Button.Popup
+		{
+			fontSize: 12px;
+			upSkin: Embed(source="images/battle/button_popup.png");
+			overSkin: Embed(source="images/battle/button_popup_over.png");
+			downSkin: Embed(source="images/battle/button_popup_down.png");
+		}
+		
+	</mx:Style>
+	
+	<!--<mx:Canvas x="0" y="0" width="1000" height="70" styleName="Top">
+	</mx:Canvas>-->
+	<!--背景-->
+	<mx:Canvas x="0" y="0" id="canvasBackground" height="600" width="1000" click="clickCanvasMain(event)">
+		<mx:Image source="images/battle/battle_bg.jpg" />
+	</mx:Canvas>
+	<mx:Canvas x="0" y="481" width="1000" height="119" styleName="BattleBottom">
+	<!--进攻方-->
+		<mx:Canvas x="10" y="39" width="248" height="80">
+			<mx:Canvas x="88" y="7" width="147" height="73"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+				<mx:Image x="53" y="8" id="imageLightAttacker" source="images/battle/light.png" visible="false"/>
+				<mx:Text x="53" y="3" text="进攻方({playerForce==1?'我方':'敌方'})" fontWeight="bold" fontSize="14" width="57" height="20"/>
+				<mx:Label x="19" y="21" text="军   队：{military_attacker.name}" fontSize="12" width="118"/>
+				<mx:Label x="18" y="41" text="来   自：{military_attacker.cityInfo.name}({military_attacker.cityInfo.posX}:{military_attacker.cityInfo.posY})" fontSize="12" width="122" height="23"/>
+				<mx:Image x="34" y="3" id="imageStarAttacker" source="images/battle/star.png" visible="false"/>
+			</mx:Canvas>
+			<mx:Image x="10" y="5" source="images/hero/{military_attacker.cityHero.head}.png" height="60" width="60"/>
+		</mx:Canvas>
+		<!--防守方-->
+		<mx:Canvas x="751" y="39" width="239" height="80">
+			<mx:Canvas x="2" y="9" width="147" height="62"   verticalScrollPolicy="off" horizontalScrollPolicy="off">
+				<mx:Image x="53" y="8" id="imageLightDefender" source="images/battle/light.png" visible="false"/>
+				<mx:Text x="53" y="3" text="防守方({playerForce==2?'我方':'敌方'})" fontWeight="bold" fontSize="14" width="47" height="20"/>
+				<mx:Label x="9" y="21" text="军   队：{battleInfo.type==1?military_defender.level+'级野怪':military_defender.name}" fontSize="12" width="114"/>
+				<mx:Label x="9" y="39" text="来   自：{battleInfo.type==1?military_defender.level+'级野怪':military_defender.cityInfo.name}({model.battleInfo.stagePosX}:{model.battleInfo.stagePosY})" fontSize="12"  width="114"/>
+				<mx:Image x="34" y="3" id="imageStarDefender" source="images/battle/star.png" visible="false"/>
+			</mx:Canvas>
+			<mx:Image y="7" source="images/hero/{battleInfo.type==1?military_defender.cmderHead:military_defender.cityHero.head}.png" height="60" width="60" x="166"/>
+		</mx:Canvas>
+			<!--round-->
+			<mx:Canvas x="431" y="43" width="136" height="55">
+				<!--<mx:Text x="31.5" y="10" text="{roundTimeFormatted}" color="#FF0000" fontSize="12" width="73" height="20"/>-->
+				<mx:HBox horizontalGap="-1" x="32" y="10" width="100" >
+					<mx:Image x="110" y="10" source="images/battle/time_{roundTimeFormatted.charAt(0)}.png" />
+					<mx:Image x="120" y="10" source="images/battle/time_{roundTimeFormatted.charAt(1)}.png" />
+					<mx:Image x="155" y="10" source="images/battle/time.png" />
+					<mx:Image x="170" y="10" source="images/battle/time_{roundTimeFormatted.charAt(3)}.png" /> 
+					<mx:Image x="180" y="10" source="images/battle/time_{roundTimeFormatted.charAt(4)}.png" />
+				</mx:HBox>
+				<mx:Text x="31" y="34" text="第{round}回合" color="#FFFFFF" fontSize="12" fontWeight="bold" textAlign="center" width="73" height="20"/>
+			</mx:Canvas>
+		<!--controlBar-->
+				<!--技能-->
+				<mx:Button x="321" y="76" id="btnCastSkill"   toolTip="释放技能" click="castSkill()"  height="20" width="47" visible="{!isCastingSkill}" upSkin="@Embed('images/battle/button/skill.png')" overSkin="@Embed('images/battle/button/skill_over.png')"  downSkin="@Embed('images/battle/button/skill_down.png')"/>
+				<!--取消-->
+				<mx:Button x="321" y="76" id="btnCancelCastSkill" styleName="Nav" label="取消" toolTip="取消释放技能" click="cancelCastSkill()"  height="20" width="47" visible="{isCastingSkill}"/>
+				<!--自动-->
+				<mx:Button x="376" y="76" id="btnAutoBattle"  toolTip="自动战斗" click="startAutoBattle()"  height="20" width="47" upSkin="@Embed('images/battle/button/auto.png')" overSkin="@Embed('images/battle/button/auto_over.png')"  downSkin="@Embed('images/battle/button/auto_down.png')"/>
+				<!--停止-->
+				<mx:Button x="63" y="3" label="停止" id="btnCancelAutoBattle" toolTip="停止自动战斗" click="cancelAutoBattle()"  height="20" width="47" visible="false"  upSkin="@Embed('images/battle/button/auto.png')" overSkin="@Embed('images/battle/button/auto_over.png')"  downSkin="@Embed('images/battle/button/auto_down.png')"/>
+				<!--结束-->
+				<mx:Button x="575" y="76" toolTip="结束回合"  click="finishRound()"  height="20" width="47"  upSkin="@Embed('images/battle/button/game_over.png')" overSkin="@Embed('images/battle/button/game_over_over.png')"  downSkin="@Embed('images/battle/button/game_over_down.png')"/>
+				<!--撤退-->
+				<mx:Button x="630" y="76"   toolTip="全军撤退" click="retreat()"  height="20" width="47"  upSkin="@Embed('images/battle/button/retreat.png')" overSkin="@Embed('images/battle/button/retreat_over.png')"  downSkin="@Embed('images/battle/button/retreat_down.png')"/>
+				<!--离开-->
+				<mx:Button x="685" y="76"  toolTip="离开战场" click="exitBattle()" height="20" width="47"  upSkin="@Embed('images/battle/button/exit.png')" overSkin="@Embed('images/battle/button/exit_over.png')"  downSkin="@Embed('images/battle/button/exit_down.png')"/>
+			<mx:Text x="378" y="100" id="textEvent" width="265" fontSize="14" fontWeight="bold" height="18"/>
+			<!--显示-->
+			<mx:Button x="266" y="76"   height="20" width="47" click="toggleBattleEvent()"  upSkin="@Embed('images/battle/button/show.png')" overSkin="@Embed('images/battle/button/show_over.png')"  downSkin="@Embed('images/battle/button/show_down.png')"/>
+	</mx:Canvas>
+	
+	<!--射程-->
+	<mx:Canvas x="50" y="50" id="canvasRange" height="400" width="900" >
+	</mx:Canvas>
+	<!--路线-->
+	<mx:Canvas x="50" y="50" id="canvasRoute" height="400" width="900">
+	</mx:Canvas>
+	<!--军队-->
+	<mx:Canvas x="50" y="50" id="canvasArmy" height="400" width="900" verticalScrollPolicy="off" horizontalScrollPolicy="off" >
+	</mx:Canvas>
+	
+	<mx:SWFLoader x="0" y="0" width="50" height="50" id="effectSWFLoader" autoLoad="false"/>
+	
+	<mx:Canvas x="280" y="90" width="220" height="70" id="canvasAutoBattleInfo" visible="false">
+		<mx:Label x="50" y="0" text="自动战斗中" fontSize="22" fontWeight="bold" color="#FF0000"/>
+		<mx:Label x="0" y="40" text="离下次操作还有：{autoBattleLeftSecond}秒" fontWeight="bold" color="#FF0000" fontSize="18" textAlign="center" width="220"/>
+	</mx:Canvas>
+	
+	<mx:Image x="308" y="50" id="imageAttackersTrun" source="images/battle/attackersturn.png" visible="false" hideEffect="{fadeOut}"/>
+	<mx:Image x="308" y="50" id="imageDefendersTrun" source="images/battle/defendersturn.png" visible="false" hideEffect="{fadeOut}"/>
+	<mx:TextArea x="10" y="450" id="textareaEvent" height="100" width="330" backgroundAlpha="0.8" editable="false" visible="false"/>
+	<!--悬停提示-->
+	<mx:Canvas x="0" y="0" id="canvasPopup" width="60" height="60" visible="false" backgroundAlpha="0" >
+		<mx:Button x="0" y="0" styleName="Popup" width="60" height="20" label="攻击" click="doAttack()"/>
+		<mx:Button x="0" y="20" styleName="Popup" width="60" height="20" label="防御" click="armyDefense()"/>
+		<mx:Button x="0" y="40" styleName="Popup" width="60" height="20" label="隐藏" click="hidePopupCanvas()"/>
+	</mx:Canvas>
+	
+	<mx:Move id="moveEffect" easingFunction="{Linear.easeInOut}" duration="1000" />
+	<mx:Fade id="fadeOut" duration="1000" alphaFrom="1" alphaTo="0" />
+	
+</mx:Canvas>

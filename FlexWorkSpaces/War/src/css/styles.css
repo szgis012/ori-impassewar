@@ -1,0 +1,614 @@
+/* CSS file */
+global
+{
+	fontSize: 12px;
+	color: #FFFFFF;
+	/* color: #FFFEB5; */
+	theme-color: #A7BA76;
+	focusAlpha:0;
+}
+
+Label.Normal
+{
+	color: #FFFEB5;
+}
+
+Label.Red
+{
+	color: #FF0000;
+}
+
+CursorManager
+{
+	busy-cursor: ClassReference('com.hifong.war.util.BusyCursor');
+}
+
+
+Canvas.Transparent
+{
+}
+Canvas.City
+{
+	backgroundImage: Embed(source="../images/bg.jpg");
+}
+Canvas.Chat 
+{
+	backgroundImage: Embed(source="../images/chat_bg.png");
+}
+Canvas.World
+{
+	backgroundImage: Embed(source="../images/map/world_bg.jpg");
+}
+Canvas.BattleBottom
+{
+	backgroundImage: Embed(source="../images/battle/battle_bottom.png");
+}
+Canvas.Left
+{
+	backgroundImage: Embed(source="../images/bg_left.jpg");
+}
+
+Canvas.Right
+{
+	backgroundImage: Embed(source="../images/bg_right.png");
+}
+Canvas.TopLeft{
+	backgroundImage:Embed(source="../images/top_left.png");	
+}
+Canvas.TopRight{
+	backgroundImage:Embed(source="../images/top_right.png");	
+}
+
+Canvas.Resource
+{
+}
+
+Button
+{
+	paddingLeft:2;
+	paddingRight:2;
+	textAlign:center;
+	
+	textRollOverColor: #FFFEB5;
+	textSelectedColor: #FFFEB5;
+	
+	upSkin: Embed(source="../images/button/button.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	overSkin: Embed(source="../images/button/button_over.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	downSkin: Embed(source="../images/button/button_down.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	disabled-skin:Embed(source="../images/button/button_disable.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	selected-up-skin:Embed(source="../images/button/button_selected.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	selectedOverSkin: Embed(source="../images/button/button_over.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+	selectedDownSkin: Embed(source="../images/button/button_down.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19"); 
+	selectedDisabledSkin: Embed(source="../images/button/button_disable.png",scaleGridLeft="9",scaleGridTop="8",scaleGridRight="63",scaleGridBottom="19");
+}
+/*
+Button.Menu
+{
+	 fontSize: 12px;
+	textRollOverColor: #FFFEB5;
+	textSelectedColor: #FFFEB5; 
+	paddingLeft: 1;
+	upSkin: Embed(source="images/button/button_menu.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	overSkin: Embed(source="images/button/button_menu_over.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	downSkin: Embed(source="images/button/button_menu_down.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+}*/
+/*==================表格内按钮样式======================*/
+Button.DG
+{
+	upSkin: Embed(source="images/button/dg.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	overSkin: Embed(source="images/button/dg_over.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	downSkin: Embed(source="images/button/dg_down.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	disabled-skin:Embed(source="images/button/dg_disable.png",scaleGridLeft="8",scaleGridTop="6",scaleGridRight="41",scaleGridBottom="13");
+	
+}
+
+
+Button.Nav
+{
+	upSkin: Embed(source="images/button/button_nav.png",scaleGridLeft="7",scaleGridTop="4",scaleGridRight="43",scaleGridBottom="17");
+	overSkin: Embed(source="images/button/button_nav_over.png",scaleGridLeft="7",scaleGridTop="4",scaleGridRight="43",scaleGridBottom="17");
+	downSkin: Embed(source="images/button/button_nav_down.png",scaleGridLeft="7",scaleGridTop="4",scaleGridRight="43",scaleGridBottom="17");
+	disabled-skin:Embed(source="images/button/button_nav_disable.png",scaleGridLeft="7",scaleGridTop="4",scaleGridRight="43",scaleGridBottom="17");
+}
+
+Button.MenuNew
+{
+	fontSize: 14px;
+	textRollOverColor: #FFFEB5;
+	textSelectedColor: #FFFEB5;
+	
+	upSkin: Embed(source="images/button/button_menu_new.swf");
+	overSkin: Embed(source="images/button/button_menu_new.swf");
+	downSkin: Embed(source="images/button/button_menu_new.swf");
+}
+Button.ResourceStat
+{
+	upSkin: Embed(source="images/button/resource_stat.png");
+	overSkin: Embed(source="images/button/resource_stat_over.png");
+	downSkin: Embed(source="images/button/resource_stat_down.png");
+}
+Button.Shop
+{
+	upSkin: Embed(source="images/button/shop.png");
+	overSkin: Embed(source="images/button/shop_over.png");
+	downSkin: Embed(source="images/button/shop_down.png");
+}
+Button.Pay
+{
+	upSkin: Embed(source="images/button/pay.png");
+	overSkin: Embed(source="images/button/pay_over.png");
+	downSkin: Embed(source="images/button/pay_down.png");
+}
+Button.Title 
+{
+    text-align:center;
+	 letterSpacing: 2;
+	up-skin:Embed(source="images/titleline.png",scaleGridLeft="65",scaleGridTop="11",scaleGridRight="183",scaleGridBottom="20");
+}
+/* Button.Control
+{
+	upSkin: Embed(source="images/button/control.png");
+	overSkin: Embed(source="images/button/control_over.png");
+	downSkin: Embed(source="images/button/control_down.png");
+} */
+
+TabNavigator
+{
+	tabOffset: -1;
+	tabStyleName: tabNavigatorTab;
+	firstTabStyleName: tabNavigatorTab;
+	lastTabStyleName: tabNavigatorTab;
+	backgroundColor: #323230;
+	paddingBottom: 0;
+	paddingTop: 0;
+	verticalGap: 0;
+	tabHeight: 28; 
+	borderColor: #4a4a4a;
+}
+.tabNavigatorTab 
+{
+	upSkin: Embed(source="../images/button/tab_button.png");
+	overSkin: Embed(source="../images/button/tab_button_over.png");
+	downSkin: Embed(source="../images/button/tab_button_down.png");
+	selectedUpSkin: Embed(source="../images/button/tab_button_select.png");
+	selectedOverSkin: Embed(source="../images/button/tab_button_select_over.png");
+	selectedDownSkin: Embed(source="../images/button/tab_button_select_down.png");
+	
+	
+	textRollOverColor: #FFFEB5;
+	textSelectedColor: #FFFEB5;
+}
+
+TabNavigator.ContentCanvas
+{
+	borderColor: #4a4a4a; 
+	background-color:#323230;
+}
+
+TabNavigator.Chat
+{
+	tabOffset: -1;
+	tabHeight: 20;
+	tabWidth: 40;
+	tabStyleName: tabNavigatorTabChat;
+	firstTabStyleName: tabNavigatorTabChat;
+	lastTabStyleName: tabNavigatorTabChat;
+	 selectedTabTextStyleName: tabNavigatorSelectedTabChat; 
+	paddingBottom: 0;
+	paddingTop: 0;
+	verticalGap: 0;
+}
+.tabNavigatorTabChat
+{
+    paddingLeft:0;
+	 paddingRight:0;
+	 color: #03fffe;
+	 highlightAlphas: 0, 0;
+ 	  fillAlphas: 0, 0;
+   	fillColors: #ffffff, #ffffff;
+   	borderColor: #27282d;
+   	themeColor:#27282d;
+  	 backgroundAlpha: 0;
+  	 textRollOverColor: #ff9f0d;
+	textSelectedColor: #ff9f0d; 
+	letterSpacing: 0;
+	 textAlign: center;
+	/* upSkin: Embed(source="../images/button/tab_chat.png");
+	overSkin: Embed(source="../images/button/tab_chat_over.png");
+	selectedUpSkin: Embed(source="../images/button/tab_chat_selected.png");
+	selectedOverSkin: Embed(source="../images/button/tab_chat_selected_over.png");
+	*/
+}
+.tabNavigatorSelectedTabChat{
+	color: #ff9f0d;
+}
+
+ButtonBar.Queue
+{
+   buttonStyleName: "buttonBarQueue";
+}
+.buttonBarQueue
+{
+	paddingLeft:0;
+	paddingRight:0;	
+	textAlign: center;
+	 highlightAlphas: 0, 0;
+ 	 fillAlphas: 0, 0, 0, 0;
+ 	 color: #ffffff;
+ 	 borderColor: #111111;
+}
+ComboBox
+{
+	alternating-item-colors:#0B1516,#0B1516;
+	background-color:#0B1516;
+	upSkin: Embed(source="../images/button/combox.jpg");
+	overSkin: Embed(source="../images/button/combox_over.jpg");
+	downSkin: Embed(source="../images/button/combox_down.jpg");
+}
+
+ComboBox.Small
+{
+	upSkin: Embed(source="../images/button/small_combox.png");
+	overSkin: Embed(source="../images/button/small_combox_over.png");
+	downSkin: Embed(source="../images/button/small_combox_down.png");
+}
+
+RadioButton
+{
+	upIcon: Embed(source="../images/button/radio.png");
+	overIcon: Embed(source="../images/button/radio_over.png");
+    downIcon: Embed(source="../images/button/radio_down.png");
+	selectedUpIcon: Embed(source="../images/button/radio_selected.png");
+	selectedOverIcon: Embed(source="../images/button/radio_selected_over.png");
+    selectedDownIcon: Embed(source="../images/button/radio_selected_down.png");
+}
+
+CheckBox
+{
+	upIcon: Embed(source="../images/button/checkbox.png");
+	overIcon: Embed(source="../images/button/checkbox_over.png");
+    downIcon: Embed(source="../images/button/checkbox_down.png");
+	selectedUpIcon: Embed(source="../images/button/checkbox_selected.png");
+	selectedOverIcon: Embed(source="../images/button/checkbox_selected_over.png");
+    selectedDownIcon: Embed(source="../images/button/checkbox_selected_down.png");
+}
+
+TitleWindow
+{ 
+	  headerHeight: 0;
+	borderSkin: Embed(source="../images/winborder.png",scaleGridLeft="48",scaleGridTop="38",scaleGridRight="281",scaleGridBottom="117");  
+	/* closeButtonSkin:Embed(source="../images/head/close.png"); 
+	closeButtonUpSkin:Embed(source="../images/head/close.png");
+	closeButtonOverSkin:Embed(source="../images/head/close_over.png");
+	closeButtonDownSkin:Embed(source="../images/head/close_down.png"); */
+}
+
+Button.closeWindow
+{
+	upSkin: Embed(source="../images/head/close.png");
+	overSkin: Embed(source="../images/head/close_over.png");
+	downSkin: Embed(source="../images/head/close_down.png");
+}
+Button.Up{
+	upSkin: Embed(source="../images/button/up.png");
+	overSkin: Embed(source="../images/button/up_over.png");
+	downSkin: Embed(source="../images/button/up_down.png");	
+}
+
+Label.windowTitle
+{
+	fontWeight: bold;
+	textAlign: center;
+	letterSpacing: 2;
+	font-size:14;
+}
+
+TextInput
+{
+	backgroundColor: #000000;
+	borderColor: #455545;
+	border-style: solid;
+}
+TextArea
+{
+	backgroundColor: #000000;
+	borderColor: #455545;
+	borderStyle: solid;
+	paddingLeft: 3;
+	paddingRight: 3;
+}
+
+/** styles for common canvas */
+Canvas.CanvasBorder
+{
+	background-color: #28292b;
+	background-alpha: 0.6;
+	borderColor: #4f5054;
+	borderStyle: solid;
+	borderThickness: 2;
+	/*
+	borderSkin:ClassReference("com.hifong.war.view.assets.skin.CanvasBorder");
+	background-color:none;*/
+}
+
+Canvas.BugFixBorder
+{
+	borderSkin:ClassReference("com.hifong.war.view.assets.skin.BugFixBorder");
+	background-color:none;
+}
+
+Canvas.InnerBorder
+{
+	/*background-color:#19371F;
+	background-alpha:0.6;
+	borderColor: #5A6343;
+	borderStyle: solid;
+	borderThickness: 2;*/
+	borderSkin:ClassReference("com.hifong.war.view.assets.skin.InnerBorder");
+}
+
+Canvas.ThirdBorder
+{
+	/*borderSkin:ClassReference("com.hifong.war.view.assets.skin.SimpleBorder");*/
+	border-color:#B7BABC;
+	border-style:solid;
+	border-thickness:1;
+	background-color:#1c2618;
+}
+
+
+DataGrid
+{ 
+	alternatingItemColors: #45473e, #31312f;
+   headerColors: #353535, #161616;
+   color: #c6c6c6;
+   rollOverColor: #656a5e;
+	selectionColor: #474745;
+	textRollOverColor: #c6c6c6;
+	textSelectedColor: #c6c6c6;
+	border-color:#4a4a4a;
+	horizontalGap: 0;
+	verticalGap: 0;
+	verticalGridLines:false;
+	headerStyleName: dataGridHeader;
+	/*
+	borderStyle: solid;
+	borderThickness: 1;
+	border-color:#898C8E;
+	selectionColor: #92B1D1;
+	rollOverColor: #92B1D1;
+	*/
+}
+
+
+.dataGridHeader
+{
+	textAlign: center;
+	fontStyle: normal;
+	fontWeight: bold;
+}
+
+.WorldToolTip
+{
+	borderSkin:ClassReference("com.hifong.war.view.assets.skin.SimpleBorder");
+	/**
+	backgroundImage: Embed(source="../images/map/tpworld.png");*/
+	backgroundColor: none;
+}
+
+ToolTip
+{
+	textAlign: left;
+	fontSize: 12;
+	fontStyle: normal;
+	color: #FFFEB5;
+	fontWeight: bold;
+	padding-top: 6;
+	padding-bottom: 6;
+	paddingLeft: 6;
+	paddingRight: 6;
+	borderSkin: Embed(source="../images/tooltip.png",scaleGridLeft="10",scaleGridTop="10",scaleGridRight="20",scaleGridBottom="20");
+}
+
+Alert
+{
+	color: #FFFEB5;
+	paddingTop:5;
+	paddingBottom:10;
+	borderSkin: Embed(source="../images/msgborder.png",scaleGridLeft="24",scaleGridTop="24",scaleGridRight="76",scaleGridBottom="76");
+	message-style-name:alertMessageStyle;
+	top:50;
+	bottom:50;
+	vertical-gap:50;
+}
+
+.alertMessageStyle
+{
+	/*
+	padding-top:10;
+	padding-bottom:10;
+	padding-left:10;
+	padding-right:10;*/
+}
+
+
+
+RadioButton
+{
+	upIcon: Embed(source="../images/button/radio.png");
+	overIcon: Embed(source="../images/button/radio_over.png");
+    downIcon: Embed(source="../images/button/radio_down.png");
+	selectedUpIcon: Embed(source="../images/button/radio_selected.png");
+	selectedOverIcon: Embed(source="../images/button/radio_selected_over.png");
+    selectedDownIcon: Embed(source="../images/button/radio_selected_down.png");
+}
+
+CheckBox
+{
+	upIcon: Embed(source="../images/button/checkbox.png");
+	overIcon: Embed(source="../images/button/checkbox_over.png");
+    downIcon: Embed(source="../images/button/checkbox_down.png");
+	selectedUpIcon: Embed(source="../images/button/checkbox_selected.png");
+	selectedOverIcon: Embed(source="../images/button/checkbox_selected_over.png");
+    selectedDownIcon: Embed(source="../images/button/checkbox_selected_down.png");
+}
+
+/** style for ScrollBar*/
+ScrollBar
+{
+	trackSkin:Embed(source="../images/scrollbar/trace.png");
+	fillColors:black,black;
+	upArrowSkin:Embed(source="../images/scrollbar/arrowup.jpg");
+	upArrowDownSkin:Embed(source="../images/scrollbar/arrowup_down.jpg");
+	up-arrow-over-skin:Embed(source="../images/scrollbar/arrowup_over.jpg");
+	downArrowSkin:Embed(source="../images/scrollbar/arrowdown.jpg");
+	downArrowDownSkin:Embed(source="../images/scrollbar/arrowdown_down.jpg");
+	down-arrow-over-skin:Embed(source="../images/scrollbar/arrowdown_over.jpg");
+	thumbSkin:Embed(source="../images/scrollbar/thumb.jpg");
+	thumbOverSkin:Embed(source="../images/scrollbar/thumb_over.jpg");
+	thumbDownSkin:Embed(source="../images/scrollbar/thumb_down.jpg");
+}
+
+/** style for map*/
+Canvas.MapControl
+{
+	background-image:Embed(source="../images/map/ctrbg.png");
+}
+
+Button.LeftArrow
+{
+	upSkin:Embed(source='../images/map/left.png');
+	overSkin:Embed(source='../images/map/left_over.png');
+	downSkin:Embed(source='../images/map/left_down.png');
+}
+
+Button.RightArrow
+{
+	upSkin:Embed(source='../images/map/right.png');
+	overSkin:Embed(source='../images/map/right_over.png');
+	downSkin:Embed(source='../images/map/right_down.png');
+}
+
+Button.TopArrow
+{
+	upSkin:Embed(source='../images/map/top.png');
+	overSkin:Embed(source='../images/map/top_over.png');
+	downSkin:Embed(source='../images/map/top_down.png');
+}
+
+Button.BottomArrow
+{
+	upSkin:Embed(source='../images/map/bottom.png');
+	overSkin:Embed(source='../images/map/bottom_over.png');
+	downSkin:Embed(source='../images/map/bottom_down.png');
+}
+
+Button.CenterArrow
+{
+	upSkin:Embed(source='../images/map/earth.png');
+	overSkin:Embed(source='../images/map/earth_over.png');
+	downSkin:Embed(source='../images/map/earth_down.png');
+}
+
+Button.ChatSend
+{
+	upSkin:Embed(source='../images/button/chat_send.png');
+	overSkin:Embed(source='../images/button/chat_send_over.png');
+	downSkin:Embed(source='../images/button/chat_send_down.png');
+}
+
+Button.ChatFace
+{
+	upSkin:Embed(source='../images/button/chat_face.png');
+	overSkin:Embed(source='../images/button/chat_face_over.png');
+	downSkin:Embed(source='../images/button/chat_face_down.png');
+}
+
+Button.ChatConfig
+{
+	upSkin:Embed(source='../images/button/chat_config.png');
+	overSkin:Embed(source='../images/button/chat_config_over.png');
+	downSkin:Embed(source='../images/button/chat_config_down.png');
+}
+Button.ChatSelect{
+	paddingLeft:2px;
+	upSkin:Embed(source='../images/button/chat_select.png');
+	overSkin:Embed(source='../images/button/chat_select_over.png');
+	downSkin:Embed(source='../images/button/chat_select_down.png');
+}
+
+Grid
+{
+	horizontal-gap:0;
+	vertical-gap:0;
+	border-color:#B7BABC;
+	border-style:solid;
+	border-thickness:1;
+}
+
+GridRow
+{
+}
+
+GridRow.OddRow
+{
+	background-color:#374535;
+}
+
+GridRow.EvenRow
+{
+	background-color:#576747;
+}
+
+GridRow.GrildRowHeader
+{
+	fontWeight: bold;
+	text-align:center;
+	background-image:Embed(source="../images/bg_grid_head.jpg");
+	background-size:"100%";
+	borderColor: #4a4a4a;
+	borderStyle: solid; 
+	border-sides:bottom;
+}
+
+NumericStepper
+{
+	upArrowUpSkin: Embed(source="../images/button/arrowUp.jpg");
+	upArrowOverSkin: Embed(source="../images/button/arrowUp_over.jpg");
+	upArrowDownSkin: Embed(source="../images/button/arrowUp_down.jpg");
+	
+	downArrowUpSkin: Embed(source="../images/button/arrowDown.jpg");
+	downArrowOverSkin: Embed(source="../images/button/arrowDown_over.jpg");
+	downArrowDownSkin: Embed(source="../images/button/arrowDown_down.jpg");
+	borderColor: #000000;
+	borderStyle: solid;
+}
+
+/** styles for slider*/
+HSlider
+{
+	/*trackSkin:Embed(source="../images/slider/trace.png");*/
+	thumbSkin:Embed(source="../images/button/btn_slider.png");
+	thumb-over-skin:Embed(source="../images/button/btn_slider_over.png");
+	thumb-down-skin:Embed(source="../images/button/btn_slider_down.png");
+	
+	dataTipOffset: 0;
+	show-track-highlight:true;
+	thumb-offset:0;
+	trackColors: #0000ff;
+}
+
+LinkButton
+{
+    textRollOverColor:#5a6d3d;
+    textSelectedColor:#5a6d3d;
+}
+
+.ProduceLinkButton
+{
+    textRollOverColor:#2B3629;
+    textSelectedColor:#2B3629;
+
+}
+
+

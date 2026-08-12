@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MessageOutbox">
+	<typeAlias alias="MessageOutbox" type="com.war.domain.MessageOutbox" />
+
+	<insert id="createMessageOutbox" parameterClass="MessageOutbox">
+		INSERT INTO T_MESSAGE_OUTBOX(SENDER_ID, RECEIVER_NAME, TITLE, CONTENT, SEND_TIME) VALUES(#senderID#, #receiverName#, #title#, #content#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="messageOutboxID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateMessageOutbox" parameterClass="MessageOutbox">
+		UPDATE T_MESSAGE_OUTBOX SET SENDER_ID=#senderID#, RECEIVER_NAME=#receiverName#, TITLE=#title#, CONTENT=#content#, SEND_TIME=#sendTime# WHERE MESSAGE_OUTBOX_ID=#messageOutboxID#
+	</update>
+
+	<delete id="deleteMessageOutboxByID" parameterClass="Integer">
+		DELETE FROM T_MESSAGE_OUTBOX WHERE MESSAGE_OUTBOX_ID=#messageOutboxID#
+	</delete>
+
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+
+	<select id="getMessageOutboxAmountBySenderID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE_OUTBOX WHERE SENDER_ID=#senderID#
+	</select>
+	
+	<select id="getMessageOutboxPagingListBySenderID" parameterClass="java.util.Map" resultClass="MessageOutbox">
+		SELECT MESSAGE_OUTBOX_ID AS messageOutboxID, SENDER_ID AS senderID, RECEIVER_NAME AS receiverName, TITLE AS title, CONTENT AS content, SEND_TIME AS sendTime FROM T_MESSAGE_OUTBOX WHERE SENDER_ID=#senderID# ORDER BY SEND_TIME DESC LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getMessageOutboxListBySenderID" parameterClass="Integer" resultClass="MessageOutbox">
+		SELECT MESSAGE_OUTBOX_ID AS messageOutboxID, SENDER_ID AS senderID, RECEIVER_NAME AS receiverName, TITLE AS title, CONTENT AS content, SEND_TIME AS sendTime FROM T_MESSAGE_OUTBOX WHERE SENDER_ID=#senderID# ORDER BY SEND_TIME DESC
+	</select>
+	
+	<insert id="sendGuildMessage" parameterClass="java.util.Map">
+		{call SEND_GUILD_MESSAGE(#guildID#, #playerID#, #title#, #content#) }
+	</insert>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<select id="getMessageOutboxByID" parameterClass="Integer" resultClass="MessageOutbox">
+		SELECT MESSAGE_OUTBOX_ID AS messageOutboxID, SENDER_ID AS senderID, RECEIVER_NAME AS receiverName, TITLE AS title, CONTENT AS content, SEND_TIME AS sendTime FROM T_MESSAGE_OUTBOX WHERE MESSAGE_OUTBOX_ID=#messageOutboxID#
+	</select>
+
+	<select id="getMessageOutboxList" resultClass="MessageOutbox">
+		SELECT MESSAGE_OUTBOX_ID AS messageOutboxID, SENDER_ID AS senderID, RECEIVER_NAME AS receiverName, TITLE AS title, CONTENT AS content, SEND_TIME AS sendTime FROM T_MESSAGE_OUTBOX
+	</select>
+
+</sqlMap>

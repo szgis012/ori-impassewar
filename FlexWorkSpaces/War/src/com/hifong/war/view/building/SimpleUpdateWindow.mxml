@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  layout="absolute" width="630" height="150" xmlns:ns1="com.hifong.war.view.building.*" horizontalAlign="left" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.constant.CityBuildingStateConstant;
+			import com.hifong.war.vo.CityBuildingVO;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import mx.core.IFlexDisplayObject;
+		
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				 this._buildingGrid = bg;
+				 this.pnlBuilding.buildingGrid = bg;
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}"   width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<ns1:BuildingItemPanel x="25" y="37" id="pnlBuilding">
+	</ns1:BuildingItemPanel>
+	
+<!--	<mx:Label x="0" y="24" htmlText="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" width="348" styleName="windowTitle" id="lblTitle"/>
+	<mx:Image x="156" y="41" source="{WarAssets.titleLine}" width="206" top="0"/>
+-->	
+</mx:TitleWindow>

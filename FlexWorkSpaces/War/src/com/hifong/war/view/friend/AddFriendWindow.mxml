@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="160" layout="absolute" showCloseButton="false" close="doClose()" initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.friend.GetFriendListEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.friend.ApplyAddFriendEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.utils.StringUtil;
+			private function doInit():void{
+				this.setFocus();
+			}
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			private function onClick():void{
+				var s:String=StringUtil.trim(txt.text);
+				if(s=="") return;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ApplyAddFriendEvent(ModelLocator.getInstance().playerInfo.playerID,s));
+				//请求好友列表
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetFriendListEvent(ModelLocator.getInstance().playerInfo.playerID));
+				doClose();
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="添加好友" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas width="337" height="87"  x="31" y="47">
+		<mx:Label x="64" y="10" text="目标名称："/>
+		<mx:TextInput x="128" y="8" id="txt"/>
+		<mx:Button x="217" y="49" label="确定" click="onClick()"/>
+	</mx:Canvas>
+</mx:TitleWindow>

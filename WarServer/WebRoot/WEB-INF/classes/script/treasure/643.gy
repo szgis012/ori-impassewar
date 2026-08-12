@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:643
+ * 
+ * 名称：装甲论
+ * 描述：增加指挥官获得的经验20%,时限7天
+ * 类型：指挥官
+ */
+
+def params = context.getParams();
+
+context.setCommanderExpAdd(params["cityHeroID"], 20, 7);

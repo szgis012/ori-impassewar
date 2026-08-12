@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Rank">
+	<typeAlias alias="PlayerRank" type="com.war.domain.PlayerRank" />
+	<typeAlias alias="GuildRank" type="com.war.domain.GuildRank" />
+	<typeAlias alias="CityRank" type="com.war.domain.CityRank" />
+	
+	<select id="getPlayerRankByPlayerID" parameterClass="Integer" resultClass="Integer">
+		SELECT RANK FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerRankByPlayerName" parameterClass="String" resultClass="Integer">
+		SELECT RANK FROM T_PLAYER WHERE NAME=#name#
+	</select>
+	
+	<select id="getPlayerRankPagingList" parameterClass="java.util.Map" resultClass="PlayerRank">
+		SELECT RANK AS rank, PLAYER_ID AS playerID, NAME AS name, (SELECT NAME FROM T_CITY WHERE T_CITY.PLAYER_ID=T_PLAYER.PLAYER_ID) AS cityName, (SELECT NAME FROM T_HONOR WHERE T_HONOR.HONOR_ID=T_PLAYER.HONOR_ID) AS honor, RENOWN AS renown, GUILD_ID AS guildID, (SELECT NAME FROM T_GUILD WHERE T_GUILD.GUILD_ID=T_PLAYER.GUILD_ID) AS guildName, COUNTRY AS country FROM T_PLAYER ORDER BY RANK LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getPlayerRankList" resultClass="PlayerRank">
+		SELECT P.RANK AS rank, P.PLAYER_ID AS playerID, P.NAME AS name, C.NAME AS cityName, H.NAME AS honor, P.RENOWN AS renown, P.GUILD_ID AS guildID, G.NAME AS guildName, P.COUNTRY AS country FROM T_PLAYER P LEFT JOIN T_GUILD G ON P.GUILD_ID=G.GUILD_ID, T_CITY C, T_HONOR H WHERE P.PLAYER_ID=C.PLAYER_ID AND P.HONOR_ID=H.HONOR_ID ORDER BY P.RANK
+	</select>
+	
+	<procedure id="refreshPlayerRank">
+		<![CDATA[ 
+			{CALL REFRESH_PLAYER_RANK}
+		]]>
+	</procedure>
+	
+	
+	
+	<select id="getGuildRankByGuildID" parameterClass="Integer" resultClass="Integer">
+		SELECT RANK FROM T_GUILD WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildRankByGuildName" parameterClass="String" resultClass="Integer">
+		SELECT RANK FROM T_GUILD WHERE NAME=#name#
+	</select>
+	
+	<select id="getGuildRankPagingList" parameterClass="java.util.Map" resultClass="GuildRank">
+		SELECT RANK AS rank, GUILD_ID AS guildID, NAME AS name, CHAIRMAN_ID AS chairmanID, (SELECT NAME FROM T_PLAYER WHERE T_PLAYER.PLAYER_ID=T_GUILD.CHAIRMAN_ID) AS chairmanName, POPULATION AS population, POPULATION_MAX AS populationMax, RENOWN AS renown FROM T_GUILD ORDER BY RANK LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getGuildRankList" resultClass="GuildRank">
+		SELECT RANK AS rank, GUILD_ID AS guildID, NAME AS name, CHAIRMAN_ID AS chairmanID, (SELECT NAME FROM T_PLAYER WHERE T_PLAYER.PLAYER_ID=T_GUILD.CHAIRMAN_ID) AS chairmanName, POPULATION AS population, POPULATION_MAX AS populationMax, RENOWN AS renown FROM T_GUILD ORDER BY RANK
+	</select>
+	
+	
+	
+	<select id="getCityPopulationRankList" resultClass="CityRank">
+		SELECT C.CITY_ID AS cityID, C.NAME AS name, C.PLAYER_ID AS playerID, P.NAME AS playerName, P.GUILD_ID, G.NAME, C.CONSTRUCTION_POINT AS constructionPoint, C.TECHNOLOGY_POINT AS technologyPoint, C.POPULATION_TOTAL AS populationTotal FROM T_CITY C, T_PLAYER P LEFT JOIN T_GUILD G ON P.GUILD_ID=G.GUILD_ID WHERE C.PLAYER_ID=P.PLAYER_ID ORDER BY C.POPULATION_TOTAL DESC
+	</select>
+	
+	
+	
+	<select id="getPlayerNum" resultClass="Integer">
+		SELECT COUNT(*) FROM T_PLAYER
+	</select>
+	
+	<select id="getGuildNum" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD
+	</select>
+	
+	<select id="getCityNum" resultClass="Integer">
+		SELECT COUNT(*) FROM T_CITY
+	</select>
+	
+</sqlMap>

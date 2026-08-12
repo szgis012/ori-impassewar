@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:616
+ * 
+ * 名称：血战令
+ * 描述：指挥官使用后，可提升统御10%，使指挥官增加10%的部队指挥上限，持续1天
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.setCityHeroReinAdd(params["cityHeroID"], 10, 1);

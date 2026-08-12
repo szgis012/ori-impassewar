@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:551
+ * 
+ * 名称：宣战文书
+ * 描述：对一座城市发动闪电战，不需宣战即可进入敌对状态，使用后两座城市立即处于战争状态，不必宣战，战争状态持续72小时。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.useDeclareWarAnnouncement(params["playerName"]);

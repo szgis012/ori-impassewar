@@ -1,0 +1,821 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:jaxws="http://cxf.apache.org/jaxws" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans classpath:spring-beans-2.5.xsd
+	http://www.springframework.org/schema/context classpath:spring-context-2.5.xsd
+	http://www.springframework.org/schema/tx classpath:spring-tx-2.5.xsd
+	http://www.springframework.org/schema/aop classpath:spring-aop-2.5.xsd 
+	http://cxf.apache.org/jaxws classpath:jaxws.xsd">
+
+	<import resource="classpath:META-INF/cxf/cxf.xml" />
+	<import resource="classpath:META-INF/cxf/cxf-extension-soap.xml" />
+	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+
+	<bean id="warWS" class="com.war.webservice.WarWS">
+		<property name="mapService" ref="mapService" />
+		<property name="monsterService" ref="monsterService" />
+		<property name="systemService" ref="systemService" />
+	</bean>
+	<jaxws:endpoint id="ws_war" implementor="#warWS" address="/WarWS" />
+	
+	<bean id="payWS" class="com.war.webservice.PayWS">
+		<property name="payHistoryDAO" ref="payHistoryDAO" />
+		<property name="playerService" ref="playerService" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	<jaxws:endpoint id="ws_pay" implementor="#payWS" address="/PayWS" />
+	
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/war_0202?useUnicode=true&amp;characterEncoding=UTF-8" />
+		<property name="user" value="root" />
+		<property name="password" value="shawbis8712" />
+		<property name="acquireIncrement" value="10" />
+		<property name="maxIdleTime" value="3600" />
+		<property name="initialPoolSize" value="10" />
+		<property name="minPoolSize" value="10" />
+		<property name="maxPoolSize" value="30" />
+		<property name="numHelperThreads" value="5" />
+	</bean>
+
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation" value="classpath:sqlMapConfig.xml" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<bean class="org.springframework.transaction.aspectj.AnnotationTransactionAspect" factory-method="aspectOf">
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+	
+	<!-- <aop:aspectj-autoproxy />
+	<context:spring-configured/>
+	<context:load-time-weaver/> -->
+	
+	<!-- 事务配置 Start -->
+	<!-- <tx:advice id="playerServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="createPlayer" />
+	    </tx:attributes>
+	</tx:advice>
+	
+	<tx:advice id="cityServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="moveCity" />
+        	<tx:method name="moveCityToTargetPosition" />
+	    </tx:attributes>
+	</tx:advice>
+	
+	<tx:advice id="buildingServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="processBuildUpgradeFinished" />
+	    </tx:attributes>
+	</tx:advice> -->
+	
+	<!-- <tx:advice id="technologyServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="createPlayer" />
+	    </tx:attributes>
+	</tx:advice>
+	
+	<tx:advice id="treasureServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="createPlayer" />
+	    </tx:attributes>
+	</tx:advice>
+	
+	<tx:advice id="taskServiceAdvice" transaction-manager="transactionManager">
+    	<tx:attributes>
+        	<tx:method name="createPlayer" />
+	    </tx:attributes>
+	</tx:advice> -->
+	<!-- 事务配置 End -->
+	
+	
+	<!-- <aop:config> -->
+		<!-- <aop:pointcut id="playerServiceMethods" expression="execution(* com.war.service.impl.PlayerService.*(..))"/>
+		<aop:advisor advice-ref="playerServiceAdvice" pointcut-ref="playerServiceMethods"/>
+		
+		<aop:pointcut id="buildingServiceMethods" expression="execution(* com.war.service.impl.BuildingService.*(..))"/>
+		<aop:advisor advice-ref="buildingServiceAdvice" pointcut-ref="buildingServiceMethods"/> -->
+		
+		<!-- <aop:pointcut id="allServiceMethods" expression="execution(* com.war.service.impl..*.*(..))"/>
+		<aop:advisor advice-ref="playerServiceAdvice" pointcut-ref="allServiceMethods"/>
+	</aop:config> -->
+	
+	
+
+	<bean id="playerDAO" class="com.war.dao.impl.PlayerDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="honorDAO" class="com.war.dao.impl.HonorDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityDAO" class="com.war.dao.impl.CityDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityResourceDAO" class="com.war.dao.impl.CityResourceDAO">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityExtDAO" class="com.war.dao.impl.CityExtDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityHeroExtDAO" class="com.war.dao.impl.CityHeroExtDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	<bean id="colonizationDAO" class="com.war.dao.impl.ColonizationDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="buildingDAO" class="com.war.dao.impl.BuildingDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityBuildingDAO" class="com.war.dao.impl.CityBuildingDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="defenseDAO" class="com.war.dao.impl.DefenseDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="technologyDAO" class="com.war.dao.impl.TechnologyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityTechnologyDAO" class="com.war.dao.impl.CityTechnologyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="constraintDependDAO" class="com.war.dao.impl.ConstraintDependDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="processQueueDAO" class="com.war.dao.impl.ProcessQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="messageInboxDAO" class="com.war.dao.impl.MessageInboxDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="messageOutboxDAO" class="com.war.dao.impl.MessageOutboxDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean> 
+	<bean id="guildDAO" class="com.war.dao.impl.GuildDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildPlayerDAO" class="com.war.dao.impl.GuildPlayerDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildRewardReceiveLogDao" class="com.war.dao.impl.GuildRewardReceiveLogDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildPlaAppInvDAO" class="com.war.dao.impl.GuildPlaAppInvDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildEventDAO" class="com.war.dao.impl.GuildEventDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildExtDAO" class="com.war.dao.impl.GuildExtDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	<bean id="guildAttackDAO" class="com.war.dao.impl.GuildAttackDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildRelationshipDAO" class="com.war.dao.impl.GuildRelationshipDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="guildtechnologyDAO" class="com.war.dao.impl.GuildtechnologyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="GuildTechnologyguildDAO" class="com.war.dao.impl.GuildTechnologyguildDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="GuildIncExpHistoryDAO" class="com.war.dao.impl.GuildIncExpHistoryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="GuildtechnologyCostDAO" class="com.war.dao.impl.GuildtechnologyCostDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="treasureDAO" class="com.war.dao.impl.TreasureDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="treasureHistoryDAO" class="com.war.dao.impl.TreasureHistoryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	 <bean id="playerTreasureDAO" class="com.war.dao.impl.PlayerTreasureDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="taskDAO" class="com.war.dao.impl.TaskDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="playerTaskDAO" class="com.war.dao.impl.PlayerTaskDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="rankDAO" class="com.war.dao.impl.RankDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityRankDAO" class="com.war.dao.impl.CityRankDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="resTransportationDAO" class="com.war.dao.impl.ResTransportationDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="resTradeDAO" class="com.war.dao.impl.ResTradeDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="tradeQueueDAO" class="com.war.dao.impl.TradeQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="productionQueueDAO" class="com.war.dao.impl.ProductionQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityCandidacyHeroDAO" class="com.war.dao.impl.CityCandidacyHeroDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityHeroDAO" class="com.war.dao.impl.CityHeroDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="nameDAO" class="com.war.dao.impl.NameDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="armyDAO" class="com.war.dao.impl.ArmyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityArmyDAO" class="com.war.dao.impl.CityArmyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="armyDependDAO" class="com.war.dao.impl.ArmyDependDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	 <bean id="ordnanceDAO" class="com.war.dao.impl.OrdnanceDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityOrdnanceDAO" class="com.war.dao.impl.CityOrdnanceDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityMilitaryDAO" class="com.war.dao.impl.CityMilitaryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityMilitarySuccorDAO" class="com.war.dao.impl.CityMilitarySuccorDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="chatHistoryDAO" class="com.war.dao.impl.ChatHistoryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="mapDAO" class="com.war.dao.impl.MapDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="mapFavouriteDAO" class="com.war.dao.impl.MapFavouriteDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="mapMonsterDAO" class="com.war.dao.impl.MapMonsterDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="depoyQueueDAO" class="com.war.dao.impl.DepoyQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="reportDAO" class="com.war.dao.impl.ReportDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleDAO" class="com.war.dao.impl.BattleDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleWaitDAO" class="com.war.dao.impl.BattleWaitDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleQueueDAO" class="com.war.dao.impl.BattleQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleLogDAO" class="com.war.dao.impl.BattleLogDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleDetailDAO" class="com.war.dao.impl.BattleDetailDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="battleArmyDAO" class="com.war.dao.impl.BattleArmyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="declareWarDAO" class="com.war.dao.impl.DeclareWarDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityDefenseDAO" class="com.war.dao.impl.CityDefenseDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="gameScriptDAO" class="com.war.dao.impl.GameScriptDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="treasureQueueDAO" class="com.war.dao.impl.TreasureQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="equipmentDAO" class="com.war.dao.impl.EquipmentDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="playerEquipmentDAO" class="com.war.dao.impl.PlayerEquipmentDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="skillDAO" class="com.war.dao.impl.SkillDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="heroSkillDAO" class="com.war.dao.impl.HeroSkillDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="spyQueueDAO" class="com.war.dao.impl.SpyQueueDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="militaryDAO" class="com.war.dao.impl.MilitaryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="payHistoryDAO" class="com.war.dao.impl.PayHistoryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="dataHistoryDAO" class="com.war.dao.impl.DataHistoryDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="gameCardDAO" class="com.war.dao.impl.GameCardDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="playerCardDAO" class="com.war.dao.impl.PlayerCardDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	
+	<bean id="strongholdDAO" class="com.war.dao.impl.StrongholdDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="shbuildingDAO" class="com.war.dao.impl.ShbuildingDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="strongholdShbuildingDAO" class="com.war.dao.impl.StrongholdShbuildingDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityWoundedArmyDAO" class="com.war.dao.impl.CityWoundedArmyDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="systemNoticeDAO" class="com.war.dao.impl.SystemNoticeDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="friendDAO" class="com.war.dao.impl.FriendDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="operationLogDAO" class="com.war.dao.impl.OperationLogDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="cityHeroLevelupLogDAO" class="com.war.dao.impl.CityHeroLevelupLogDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	
+	
+	<bean id="referenceAccountDAO" class="com.war.dao.impl.ReferenceAccountDAO" scope="prototype">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	
+	<bean id="gameScriptEngine" class="com.war.script.impl.GroovyGameScriptEngine" scope="prototype">
+	</bean>
+	<bean id="gameScriptContextFactory" class="com.war.script.impl.GameScriptContextFactory" scope="prototype">
+	</bean>
+	
+	<!-- service start -->
+	<bean id="timeService" class="com.war.service.impl.TimeService">
+	</bean>
+	
+	<bean id="processQueueService" class="com.war.service.impl.ProcessQueueService">
+		<property name="processQueueDAO" ref="processQueueDAO" />
+	</bean>
+	
+	<bean id="quartzService" class="com.war.service.impl.QuartzService">
+		<property name="buildingService" ref="buildingService" />
+		<property name="technologyService" ref="technologyService" />
+		<property name="processQueueService" ref="processQueueService" />
+		<property name="productionQueueService" ref="productionQueueService"/>
+		<property name="cityCenterService" ref="cityCenterService"/>
+		<property name="armoryService" ref="armoryService"/>
+		<property name="marketService" ref="marketService" />
+		<property name="tradeQueueService" ref="tradeQueueService" />
+		<property name="heroService" ref="heroService"/>
+		<property name="depoyQueueService" ref="depoyQueueService"/>
+		<property name="militaryService" ref="militaryService"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="battleService" ref="battleService"/>
+		<property name="cityDefenseService" ref="cityDefenseService"/>
+		<property name="rankService" ref="rankService"/>
+		<property name="treasureQueueService" ref="treasureQueueService"/>
+		<property name="declareWarService" ref="declareWarService"/>
+		<property name="monsterService" ref="monsterService"/>
+		<property name="playerService" ref="playerService"/>
+		<property name="spyQueueService" ref="spyQueueService"/>
+		<property name="dataHistoryService" ref="dataHistoryService"/>
+		<property name="reportService" ref="reportService"/>
+		<property name="colonizationService" ref="colonizationService"/>
+		<property name="taskService" ref="taskService"/>
+		<property name="armyService" ref="armyService" />
+		<property name="systemService" ref="systemService" />
+	</bean>
+	
+	<bean id="tradeQueueService" class="com.war.service.impl.TradeQueueService">
+		<property name="tradeQueueDAO" ref="tradeQueueDAO" />
+		<property name="resTransportationDAO" ref="resTransportationDAO" />
+		<property name="resTradeDAO" ref="resTradeDAO" />
+	</bean>
+	
+	<bean id="playerService" class="com.war.service.impl.PlayerService">
+		<property name="playerDAO" ref="playerDAO" />
+		<property name="friendDAO" ref="friendDAO" />
+		<property name="cityBuildingDAO" ref="cityBuildingDAO" />
+		<property name="cityDefenseDAO" ref="cityDefenseDAO" />
+		<property name="cityArmyDAO" ref="cityArmyDAO"/>
+		<property name="defenseDAO" ref="defenseDAO"/>
+		<property name="playerTaskDAO" ref="playerTaskDAO" />
+		<property name="mapDAO" ref="mapDAO" />
+		<property name="guildService" ref="guildService" />
+		<property name="playerTreasureDAO" ref="playerTreasureDAO" />
+		<property name="referenceAccountDAO" ref="referenceAccountDAO" />
+		<property name="honorService" ref="honorService" />
+		<property name="cityService" ref="cityService" />
+		<property name="buildingService" ref="buildingService" />
+		<property name="cityDefenseService" ref="cityDefenseService" />
+		<property name="messageService" ref="messageService" />
+		<property name="reportService" ref="reportService" />
+		<property name="taskService" ref="taskService" />
+		<property name="armyService" ref="armyService"/>
+		<property name="ordnanceService" ref="ordnanceService"/>
+		<property name="defenseService" ref="defenseService"/>
+		<property name="treasureService" ref="treasureService"/>
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+
+	<bean id="honorService" class="com.war.service.impl.HonorService">
+		<property name="honorDAO" ref="honorDAO" />
+	</bean>
+
+	<bean id="cityService" class="com.war.service.impl.CityService">
+		<property name="cityDAO" ref="cityDAO" />
+		<property name="cityResourceDAO" ref="cityResourceDAO" />
+		<property name="cityBuildingDAO" ref="cityBuildingDAO" />
+		<property name="cityDefenseDAO" ref="cityDefenseDAO" />
+		<property name="cityExtDAO" ref="cityExtDAO" />
+		<property name="playerDAO" ref="playerDAO" />
+		<property name="cityMilitaryDAO" ref="cityMilitaryDAO" />
+		<property name="tradeQueueDAO" ref="tradeQueueDAO" />
+		<property name="depoyQueueDAO" ref="depoyQueueDAO" />
+		<property name="battleDAO" ref="battleDAO" />
+		<property name="cityMilitarySuccorDAO" ref="cityMilitarySuccorDAO" />
+		<property name="resTradeDAO" ref="resTradeDAO" />
+		<property name="mapService" ref="mapService" />
+		<property name="reportService" ref="reportService" />
+		<property name="treasureService" ref="treasureService" />
+	</bean>
+	
+	<bean id="colonizationService" class="com.war.service.impl.ColonizationService">
+		<property name="colonizationDAO" ref="colonizationDAO" />
+		<property name="playerDAO" ref="playerDAO" />
+		<property name="cityService" ref="cityService" />
+		<property name="reportService" ref="reportService" />
+	</bean>
+
+	<bean id="buildingService" class="com.war.service.impl.BuildingService">
+		<property name="buildingDAO" ref="buildingDAO" />
+		<property name="cityBuildingDAO" ref="cityBuildingDAO" />
+		<property name="playerDAO" ref="playerDAO" />
+		<property name="cityService" ref="cityService" />
+		<property name="guildDAO" ref="guildDAO" />
+		<property name="guildExtDAO" ref="guildExtDAO" />
+		<property name="constraintDependService" ref="constraintDependService" />
+		<property name="processQueueService" ref="processQueueService" />
+		<property name="technologyService" ref="technologyService" />
+		<property name="treasureQueueService" ref="treasureQueueService" />
+	</bean>
+	
+	<bean id="messageService" class="com.war.service.impl.MessageService">
+		<property name="messageInboxDAO" ref="messageInboxDAO" />
+		<property name="messageOutboxDAO" ref="messageOutboxDAO" />
+		<property name="playerDAO" ref="playerDAO" />
+	</bean>
+	
+	<bean id="guildService" class="com.war.service.impl.GuildService">
+		<property name="guildDAO" ref="guildDAO" />
+		<property name="guildPlayerDAO" ref="guildPlayerDAO" />
+		<property name="guildRewardReceiveLogDAO" ref="guildRewardReceiveLogDao" />
+		<property name="guildEventDAO" ref="guildEventDAO" />
+		<property name="guildAttackDAO" ref="guildAttackDAO" />
+		<property name="guildPlaAppInvDAO" ref="guildPlaAppInvDAO" />
+		<property name="guildRelationshipDAO" ref="guildRelationshipDAO" />
+		<property name="guildtechnologyDAO" ref="guildtechnologyDAO" />
+		<property name="guildTechnologyguildDAO" ref="GuildTechnologyguildDAO" />
+		<property name="guildIncExpHistoryDAO" ref="GuildIncExpHistoryDAO" />
+		<property name="guildtechnologyCostDAO" ref="GuildtechnologyCostDAO" />
+		<property name="cityHeroExtDAO" ref="cityHeroExtDAO"/>
+		<property name="playerDAO" ref="playerDAO" />
+		<property name="guildExtDAO" ref="guildExtDAO"/>
+		<property name="cityHeroDAO" ref="cityHeroDAO"/>
+		<property name="cityBuildingDAO" ref="cityBuildingDAO"/>
+		<property name="honorService" ref="honorService" />
+		<property name="cityService" ref="cityService" />
+		<property name="reportService" ref="reportService" />
+		<property name="processQueueService" ref="processQueueService"/>
+		<property name="treasureService" ref="treasureService"/>
+		<property name="operationLogService" ref="operationLogService"/>
+	</bean>
+	
+	<bean id="treasureService" class="com.war.service.impl.TreasureService">
+		<property name="treasureDAO" ref="treasureDAO" />
+		<property name="treasureHistoryDAO" ref="treasureHistoryDAO" />
+		<property name="playerTreasureDAO" ref="playerTreasureDAO"/>
+		<property name="playerDAO" ref="playerDAO"/>
+		<property name="gameScriptEngine" ref="gameScriptEngine"/>
+		<property name="gameScriptContextFactory" ref="gameScriptContextFactory"/>
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+	
+	<bean id="taskService" class="com.war.service.impl.TaskService">
+		<property name="playerTaskDAO" ref="playerTaskDAO" />
+		<property name="taskDAO" ref="taskDAO"/>
+		<property name="gameScriptEngine" ref="gameScriptEngine"/>
+		<property name="gameScriptContextFactory" ref="gameScriptContextFactory" />
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+	
+	<bean id="rankService" class="com.war.service.impl.RankService">
+		<property name="rankDAO" ref="rankDAO"/>
+		<property name="cityRankDAO" ref="cityRankDAO"/>
+		<property name="cityDAO" ref="cityDAO"/>
+		<property name="guildService" ref="guildService"/>
+	</bean>
+	
+	<bean id="marketService" class="com.war.service.building.impl.MarketService">
+		<property name="resTransportationDAO" ref="resTransportationDAO"/>
+		<property name="resTradeDAO" ref="resTradeDAO"/>
+		<property name="tradeQueueDAO" ref="tradeQueueDAO"/>
+		<property name="playerService" ref="playerService"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="reportService" ref="reportService"/>
+	</bean>
+
+	<bean id="resourcesTuneService" class="com.war.service.building.impl.ResourcesTuneService">
+		<property name="cityService" ref="cityService"/>
+		<property name="cityBuildingDAO" ref="cityBuildingDAO"/>
+	</bean>
+	
+	<bean id="cityCenterService" class="com.war.service.building.impl.CityCenterService">
+	 	<property name="cityService" ref="cityService"/>
+	 	<property name="productionQueueService" ref="productionQueueService"/>
+	 	<property name="buildingService" ref="buildingService"/>
+	 	<property name="treasureService" ref="treasureService"/>
+	 	<property name="operationLogService" ref="operationLogService"/>
+	</bean>
+	
+	<bean id="productionQueueService" class="com.war.service.impl.ProductionQueueService">
+	 	<property name="productionQueueDAO" ref="productionQueueDAO"/>
+	</bean>
+	
+	<bean id="armyService" class="com.war.service.impl.ArmyService">
+		<property name="cityWoundedArmyDAO" ref="cityWoundedArmyDAO"/>
+	 	<property name="cityDAO" ref="cityDAO"/>
+	 	<property name="cityResourceDAO" ref="cityResourceDAO"/>
+	 	<property name="armyDAO" ref="armyDAO"/>
+	 	<property name="armyDependDAO" ref="armyDependDAO"/>
+	 	<property name="cityArmyDAO" ref="cityArmyDAO"/>
+	 	<property name="cityService" ref="cityService"/>
+	 	<property name="ordnanceService" ref="ordnanceService"/>
+	 	<property name="constraintDependService" ref="constraintDependService"/>
+	 	<property name="buildingService" ref="buildingService"/>
+	 	<property name="operationLogService" ref="operationLogService"/>
+	</bean>
+	
+	<bean id="ordnanceService" class="com.war.service.impl.OrdnanceService">
+	 	<property name="cityOrdnanceDAO" ref="cityOrdnanceDAO"/>
+	 	<property name="ordnanceDAO" ref="ordnanceDAO"/>
+	 	<property name="constraintDependService" ref="constraintDependService"/>
+	</bean>
+	
+	<bean id="barracksService" class="com.war.service.building.impl.BarracksService">
+	 	<property name="armyService" ref="armyService"/>
+	 	<property name="cityService" ref="cityService"/>
+	</bean>
+	
+	<bean id="armoryService" class="com.war.service.building.impl.ArmoryService">
+	 	<property name="ordnanceService" ref="ordnanceService"/>
+	 	<property name="productionQueueService" ref="productionQueueService"/>
+	 	<property name="buildingService" ref="buildingService"/>
+	 	<property name="cityService" ref="cityService"/>
+	</bean>
+
+	<bean id="constraintDependService" class="com.war.service.impl.ConstraintDependService">
+		<property name="constraintDependDAO" ref="constraintDependDAO"/>
+		<property name="buildingDAO" ref="buildingDAO"/>
+		<property name="technologyDAO" ref="technologyDAO"/>
+	</bean>
+	
+	<bean id="technologyService" class="com.war.service.impl.TechnologyService">
+		<property name="technologyDAO" ref="technologyDAO"/>
+		<property name="cityBuildingDAO" ref="cityBuildingDAO"/>
+		<property name="cityTechnologyDAO" ref="cityTechnologyDAO"/>
+		<property name="playerDAO" ref="playerDAO"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="constraintDependService" ref="constraintDependService"/>
+		<property name="processQueueService" ref="processQueueService"/>
+		<property name="treasureQueueService" ref="treasureQueueService"/>
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+	
+	<bean id="nameService" class="com.war.service.impl.NameService">
+		<property name="nameDAO" ref="nameDAO"/>
+	</bean>
+	
+	<bean id="heroService" class="com.war.service.impl.HeroService">
+		<property name="cityHeroDAO" ref="cityHeroDAO"/>
+		<property name="cityHeroExtDAO" ref="cityHeroExtDAO" />
+		<property name="cityCandidacyHeroDAO" ref="cityCandidacyHeroDAO"/>
+		<property name="skillDAO" ref="skillDAO"/>
+		<property name="cityMilitaryDAO" ref="cityMilitaryDAO"/>
+		<property name="heroSkillDAO" ref="heroSkillDAO"/>
+		<property name="cityMilitarySuccorDAO" ref="cityMilitarySuccorDAO"/>
+		<property name="cityHeroLevelupLogDAO" ref="cityHeroLevelupLogDAO"/>
+		<property name="treasureQueueDAO" ref="treasureQueueDAO"/>
+		<property name="guildDAO" ref="guildDAO"/>
+		<property name="buildingService" ref="buildingService"/>
+		<property name="nameService" ref="nameService"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="equipmentService" ref="equipmentService"/>
+		<property name="militaryService" ref="militaryService"/>
+		<property name="reportService" ref="reportService"/>
+		<property name="treasureService" ref="treasureService"/>
+		<property name="processQueueService" ref="processQueueService"/>
+		<property name="playerService" ref="playerService"/>
+		<property name="operationLogService" ref="operationLogService"/>
+		<property name="depoyQueueService" ref="depoyQueueService"/>
+	</bean>
+	
+	<bean id="militaryService" class="com.war.service.impl.MilitaryService">
+		<property name="militaryDAO" ref="militaryDAO"/>
+		<property name="cityMilitaryDAO" ref="cityMilitaryDAO"/>
+		<property name="battleDAO" ref="battleDAO"/>
+		<property name="battleLogDAO" ref="battleLogDAO"/>
+		<property name="battleWaitDAO" ref="battleWaitDAO"/>
+		<property name="battleQueueDAO" ref="battleQueueDAO"/>
+		<property name="mapMonsterDAO" ref="mapMonsterDAO"/>
+		<property name="depoyQueueDAO" ref="depoyQueueDAO"/>
+		<property name="cityHeroDAO" ref="cityHeroDAO"/>
+		<property name="cityMilitarySuccorDAO" ref="cityMilitarySuccorDAO"/>
+		<property name="heroSkillDAO" ref="heroSkillDAO"/>
+		<property name="skillDAO" ref="skillDAO"/>
+		<property name="friendDAO" ref="friendDAO"/>
+		<property name="processQueueDAO" ref="processQueueDAO"/>
+		<property name="armyService" ref="armyService"/>
+		<property name="depoyQueueService" ref="depoyQueueService"/>
+		<property name="playerService" ref="playerService"/>
+		<property name="mapService" ref="mapService"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="guildService" ref="guildService"/>
+		<property name="declareWarService" ref="declareWarService"/>
+		<property name="buildingService" ref="buildingService"/>
+		<property name="technologyService" ref="technologyService"/>
+		<property name="cityDefenseService" ref="cityDefenseService"/>
+		<property name="spyQueueService" ref="spyQueueService"/>
+		<property name="reportService" ref="reportService"/>
+		<property name="marketService" ref="marketService"/>
+		<property name="treasureQueueService" ref="treasureQueueService"/>
+		<property name="colonizationService" ref="colonizationService"/>
+		<property name="operationLogService" ref="operationLogService"/>
+		<property name="monsterService" ref="monsterService"/>
+		<property name="treasureService" ref="treasureService"/>
+		<property name="equipmentService" ref="equipmentService"/>
+		<property name="strongholdService" ref="strongholdService"/>
+	</bean>
+	
+	<bean id="heavyFactoryService" class="com.war.service.building.impl.HeavyFactoryService">
+	   	<property name="armyService" ref="armyService"/>
+	</bean>
+	
+	<bean id="airportService" class="com.war.service.building.impl.AirportService">
+	   	<property name="armyService" ref="armyService"/>
+	</bean>
+	
+	<bean id="mapService" class="com.war.service.impl.MapService">
+   	 	<property name="mapDAO" ref="mapDAO"/>
+   	 	<property name="mapFavouriteDAO" ref="mapFavouriteDAO"/>
+   	 	<property name="mapMonsterDAO" ref="mapMonsterDAO"/>
+   	 	<property name="cityDAO" ref="cityDAO"/>
+   	 	<property name="playerService" ref="playerService"/>
+	</bean>
+	
+	<bean id="depoyQueueService" class="com.war.service.impl.DepoyQueueService">
+   	 	<property name="depoyQueueDAO" ref="depoyQueueDAO"/>	
+	</bean>
+	
+	<bean id="reportService" class="com.war.service.impl.ReportService">
+   	 	<property name="reportDAO" ref="reportDAO"/>	
+	</bean>
+	
+	<bean id="battleService" class="com.war.service.impl.BattleService">
+		<property name="battleDAO" ref="battleDAO"/>
+		<property name="battleLogDAO" ref="battleLogDAO"/>
+		<property name="battleArmyDAO" ref="battleArmyDAO"/>
+		<property name="battleDetailDAO" ref="battleDetailDAO"/>
+		<property name="battleQueueDAO" ref="battleQueueDAO"/>
+		<property name="battleWaitDAO" ref="battleWaitDAO"/>
+		<property name="buildingDAO" ref="buildingDAO"/>
+		<property name="cityResourceDAO" ref="cityResourceDAO"/>
+		<property name="cityMilitarySuccorDAO" ref="cityMilitarySuccorDAO"/>
+		<property name="cityMilitaryDAO" ref="cityMilitaryDAO"/>
+		<property name="defenseDAO" ref="defenseDAO"/>
+		<property name="buildingService" ref="buildingService"/>
+		<property name="militaryService" ref="militaryService"/>
+		<property name="heroService" ref="heroService"/>
+		<property name="depoyQueueService" ref="depoyQueueService"/>
+		<property name="cityDefenseService" ref="cityDefenseService"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="playerService" ref="playerService"/>
+		<property name="guildService" ref="guildService"/>
+		<property name="treasureService" ref="treasureService"/>
+		<property name="treasureQueueService" ref="treasureQueueService"/>
+		<property name="equipmentService" ref="equipmentService"/>
+		<property name="reportService" ref="reportService"/>
+		<property name="mapService" ref="mapService"/>
+		<property name="marketService" ref="marketService"/>
+		<property name="colonizationService" ref="colonizationService"/>
+		<property name="armyService" ref="armyService"/>
+		<property name="technologyService" ref="technologyService"/>
+		<property name="defenseService" ref="defenseService"/>
+	</bean>
+	
+	<bean id="operationLogService" class="com.war.service.impl.OperationLogService">
+		<property name="operationLogDAO" ref="operationLogDAO"/>
+	</bean>
+	
+	<bean id="defenseService" class="com.war.service.impl.DefenseService">
+		<property name="defenseDAO" ref="defenseDAO"/>
+		<property name="constraintDependService" ref="constraintDependService"/>
+	</bean>
+	
+	<bean id="declareWarService" class="com.war.service.impl.DeclareWarService">
+   	 	<property name="declareWarDAO" ref="declareWarDAO"/>
+   	 	<property name="cityService" ref="cityService"/>
+   	 	<property name="playerService" ref="playerService"/>
+   	 	<property name="reportService" ref="reportService"/>
+   	 	<property name="treasureQueueService" ref="treasureQueueService"/>
+	</bean>
+	
+	<bean id="cityDefenseService" class="com.war.service.building.impl.CityDefenseService">
+   	 	<property name="cityDefenseDAO" ref="cityDefenseDAO"/>
+   	 	<property name="defenseService" ref="defenseService"/>
+   	 	<property name="cityService" ref="cityService"/>
+   	 	<property name="productionQueueService" ref="productionQueueService"/>
+	</bean>
+	
+	<bean id="monsterService" class="com.war.service.impl.MonsterService">
+		<property name="mapDAO" ref="mapDAO"/>
+		<property name="mapMonsterDAO" ref="mapMonsterDAO"/>
+		<property name="nameService" ref="nameService"/>
+	</bean>
+
+	<bean id="chatService" class="com.war.service.impl.ChatService">
+		<property name="chatHistoryDAO" ref="chatHistoryDAO"/>
+	</bean>
+	
+	<bean id="gameScriptService" class="com.war.service.impl.GameScriptService">
+		<property name="gameScriptDAO" ref="gameScriptDAO"/>
+	</bean>
+	
+	<bean id="treasureQueueService" class="com.war.service.impl.TreasureQueueService">
+		<property name="treasureQueueDAO" ref="treasureQueueDAO"/>
+		<property name="cityService" ref="cityService"/>
+		<property name="playerDAO" ref="playerDAO"/>
+		<property name="cityHeroDAO" ref="cityHeroDAO"/>
+		<property name="cityHeroExtDAO" ref="cityHeroExtDAO"/>
+	</bean>
+	
+	<bean id="equipmentService" class="com.war.service.impl.EquipmentService">
+		<property name="equipmentDAO" ref="equipmentDAO"/>
+		<property name="playerEquipmentDAO" ref="playerEquipmentDAO"/>
+	</bean>
+	
+	<bean id="spyQueueService" class="com.war.service.impl.SpyQueueService">
+		<property name="spyQueueDAO" ref="spyQueueDAO"/>
+		<property name="mapDAO" ref="mapDAO"/>
+	</bean>
+	
+	<bean id="dataHistoryService" class="com.war.service.impl.DataHistoryService">
+		<property name="dataHistoryDAO" ref="dataHistoryDAO"/>
+	</bean>
+	
+	<bean id="gameCardService" class="com.war.service.impl.GameCardService">
+		<property name="gameCardDAO" ref="gameCardDAO"/>
+		<property name="playerCardDAO" ref="playerCardDAO"/>
+		<property name="treasureService" ref="treasureService"/>
+	</bean>
+	
+	<bean id="systemService" class="com.war.service.impl.SystemService">
+		<property name="systemNoticeDAO" ref="systemNoticeDAO"/>
+	</bean>
+	
+	<!-- Stronghold service start here -->
+	<bean id="strongholdService" class="com.war.service.impl.StrongholdService">
+		<property name="shbuildingDAO" ref="shbuildingDAO"/>
+		<property name="strongholdDAO" ref="strongholdDAO"/>
+		<property name="strongholdShbuildingDAO" ref="strongholdShbuildingDAO"/>
+	</bean>
+	
+	<bean id="shbuildingService" class="com.war.service.impl.ShbuildingService">
+		<property name="shbuildingDAO" ref="shbuildingDAO"/>
+	</bean>
+	
+</beans>

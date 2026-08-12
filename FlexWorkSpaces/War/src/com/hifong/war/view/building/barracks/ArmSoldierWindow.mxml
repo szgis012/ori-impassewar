@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" layout="absolute" width="430" height="460" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.DependUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.ConvertUtil;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.events.building.barracks.ArmSoldierEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.OrdnanceVO;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 当前兵种信息*/
+			private var _army:ArmyVO;
+			
+			/** 当前兵种的数量信息*/
+			[Bindable]
+			public var cityArmy:CityArmyVO;
+			
+			/** 前提建筑*/
+			[Bindable]
+			private var preBuildingName:String = "无";
+			
+			[Bindable]
+			public function set army(a:ArmyVO):void{
+				_army = a;
+				preBuildingName = DependUtil.getPreBuildingName(a.constraintDepend);
+			}
+			
+			public function get army():ArmyVO{
+				return _army;
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			//得到当前可用的武器数量
+			private function getCurrentNum(item:Object, column:DataGridColumn):String{
+				//得到城市该军械的数量信息
+				var cityOrdnance:CityOrdnanceVO = model.ordnanceInfo.cityOrdnanceMap[item.ordnanceID] as CityOrdnanceVO;
+				
+				if(cityOrdnance){
+					return String(cityOrdnance.num);
+				}else{
+					return "0";
+				}
+			}
+			
+			//得到当前可用的武器数量
+			private function getOrdnanceName(item:Object, column:DataGridColumn):String{
+				//得到城市该军械的数量信息
+//				var ordnance:OrdnanceVO = model.ordnanceInfo.ordnanceMap[item.ordnanceID] as OrdnanceVO;
+//				
+//				if(ordnance){
+//					return ordnance.name;
+//				}else{
+//					return "无效军械";
+//				}
+
+				return ConvertUtil.getOrdnanceNameByID(item.ordnanceID);
+			}
+			
+			//武装
+			private function doArm():void{
+				var num:int = int(this.txtArmyNum.text);
+				
+				if(num == 0){
+					MsgBox.showMessage("请输入要武装的士兵数量。");
+					this.txtArmyNum.setFocus();
+					return;
+				}
+				
+				if(num > model.cityInfo.recruitNum){
+					MsgBox.showMessage("新兵数量不足。");
+					this.txtArmyNum.setFocus();
+					return;
+				}
+					
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ArmSoldierEvent(cityArmy,num));
+				
+				doClose();
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="武装：{army.name}" visible="{Boolean(titleBtn.label.length)}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="80" width="380" height="80" styleName="CanvasBorder">
+		<mx:Image x="10" y="10" width="60" height="60" source="{ImagePathUtil.getBuildArmyPath(army.image)}" toolTip="{army.description}"/>
+		<mx:TextArea x="78" y="10" width="292" height="60" text="{army.description}" editable="false"/>
+	</mx:Canvas>
+	
+	<mx:Label x="26" y="168" text="前提建筑：{preBuildingName}" fontWeight="bold"/>
+	<mx:DataGrid x="25" y="189" width="380" height="125" sortableColumns="false" dataProvider="{army.armyDependList}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="武装条件" labelFunction="getOrdnanceName"/>
+			<mx:DataGridColumn headerText="需要数量" dataField="num" textAlign="right"/>
+			<mx:DataGridColumn headerText="当前数量" labelFunction="getCurrentNum" textAlign="right"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="25" y="322" width="380" height="109" styleName="CanvasBorder">
+		<mx:Label x="10" y="41" text="当前数量："/>
+		<mx:Text x="74" y="41" text="{cityArmy.num}" width="60"/>
+		<mx:Label x="167.5" y="41" text="武装数量："/>
+		<mx:Label x="10" y="10" text="新兵数量："/>
+		<mx:TextInput x="230" y="40" width="140" id="txtArmyNum" restrict="0-9" text="1" textAlign="right"/>
+		<mx:Text x="74" y="10" text="{model.cityInfo.recruitNum}" width="60"/>
+		<mx:Button x="310" y="70" label="确定" click="doArm()" enabled="{model.cityInfo.recruitNum>0}"/>
+		<mx:Label x="167" y="10" text="(武装一个{army.name}需要{army.population}个新兵.)" width="191" id="lblCostPopulation"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

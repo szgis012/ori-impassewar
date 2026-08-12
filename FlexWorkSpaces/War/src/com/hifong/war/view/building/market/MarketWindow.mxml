@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="440" xmlns:building="com.hifong.war.view.building.*" horizontalAlign="left" showCloseButton="false" close="doClose()" xmlns:market="com.hifong.war.view.building.market.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.util.MsgBox;
+			
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.util.WindowUtil;
+			
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				this._buildingGrid = bg;
+				 this.pnlBuilding.buildingGrid = bg;
+				 
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function onTabChange(event:IndexChangedEvent):void{
+				
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<building:BuildingItemPanel id="pnlBuilding" x="25" y="37">
+	</building:BuildingItemPanel>
+	<mx:TabNavigator x="25" y="134" width="580" height="277" change="onTabChange(event)">
+		<market:ResouceTransportation x="0" y="0" label="资源运输" width="100%" height="100%" styleName="ContentCanvas">
+		</market:ResouceTransportation>
+		<market:ResourceTrade x="0" y="10" label="资源交易" width="100%" height="100%" styleName="ContentCanvas">
+		</market:ResourceTrade>
+		<market:TradeQueue x="0" y="10" label="交易列表" width="100%" height="100%" styleName="ContentCanvas">
+		</market:TradeQueue>
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

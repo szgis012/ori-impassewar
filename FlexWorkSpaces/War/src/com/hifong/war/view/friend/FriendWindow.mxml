@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="630" height="480" showCloseButton="false" layout="absolute"  initialize="doInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.events.friend.RefuseAddFriendApplyEvent;
+			import com.hifong.war.events.friend.AcceptAddFriendApplyEvent;
+			import com.hifong.war.events.friend.DeleteFriendEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.friend.GetFriendListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			[Bindable]
+			private var model:ModelLocator=ModelLocator.getInstance();
+			
+			private var currentData:Object;
+			private var showTarget:VBox;
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			private function doInit():void{
+				this.setFocus();
+				//请求好友列表
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetFriendListEvent(model.playerInfo.playerID));
+			}
+			/**
+			 * 删除好友
+			 */
+			public  function deleteFriend(data:Object):void{ 
+				MsgBox.showConfirm("是否删除好友"+data.targetPlayer.name+"?",function():void{ 
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteFriendEvent(model.playerInfo.playerID,data.targetPlayerID));
+					//请求好友列表
+					CairngormEventDispatcher.getInstance().dispatchEvent(new GetFriendListEvent(model.playerInfo.playerID)); 
+				});
+			}
+			/**
+			 * 查看好友信息
+			 */
+			public function showFriendMessage(data:Object):void{
+				//to do
+			}
+			private function getPosXY(data:Object,column:*):String{
+				return data.posX+":"+data.posY;
+			}
+			/**
+			 * 显示操作菜单
+			 */
+			public  function onShow(event:MouseEvent,data:Object):void{
+				operation.visible=false;
+				permission.visible=false;
+				currentData=data;
+				switch(data.state){
+					case 1:
+						operation.visible=true;
+						showTarget=operation;
+						break;
+					case 2:
+						permission.visible=true;
+						showTarget=permission;
+						break;
+					case 0:
+					break;
+				}
+				if(showTarget!=null){
+					showTarget.x=event.stageX-this.x+2;
+					showTarget.y=event.stageY-this.y+2;
+				}
+			}
+			private function onHide():void{
+				if(showTarget){
+					showTarget.visible=false;
+					showTarget=null;
+				}
+			} 
+			/**
+			 * 同意好友请求
+			 */
+			 private function acceptFriendRequest():void{
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new AcceptAddFriendApplyEvent(model.playerInfo.playerID,currentData.playerID));
+			 }
+			 /**
+			 * 取消好友请求
+			 */
+			 private function cancelFriendRequest():void{
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new RefuseAddFriendApplyEvent(model.playerInfo.playerID,currentData.playerID));
+			 }
+			 /**
+			 * 添加好友
+			 */
+			 private function addFriend():void{
+			 	var win:AddFriendWindow=new AddFriendWindow();
+			 	WindowUtil.showModelWindow(win);
+			 }
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="好 友" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas width="100%" height="100%" mouseDown="onHide()">
+		
+		<mx:TextArea x="25" y="37" width="578" height="73" text="好友之间能互相查看城市坐标。&#xa;&#xa;好友之间不能相互宣战，无法进行战争操作（侦查、宣战、攻击）&#xa;"/>
+		<mx:DataGrid x="25" y="120" width="578" height="298" dataProvider="{model.friendList}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="名称"  sortable="false" dataField="targetPlayer.name"  labelFunction="{DataGridUtil.getColumnProperty}">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Label  text="{data.targetPlayer.name}" click="showOperation(event)"   >
+								<mx:Script>
+									<![CDATA[
+										protected function showOperation(event:MouseEvent):void
+										{
+											outerDocument.onShow(event,data);
+										}
+									]]>
+								</mx:Script>
+							</mx:Label>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="军团"  sortable="false" dataField="targetPlayer.guildName"  labelFunction="{DataGridUtil.getColumnProperty}"/>
+				<mx:DataGridColumn headerText="声望"  sortable="false" dataField="targetPlayer.renown" labelFunction="{DataGridUtil.getColumnProperty}"/>
+				<mx:DataGridColumn headerText="坐标"  sortable="false" labelFunction="getPosXY" textAlign="center"/>
+				<mx:DataGridColumn headerText="	操作"  sortable="false" dataField="friendID"  width="120">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:HBox>
+								<mx:Button label="查看" styleName="DG" click="outerDocument.showFriendMessage(data)" width="50" />
+								<mx:Button label="删除" styleName="DG" click="outerDocument.deleteFriend(data)" width="50"/>
+							</mx:HBox>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button x="498" y="429" label="添加好友" click="addFriend()"/>
+		<mx:VBox id="operation" visible="false" width="80" backgroundAlpha="0.5" backgroundColor="0" verticalGap="0" rollOut="onHide()">
+		<mx:Button label="私聊"   width="100%" />
+		<mx:Button label="运输"   width="100%" />
+		<mx:Button label="派遣"  width="100%" />
+		<mx:Button label="发邮件"   width="100%" />
+		</mx:VBox>
+		<mx:VBox id="permission" visible="false" width="80" backgroundAlpha="0.5" backgroundColor="0" verticalGap="0" rollOut="onHide()">
+			<mx:Button label="同意"   width="100%" click="acceptFriendRequest()" />
+			<mx:Button label="取消"   width="100%" click="cancelFriendRequest()" />
+		</mx:VBox>
+	</mx:Canvas>
+</mx:TitleWindow>

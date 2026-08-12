@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Honor">
+	<typeAlias alias="Honor" type="com.war.domain.Honor" />
+	
+	<insert id="createHonor" parameterClass="Honor">
+		INSERT INTO T_HONOR(HONOR_ID, NAME) VALUES(#honorID#, #name#)
+		<selectKey resultClass="Integer" keyProperty="honorID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateHonor" parameterClass="Honor">
+		UPDATE T_HONOR SET HONOR_ID=#honorID#, NAME=#name# WHERE HONOR_ID=#honorID#
+	</update>
+	
+	<delete id="deleteHonorByID" parameterClass="Integer">
+		DELETE FROM T_HONOR WHERE HONOR_ID=#honorID#
+	</delete>
+	
+	<select id="getHonorByID" parameterClass="Integer" resultClass="Honor">
+		SELECT HONOR_ID AS honorID, NAME AS name FROM T_HONOR WHERE HONOR_ID=#honorID#
+	</select>
+	
+	<select id="getHonorList" resultClass="Honor">
+		SELECT HONOR_ID AS honorID, NAME AS name FROM T_HONOR
+	</select>
+
+</sqlMap>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Guild">
+	<typeAlias alias="Guild" type="com.war.domain.Guild" />
+	
+	<insert id="createGuild" parameterClass="Guild">
+		INSERT INTO T_GUILD(GUILD_ID, NAME, LEVEL, IMAGE, CHAIRMAN_ID, RENOWN, OFFICIAL_NUM, POPULATION, POPULATION_MAX, MONEY, ORIFLAMME_LOWER_NUM, ORIFLAMME_INTERMEDIATE_NUM, ORIFLAMME_ADVANCED_NUM, RANK, INTRODUCTION, NOTICE, CREATE_TIME) VALUES(#guildID#, #name#, #level#, #image#, #chairmanID#, #renown#, #officialNum#, #population#, #populationMax#, #money#, #oriflammeLowerNum#, #oriflammeIntermediateNum#, #oriflammeAdvancedNum#, #rank#, #introduction#, #notice#, #createTime#)
+		<selectKey resultClass="Integer" keyProperty="guildID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateGuildInfo" parameterClass="Guild">
+		UPDATE T_GUILD SET NAME=#name#, INTRODUCTION=#introduction#, NOTICE=#notice# WHERE GUILD_ID=#guildID#
+	</update>
+	
+	<update id="updateGuild" parameterClass="Guild">
+		UPDATE T_GUILD SET GUILD_ID=#guildID#, NAME=#name#, LEVEL=#level#, IMAGE=#image#, CHAIRMAN_ID=#chairmanID#, RENOWN=#renown#, OFFICIAL_NUM=#officialNum#, POPULATION=#population#, POPULATION_MAX=#populationMax#, MONEY=#money#, ORIFLAMME_LOWER_NUM=#oriflammeLowerNum#, ORIFLAMME_INTERMEDIATE_NUM=#oriflammeIntermediateNum#, ORIFLAMME_ADVANCED_NUM=#oriflammeAdvancedNum#, RANK=#rank#, INTRODUCTION=#introduction#, NOTICE=#notice#, CREATE_TIME=#createTime# WHERE GUILD_ID=#guildID#
+	</update>
+	
+	<update id="updateGuildRenownAndRankBatch" parameterClass="Guild">
+		UPDATE T_GUILD SET RENOWN=#renown#, RANK=#rank# WHERE GUILD_ID=#guildID#
+	</update>
+	
+	<delete id="deleteGuildByID" parameterClass="Integer">
+		DELETE FROM T_GUILD WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<select id="getGuildNum" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD
+	</select>
+	
+	<select id="getGuildIDByGuildName" parameterClass="String" resultClass="Integer">
+		SELECT GUILD_ID FROM T_GUILD WHERE NAME=#name#
+	</select>
+	
+	<select id="getGuildNameByID" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_GUILD WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildByGuildName" parameterClass="String" resultClass="Guild">
+		SELECT GUILD_ID AS guildID, NAME AS name, LEVEL AS level, IMAGE AS image, CHAIRMAN_ID AS chairmanID, RENOWN AS renown, OFFICIAL_NUM AS officialNum, POPULATION AS population, POPULATION_MAX AS populationMax, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, RANK AS rank, INTRODUCTION AS introduction, NOTICE AS notice, CREATE_TIME AS createTime FROM T_GUILD WHERE NAME=#guildName#
+	</select>
+	
+	<select id="getGuildByID" parameterClass="Integer" resultClass="Guild">
+		SELECT GUILD_ID AS guildID, NAME AS name, LEVEL AS level, IMAGE AS image, CHAIRMAN_ID AS chairmanID, RENOWN AS renown, OFFICIAL_NUM AS officialNum, POPULATION AS population, POPULATION_MAX AS populationMax, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, RANK AS rank, INTRODUCTION AS introduction, NOTICE AS notice, CREATE_TIME AS createTime FROM T_GUILD WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildPagingList" parameterClass="java.util.Map" resultClass="Guild">
+		SELECT GUILD_ID AS guildID, NAME AS name, LEVEL AS level, IMAGE AS image, CHAIRMAN_ID AS chairmanID, RENOWN AS renown, OFFICIAL_NUM AS officialNum, POPULATION AS population, POPULATION_MAX AS populationMax, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, RANK AS rank, INTRODUCTION AS introduction, NOTICE AS notice, CREATE_TIME AS createTime FROM T_GUILD ORDER BY RANK LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getGuildList" resultClass="Guild">
+		SELECT GUILD_ID AS guildID, NAME AS name, LEVEL AS level, IMAGE AS image, CHAIRMAN_ID AS chairmanID, RENOWN AS renown, OFFICIAL_NUM AS officialNum, POPULATION AS population, POPULATION_MAX AS populationMax, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, RANK AS rank, INTRODUCTION AS introduction, NOTICE AS notice, CREATE_TIME AS createTime FROM T_GUILD 
+	</select>
+
+</sqlMap>

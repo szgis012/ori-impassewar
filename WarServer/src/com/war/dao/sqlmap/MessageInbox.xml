@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MessageInbox">
+	<typeAlias alias="MessageInbox" type="com.war.domain.MessageInbox" />
+
+	<insert id="createMessageInbox" parameterClass="MessageInbox">
+		INSERT INTO T_MESSAGE_INBOX(SENDER_NAME, RECEIVER_ID, TITLE, CONTENT, READ_FLAG, RECEIVE_TIME) VALUES(#senderName#, #receiverID#, #title#, #content#, 0, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="messageInboxID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateMessageInbox" parameterClass="MessageInbox">
+		UPDATE T_MESSAGE_INBOX SET SENDER_NAME=#senderName#, RECEIVER_ID=#receiverID#, TITLE=#title#, CONTENT=#content#, READ_FLAG=#readFlag#, RECEIVE_TIME=#receiveTime# WHERE MESSAGE_INBOX_ID=#messageInboxID#
+	</update>
+	
+	<update id="updateMessageReadFlagByID" parameterClass="java.util.Map">
+		UPDATE T_MESSAGE_INBOX SET READ_FLAG=#readFlag# WHERE MESSAGE_INBOX_ID=#messageInboxID#
+	</update>
+
+	<delete id="deleteMessageInboxByID" parameterClass="Integer">
+		DELETE FROM T_MESSAGE_INBOX WHERE MESSAGE_INBOX_ID=#messageInboxID#
+	</delete>
+
+	<select id="getMessageInboxByID" parameterClass="Integer" resultClass="MessageInbox">
+		SELECT MESSAGE_INBOX_ID AS messageInboxID, SENDER_NAME AS senderName, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, RECEIVE_TIME AS receiveTime FROM T_MESSAGE_INBOX WHERE MESSAGE_INBOX_ID=#messageInboxID#
+	</select>
+
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<select id="getMessageInboxNumByReadFlagAndReceiverID" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE_INBOX WHERE READ_FLAG=#readFlag# AND RECEIVER_ID=#receiverID#
+	</select>
+	
+	<select id="getMessageReadFlagByID" parameterClass="Integer" resultClass="Integer">
+		SELECT READ_FLAG FROM T_MESSAGE_INBOX WHERE MESSAGE_INBOX_ID=#messageInboxID#
+	</select>
+	
+	<select id="getMessageInboxAmountByReceiverID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE_INBOX WHERE RECEIVER_ID=#receiverID#
+	</select>
+	
+	<select id="getMessageInboxPagingListByReceiverID" parameterClass="java.util.Map" resultClass="MessageInbox">
+		SELECT MESSAGE_INBOX_ID AS messageInboxID, SENDER_NAME AS senderName, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, RECEIVE_TIME AS receiveTime FROM T_MESSAGE_INBOX WHERE RECEIVER_ID=#receiverID# ORDER BY RECEIVE_TIME DESC LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getMessageInboxListByReceiverID" parameterClass="Integer" resultClass="MessageInbox">
+		SELECT MESSAGE_INBOX_ID AS messageInboxID, SENDER_NAME AS senderName, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, RECEIVE_TIME AS receiveTime FROM T_MESSAGE_INBOX WHERE RECEIVER_ID=#receiverID# ORDER BY RECEIVE_TIME DESC
+	</select>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+
+	<select id="getMessageInboxList" resultClass="MessageInbox">
+		SELECT MESSAGE_INBOX_ID AS messageInboxID, SENDER_NAME AS senderName, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, RECEIVE_TIME AS receiveTime FROM T_MESSAGE_INBOX
+	</select>
+</sqlMap>

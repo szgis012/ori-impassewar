@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" styleName="City" horizontalScrollPolicy="off" verticalScrollPolicy="off" initialize="initGrid()" width="1000" height="600"  xmlns:building="com.hifong.war.view.building.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.ColorFilterTween;
+			import com.hifong.war.common.HitTester;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.vo.CityBuildingVO;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.view.building.citycenter.CityCenterWindow;
+			import com.hifong.war.view.building.oilfield.OilFieldWindow;
+			import com.hifong.war.view.building.steel.SteelWindow;
+			import com.hifong.war.view.building.mill.MillWindow;
+			import com.hifong.war.view.building.lumber.LumberWindow;
+			import com.hifong.war.view.building.market.MarketWindow;
+			import mx.events.CollectionEventKind;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.GetCompletedBuildingListEvent;
+			import com.hifong.war.view.building.CreateBuildingWindow;
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.view.building.SimpleUpdateWindow;
+			import com.hifong.war.util.CoordinateUtil;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+						
+			import flash.events.MouseEvent;
+			import flash.filters.ColorMatrixFilter;
+			import flash.geom.Point;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.managers.PopUpManager;
+			
+			
+			/**
+			 * 建造位置数组
+			 * 数组中的每一项为地图上一个可建造的位置起始坐标,map坐标
+			 */ 
+//			private static const BUILD_POSITION:Object = { 1:[0,0],2:[0,100],3:[0,200],4:[0,300],5:[100,0],6:[200,0],7:[300,0],8:[200,200],9:[100,100],10:[-100,100]
+//															,11:[-100,200],12:[-100,300],13:[-200,200],14:[100,-100],15:[200,-100],16:[300,-100],17:[200,-200] };
+//															
+			
+			private static const BUILD_POSITION:Object = { 
+				0:[80,140],//城镇中心
+				1:[180,-170],//row1
+				2:[165,-85],3:[270,-130],//row2
+				4:[-80,90],5:[30,55],6:[140,20],7:[240,-10],8:[370,-50],//row3
+				9:[-180,210],10:[-100,190],11:[0,160],12:[345,40],13:[440,10],//row4
+				14:[-130,290],15:[-30,255],16:[330,140],17:[420,110],//row5
+				18:[-55,340],19:[40,310],20:[150,280],28:[300,230],//row6
+				21:[-50,420],22:[30,410],23:[130,370],24:[220,340],//row7  防御工事
+				25:[-150,515],//row7围墙
+				26:[5,500],27:[90,470]//row8 防御工事
+			 };
+																											
+			//图片宽度
+			private static const GRID_WIDTH:int = 78;
+			//图片高度
+			private static const GRID_HEIGHT:int = 78;
+			//地图坐标和屏幕坐标的偏移角度
+			private static const OFFSET_ANGLE:Number = Math.PI / 4;
+			//地图坐标原点在屏幕坐标中的X坐标值
+			private static const OFFSETX:Number = 392;
+			//地图坐标原点在屏幕坐标中的Y坐标值
+			private static const OFFSETY:Number = 0;
+			//默认图片有效宽度
+			//private static const IMG_WIDTH:Number = Math.sqrt(2*39*39);//GRID_WIDTH/2
+			//默认图片有效高度
+			//private static const IMG_HEIGHT:Number = Math.sqrt(2*39*39);//GRID_HEIGHT/2
+			//高亮滤镜
+			private static var hilightFilter:ColorMatrixFilter = new ColorMatrixFilter([1, 0, 0, 0, 50, 0, 1, 0, 0, 50, 0, 0, 1, 0, 50, 0, 0, 0, 1, 0]);
+			//灰色滤镜
+			//private static var greyFilter:ColorMatrixFilter = new ColorMatrixFilter([0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 1, 0]);
+			
+			//城墙坐标和屏幕坐标的偏移角度,479,267分别为城墙图片的宽，高
+			//private static const WALL_OFFSET_ANGLE:Number = Math.atan(267/479);
+			
+			//最后一个高亮的建筑
+			private var lastHilightGrid:BuildingGrid;
+			//最后一个建筑的其他滤镜
+			private var lastGridFilter:Array;
+			
+			//地图上可建造的位置列表,key为位置，在BUILD_POSITION中定义。
+			private var cityGridList:Object = {};
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//将地图坐标转换成屏幕坐标
+			public function getScreenPoint(p:Point):Point{
+				return CoordinateUtil.getOldPoint(p,OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}
+			
+			//将屏幕坐标转换成地图坐标
+			public function getMapPoint(p:Point):Point{
+				return CoordinateUtil.getNewPoint(p,OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}
+			
+			//将地图坐标转换成屏幕坐标
+			/*public function getWallScreenPoint(p:Point):Point{
+				return CoordinateUtil.getOldPoint(p,WALL_OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}*/
+			
+			//将屏幕坐标转换成地图坐标
+			/*public function getWallMapPoint(p:Point):Point{
+				return CoordinateUtil.getNewPoint(p,WALL_OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}*/
+			
+			/**
+			 * 点击城市建筑
+			 */
+			private function doClick(event:MouseEvent):void{
+				//计算该点在当前面板中的坐标
+//				var p:Point = this.globalToLocal(new Point(event.stageX,event.stageY));
+				var p:Point = new Point(event.stageX,event.stageY);
+				var bg:BuildingGrid = this.findBuildingGridByPoint(p);
+				
+				if(bg){
+					model.currentBuindingGrid = bg;
+					//如果是空地(即还没建东西)
+					if(bg.isBlankGrid()){
+						DialogManager.showBuildWindow(bg);
+					}else{
+						DialogManager.showUpgradeWindow(bg);
+					}
+				}
+			}
+			
+			private var point_DMV:Point;
+			private var bg_DMV:BuildingGrid;
+			/**
+			 * 鼠标滑过建筑物
+			 */
+			private function doMouseMove(event:MouseEvent):void{
+				//将上次的高亮建筑滤镜去除
+				
+				//计算该点在当前面板中的坐标
+//				point_DMV = this.globalToLocal(new Point(event.stageX,event.stageY));
+				point_DMV = new Point(event.stageX,event.stageY);
+				bg_DMV = this.findBuildingGridByPoint(point_DMV);
+				
+				if(bg_DMV){
+					
+					buildingToolTip.tipInfo = bg_DMV.tipInfo;
+					var vx:Number = this.globalToLocal(point_DMV).x + 10;
+					var vy:Number = this.globalToLocal(point_DMV).y + 10;
+					//边界判断  
+					if(x+buildingToolTip.width>this.width){
+						vx = point_DMV.x - buildingToolTip.width ;
+					}
+					
+					if(y+buildingToolTip.height>this.height){
+						vy = point_DMV.y - buildingToolTip.height ;
+					}
+					
+					buildingToolTip.x = vx;
+					buildingToolTip.y = vy;
+					buildingToolTip.visible = true;
+					
+					if(lastHilightGrid==bg_DMV) return;
+					ColorFilterTween.displayHilight(bg_DMV);
+					if(lastHilightGrid!=null) ColorFilterTween.unDisplayHilight(lastHilightGrid);
+					lastHilightGrid = bg_DMV;
+				}else{
+					buildingToolTip.visible = false;
+					if(lastHilightGrid!=null){
+					 ColorFilterTween.unDisplayHilight(lastHilightGrid);
+					 lastHilightGrid=null;
+					}
+				}
+				
+			}
+			
+			/**
+			 * 获得城市建筑所属的BuildingGrid对象
+			 * cityBuildingID 城市建筑编号
+			 */ 
+			public function getBuildingGridByCBID(cityBuildingID:int):BuildingGrid{
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:BuildingGrid in this.cityGridList){
+					if(!bg.isBlankGrid()){
+						if(bg.cityBuilding.cityBuildingID == cityBuildingID){
+							return bg;
+						}
+					}
+				}
+				return null;
+			}
+			
+			/**
+			 * 获得城市建筑所属的BuildingGrid对象
+			 * 注：对于有多个建筑的，返回最高等级的对象
+			 * buildingID 建筑编号
+			 */ 
+			public function getBuildingGridByBID(buildingID:int):BuildingGrid{
+				var buildingGrid:BuildingGrid;
+				
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:BuildingGrid in this.cityGridList){
+					if(!bg.isBlankGrid()){
+						if(bg.cityBuilding.buildingID == buildingID){
+							if(buildingGrid){
+								//保存等级最高的buildingGrid
+								if(bg.cityBuilding.level > buildingGrid.cityBuilding.level){
+									buildingGrid = bg;
+								}
+							}else{
+								buildingGrid = bg;
+							}
+						}
+					}
+				}
+				
+				return buildingGrid;
+			}
+			
+			/**
+			 * 获得一个空地的BuildingGrid对象
+			 */ 
+			public function findBlankBuildingGrid():BuildingGrid{
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:BuildingGrid in this.cityGridList){
+					if(bg.isBlankGrid()){
+						return bg;
+					}
+				}
+				
+				return null;
+			}
+			
+			/**
+			 * 返回城市建筑单元
+			 */
+			private function findBuildingGridByPoint(p:Point):BuildingGrid {
+				//计算偏移(应用0,0坐标与地图0,0坐标偏移)
+//				var point_FBGBP:Point = new Point(p.x+219, p.y+63);
+				var point_FBGBP:Point = new Point(p.x, p.y);
+				
+				for each(var bg:BuildingGrid in this.cityGridList) {
+					if(HitTester.realHitTest(bg ,point_FBGBP)) {
+						//trace(cityGridList[key].cityBuilding.building.name, p.x, p.y, cityGridList[key].x, cityGridList[key].y, cityGridList[key].width, cityGridList[key].height);
+						return bg; 
+					}
+				}
+				return null;
+			}
+			
+			
+			//设置建筑在地图上的位置
+			private function setGridPos(img:Image,p:Array):void{
+
+			}
+			
+			
+			/**
+			 * 初始化城市网格
+			 */
+			private function initGrid():void{
+				var bg:BuildingGrid;
+				//初始化所有建造点
+				for (var pos:String in BUILD_POSITION){
+					bg = BuildingGrid.getBlankBuildingGrid(int(pos));
+					//add roll effect 
+//					ColorFilterTween.addRollEffect(bg);
+					
+					bg.position = parseInt(pos);
+					this.cityGridList[pos] = bg;
+					setGridPos(bg,BUILD_POSITION[pos]);
+					pnlBuilding.addChild(bg);
+				}
+				
+				model.cityBuildingList.addEventListener(CollectionEvent.COLLECTION_CHANGE,onBuildingListChange);
+
+			}
+			
+			//根据列表数据的变化，调整界面显示
+			private function onBuildingListChange(event:CollectionEvent):void{
+				//增删的对象
+				var cb:CityBuildingVO ;
+				var bg:BuildingGrid;
+				
+				switch(event.kind){
+					//新建的建筑
+					case CollectionEventKind.ADD:
+						cb = event.items[0] as CityBuildingVO;
+						bg = this.cityGridList[cb.position] as BuildingGrid;
+						//更新Grid
+						if(bg){
+							bg.cityBuilding = cb;
+						}
+						break;
+					//建筑被移除	
+					case CollectionEventKind.REMOVE:
+						cb = event.items[0] as CityBuildingVO;
+						bg = this.cityGridList[cb.position] as BuildingGrid;
+						//成为空地
+						if(bg){
+							bg.resetGrid();
+						}
+						break;
+				}
+				
+			}
+
+		]]>
+	</mx:Script>
+	<!--城市背景大图-->
+	<!--<mx:Image x="0" y="0" source="{new WarAssets.cityBackgroundAsset()}" width="100%" height="100%"/>-->
+	<!--建筑物-->
+	<mx:Canvas id="pnlBuilding" x="0" y="0" width="100%" height="100%"  click="doClick(event)" mouseMove="doMouseMove(event)"  horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	</mx:Canvas>
+	<!--队列-->
+	<building:ProcessQueueNav x="0" y="24" />
+	
+	<building:BuildingToolTip x="50" y="410" id="buildingToolTip" visible="false">
+	</building:BuildingToolTip>
+	
+</mx:Canvas>

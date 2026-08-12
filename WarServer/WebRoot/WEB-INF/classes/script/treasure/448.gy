@@ -1,0 +1,33 @@
+/**
+ * 宝物编号:448
+ * 
+ * 名称：军火箱
+ * 描述：获得随机种类军械，数量不超过200
+ * 类型：宝箱类
+ */
+
+//可以获得的军械编号
+def ordnanceIDs = [1,2,3,4,5,6];
+//对应军械编号的名称
+def ordnanceNames = ["步枪","重机枪","冲锋枪","火箭筒","狙击枪","手枪"];
+
+String dirName = "ordnance";
+
+StringBuffer retstr = new StringBuffer();
+
+//资源数量值
+def resNumList = Arrays.asList(10,30,60,100);
+//随机数量出现值
+Collections.shuffle(resNumList);
+//将顺序打乱的资源数量值
+def rndNumList = resNumList.toArray();
+
+//出现资源的个数1-4
+int num = Math.random() * 10 % 4 + 1;
+
+for(int i=0; i<num ;i++){
+	context.rewardOrdnance(ordnanceIDs[i],resNumList[i]);
+	retstr.append("${ordnanceNames[i]}:${dirName}/${ordnanceIDs[i]}.png:${resNumList[i]}:1:${ordnanceIDs[i]}|");
+}
+
+return retstr.substring(0,retstr.length()-1);

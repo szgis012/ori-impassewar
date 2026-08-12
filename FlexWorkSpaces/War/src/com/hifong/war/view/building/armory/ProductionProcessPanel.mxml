@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="70" styleName="CanvasBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.vo.OrdnanceVO;
+			import com.hifong.war.events.building.armory.CancelProduceOrdnanceEvent;
+			import com.hifong.war.events.building.CancelProductionProcessEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.common.OrdnanceInfo;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.model.ModelLocator;
+			import mx.managers.PopUpManager;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var ordnanceInfo:OrdnanceInfo = model.ordnanceInfo;
+			
+			/** 当前生产军械的进程*/
+			[Bindable]
+			public var currentOrdnanceProcess:ProductionQueueVO;
+			
+			/** 当前军械信息*/
+			[Bindable]
+			public var currentOrdnance:OrdnanceVO;
+			
+			
+			private function showWaitProduceWindow():void{
+				var win:WaitProduceProcessWindow = new WaitProduceProcessWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doAccelerate():void {
+				//加载可以使用的宝物信息
+				//传递给宝物的参数
+				var params:Object = {queueID:currentOrdnanceProcess.productionQueueID};
+				var win:UseTreasureWindow = new UseTreasureWindow();
+				win.params = params;
+				win.treasureCategory = TreasureCategoryConstant.ACCELERATE;
+				win.treasureType = TreasureTypeConstant.ACCELERATE_ORDNANCE;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doCancel():void{
+				MsgBox.showConfirm("取消只返回部分资源，您确定要进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelProduceOrdnanceEvent(currentOrdnanceProcess));	
+				});
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="205" y="5" text="总时间：" fontWeight="bold"/>
+	<mx:Label x="10" y="20" text="正在制造：{currentOrdnance.name}({currentOrdnanceProcess.amount})" fontWeight="bold" width="367"/>
+	<mx:Label x="439" y="4" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" text="等待制造({ ordnanceInfo.ordnanceProcessList.length-1 }/{ordnanceInfo.maxWaitQueueNum})" textAlign="right" id="btnWaitProduce" click="showWaitProduceWindow()" width="131" styleName="ProduceLinkButton"/>
+	<mx:Label x="10" y="46" id="lblNeedTime" width="187" fontWeight="bold"/>
+	<mx:Label x="205" y="46" text="结束：{DateFormatUtil.formatTime(currentOrdnanceProcess.finishTime)}" fontWeight="bold" width="206"/>
+	<mx:Label x="256" y="4" id="lblTotalTime" width="121" fontWeight="bold"/>
+	<mx:Button x="442" y="41" label="加速" width="60" height="24" click="doAccelerate()"/>
+	<mx:Button x="510" y="41" label="取消" click="doCancel()" height="24" width="60"/>
+</mx:Canvas>

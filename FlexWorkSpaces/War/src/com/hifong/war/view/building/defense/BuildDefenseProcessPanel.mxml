@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="70" styleName="CanvasBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.DefenseVO;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.vo.BuildingVO;
+			import com.hifong.war.events.building.defense.CancelBuildDefenseEvent;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.CityDefenseInfo;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var cityDefenseInfo:CityDefenseInfo = model.cityDefenseInfo;
+			
+			/** 当前建造的防御对应的建筑信息*/
+			[Bindable]
+			public var currentDefenseBuilding:DefenseVO;
+			
+			/** 当前建造进程*/
+			[Bindable]
+			public var currentDefenseProcess:ProductionQueueVO;
+			
+			private function showWaitProduceWindow():void{
+				var win:WaitBuildDefenseProcessWindow = new WaitBuildDefenseProcessWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doCancel():void{
+				MsgBox.showConfirm("取消只返回部分资源，您确定要进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelBuildDefenseEvent(currentDefenseProcess));
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="205" y="0" text="总时间：" fontWeight="bold"/>
+	<mx:Label x="10" y="18" id="lblCurProduce" text="正在制造：{currentDefenseBuilding.name}({currentDefenseProcess.amount})" fontWeight="bold"/>
+	<mx:Label x="443" y="6" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" text="等待制造({cityDefenseInfo.defenseProcessList.length - 1}/{cityDefenseInfo.maxWaitQueueNum})" textAlign="right" id="btnWaitProduce" click="showWaitProduceWindow()" width="129" styleName="ProduceLinkButton"/>
+	<mx:Label x="10" y="41" id="lblNeedTime" width="187" fontWeight="bold"/>
+	<mx:Button x="513" y="36" label="取消" click="doCancel()" width="60" height="24"/>
+	<mx:Label x="205" y="41" id="lblFinishTime" text="结束：{DateFormatUtil.formatTime(currentDefenseProcess.finishTime)}" fontWeight="bold"/>
+	<mx:Label x="256" y="0" id="lblTotalTime" width="121" fontWeight="bold"/>
+	
+</mx:Canvas>

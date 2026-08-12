@@ -1,0 +1,40 @@
+/**
+ * 宝物编号:461
+ * 
+ * 名称：国家宝藏
+ * 描述：获得：
+ 
+			一星铜质战功章*2
+			一星白银战功章*2
+			一星黄金战功章*2
+			二星铜质战功章*1
+			二星白银战功章*1
+			二星黄金战功章*1
+			三星铜质战功章*1
+			三星白银战功章*1
+			三星黄金战功章*1
+			大喇叭*5
+			建筑工*2
+			小型仓库*1
+			初级流水线*1
+			计算机*1
+			
+			注：一个国家宝藏仅能开出其中一种东西，几率相同。
+
+ * 类型：宝箱
+ */
+
+//出现的装备
+String treasureStr = context.nationalTreasureErnie();
+
+String[] result = treasureStr.split(":");
+
+def treasureID = Integer.parseInt(result[0]);
+def num = Integer.parseInt(result[1]);
+def treasureName = result[2];
+def image = "treasure/" + treasureID + ".png";
+
+context.rewardTreasure(treasureID, num);
+String retstr = "${treasureName}:${image}:${num}";
+	
+return retstr;

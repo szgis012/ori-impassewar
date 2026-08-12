@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="630" height="338" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.building.armory.CancelProduceOrdnanceEvent;
+			import com.hifong.war.events.building.armory.ProduceOrdnanceEvent;
+			import com.hifong.war.events.building.CancelProductionProcessEvent;
+			import com.hifong.war.events.building.armory.FinishAllProduceProcessEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.vo.OrdnanceVO;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.OrdnanceInfo;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var model:ModelLocator =  ModelLocator.getInstance();
+			[Bindable]
+			private var ordnanceInfo:OrdnanceInfo = model.ordnanceInfo;
+			
+			/** 监视城防建造队列的改变*/
+			private var productionProcessListWatcher:ChangeWatcher;
+			
+			private function doInit():void{
+				productionProcessListWatcher = ChangeWatcher.watch(model.ordnanceInfo,"ordnanceProcessList",onProductionProcessListChange);
+			}
+			
+			//建造进程更改时的处理 
+			private function onProductionProcessListChange(event:Object):void{
+				gridProcessList.dataProvider = getWaitedProcessList();
+				this.lblTotalTime.text = getTotalTime();
+			}
+			
+			private function getTotalTime():String{
+				var productionProcessList:ArrayCollection = ordnanceInfo.ordnanceProcessList;
+				
+				if(productionProcessList && productionProcessList.length>0){
+					//获得最后的进程,根据最后建造时间计算总剩余时间
+					var process:ProductionQueueVO = productionProcessList.getItemAt(productionProcessList.length - 1) as ProductionQueueVO;
+					var totalSeconds:Number = Math.max(0,Math.floor((process.finishTime.time - model.serverTime.time )/1000));
+					
+					return  DateFormatUtil.convertSecondToTime(totalSeconds);
+				}else{
+					return "当前没有建造队列";
+				}
+				
+			}
+			
+			private function doClose():void{
+				productionProcessListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			//获得军械名称
+			private function getName(item:Object, column:DataGridColumn):String{
+				var pp:ProductionQueueVO = item as ProductionQueueVO;
+				var co:CityOrdnanceVO =  ordnanceInfo.cityOrdnanceMap2[pp.targetID] as CityOrdnanceVO;
+				var ordnance:OrdnanceVO = ordnanceInfo.ordnanceMap[co.ordnanceID] as OrdnanceVO;
+				
+				return ordnance.name;
+			}
+			
+			//获得生产所需时间
+			private function getProduceTime(item:Object, column:DataGridColumn):String{
+				var pp:ProductionQueueVO = item as ProductionQueueVO;
+				var co:CityOrdnanceVO =  ordnanceInfo.cityOrdnanceMap2[pp.targetID] as CityOrdnanceVO;
+				var ordnance:OrdnanceVO = ordnanceInfo.ordnanceMap[co.ordnanceID] as OrdnanceVO;
+				
+				return DateFormatUtil.convertSecondToTime(ordnance.constraintDepend.costTime * pp.amount);
+			}
+			
+			//获得完成时间
+			private function getFinishTime(item:Object, column:DataGridColumn):String{
+				var pp:ProductionQueueVO = item as ProductionQueueVO;
+				
+				return DateFormatUtil.formatDate(pp.finishTime);
+			}
+			
+			//获得等待的进程列表
+			private function getWaitedProcessList():ArrayCollection{
+				var arr:ArrayCollection = new ArrayCollection();
+				var processList:ArrayCollection = ordnanceInfo.ordnanceProcessList;
+				
+				//跳过第一个(即正在建造的)进程
+				if(processList && processList.length>1){
+					for(var i:int=1; i<processList.length; i++){
+						arr.addItem(processList.getItemAt(i));
+					}
+				}
+				
+				return arr;
+			}
+			
+			private function doFinishAllProduceProcess():void{
+				
+				//这里检查是否有相应的宝物，只有满足条件时才能进行本操作	
+//				CairngormEventDispatcher.getInstance().dispatchEvent(new FinishAllProduceProcessEvent());
+			}
+			
+			public function doAccelerate(data:Object):void{
+				MsgBox.showMessage("加速功能暂未开放！");
+			}
+			
+			public function doCancel(data:Object):void{
+				MsgBox.showConfirm("取消只返回部分资源，您确定要进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelProduceOrdnanceEvent(data as ProductionQueueVO));
+				});
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="等待生产的军械" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="580" height="278" styleName="CanvasBorder">
+		<mx:DataGrid id="gridProcessList" x="10" y="10" width="560" height="220" sortableColumns="false" dataProvider="{getWaitedProcessList()}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="名称" dataField="productionProcessID" labelFunction="getName" width="160"/>
+			<mx:DataGridColumn headerText="数量" dataField="amount" width="70" textAlign="right"/>
+			<mx:DataGridColumn headerText="生产时间" labelFunction="getProduceTime" width="110" textAlign="center"/>
+			<mx:DataGridColumn headerText="结束时间" labelFunction="getFinishTime" width="140" textAlign="center"/>
+			<mx:DataGridColumn headerText="操作" dataField="productionProcessID">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox paddingLeft="10">
+							<mx:Button label="取消" height="24" click="outerDocument.doCancel(data)"/>  
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+		</mx:DataGrid>
+		<mx:Label x="10" y="242" text="总计生产时间：" fontWeight="normal"/>
+		<mx:Text x="95" y="241" id="lblTotalTime" text="{getTotalTime()}" width="271" height="27"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

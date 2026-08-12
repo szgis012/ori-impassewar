@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="244" creationComplete="onShow()" show="onShow()" hide="onHide()">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import mx.collections.SortField;
+			import mx.collections.Sort;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.constant.CityBuildingStateConstant;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.BuildingUtil;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.vo.CityBuildingVO;
+			import mx.core.IFlexDisplayObject;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.common.DialogManager;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import com.hifong.war.view.building.SimpleUpdateWindow;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.model.ModelLocator;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//建筑列表计时器
+			private var buildingTimer:Timer;
+			
+			private function onShow():void{
+				//处理timer延迟
+				onBuildingTime(null);
+				startTimer();
+			}
+			
+			//跟建造列表计时
+			private function onBuildingTime(event:TimerEvent):void{
+				var buildingList:ArrayCollection = model.cityBuildingList;
+				var cityBuilding:CityBuildingVO;
+				//建筑建造的信息
+				var buildingState:ObjectProxy;
+				//将要显示的建筑排程列表
+				var showBuildingList:ArrayCollection = new ArrayCollection();
+				
+				if(buildingList && buildingList.length>0){
+					for(var i:int=0; i<buildingList.length; i++){
+						cityBuilding = buildingList.getItemAt(i) as CityBuildingVO;
+						//如果建筑处在升级或者拆除中
+						if(cityBuilding.state != CityBuildingStateConstant.NORMAL){
+							//显示列表
+							buildingState = new ObjectProxy();
+							//城市建筑编号
+							buildingState.cityBuildingID = cityBuilding.cityBuildingID;
+							//建筑名称
+							if(cityBuilding.building==null) continue;
+							buildingState.name = cityBuilding.building.name;
+							//结束时间
+//							if(cityBuilding.processQueue==null) continue;
+							buildingState.finishTime = DateFormatUtil.formatTime(cityBuilding.processQueue.finishTime);
+							//建筑任务描述
+							buildingState.task = "";
+							
+							//如果是建造或者升级
+							if(cityBuilding.state == CityBuildingStateConstant.BUILDING){
+								if(cityBuilding.level == 0){
+									buildingState.task = "新建";
+								}else{
+									buildingState.task = "从" + cityBuilding.level + "级" + "升到" + (cityBuilding.level+1) + "级";
+								}
+							}else if(cityBuilding.state == CityBuildingStateConstant.DESTROYING){
+								//拆除
+								buildingState.task = "从" + cityBuilding.level + "级" + "拆到" + (cityBuilding.level-1) + "级";
+							}
+							
+							//剩余时间
+							var leavingSeconds:Number = Math.max((cityBuilding.processQueue.finishTime.time - model.serverTime.time)/1000,0)
+							buildingState.leavingTime = DateFormatUtil.convertSecondToTime(int(leavingSeconds));
+							
+							showBuildingList.addItem(buildingState);
+						}
+					}
+					
+					//sort
+					var sort:Sort = new Sort();
+					sort.fields = [new SortField("leavingTime")];
+					showBuildingList.sort = sort;
+					showBuildingList.refresh();
+				}
+				
+				//更新显示
+				this.gridProcessList.dataProvider = showBuildingList;
+			}
+			
+			private function startTimer():void{
+				if(!buildingTimer){
+					buildingTimer = new Timer(1000);
+					buildingTimer.addEventListener(TimerEvent.TIMER,onBuildingTime);
+					buildingTimer.start();
+				}
+			}
+			
+			private function stopTimer():void{
+				if(buildingTimer){
+					buildingTimer.removeEventListener(TimerEvent.TIMER,onBuildingTime);
+					buildingTimer.stop();
+					buildingTimer = null;
+				}
+			}
+			
+			//父窗口关闭时调用该方法以便释放资源
+			public function onParentWindowClose():void{
+				onHide();
+			}
+			
+			private function onHide():void{
+				stopTimer();
+			}
+			
+			private function onDoubleClick(event:MouseEvent):void{
+				var dgi:DataGridItemRenderer = event.target as DataGridItemRenderer;
+				var bg:BuildingGrid = BuildingUtil.getBuildingGridByCBID(dgi.data.cityBuildingID);
+				
+				//如果不是城镇中心就打开新窗口
+				if(bg && bg.cityBuilding.buildingID != BuildingConstant.CITY_CENTER){
+					DialogManager.showUpgradeWindow(bg);
+					WindowUtil.closeWindow(UIComponent(this.parent.parent));
+				}
+			}
+			
+		]]>
+	</mx:Script>
+    
+	<mx:Canvas x="10" y="10" width="560" height="30" styleName="CanvasBorder">
+		<mx:Text x="5" y="4" text="这里显示城市所有的正在建造或者升级的建筑物，您可以在这里对这些建筑工作进行管理。" width="546" height="18"/>
+	</mx:Canvas>
+	<mx:DataGrid id="gridProcessList" sortableColumns="false" x="10" y="48" width="560" height="186" doubleClickEnabled="true" doubleClick="onDoubleClick(event)">
+		<mx:columns>
+			<mx:DataGridColumn headerText="建筑名称" dataField="name" width="100"/>
+			<mx:DataGridColumn headerText="任务" dataField="task"  width="120"/>
+			<mx:DataGridColumn headerText="剩余时间" dataField="leavingTime"  width="120" textAlign="center"/>
+			<mx:DataGridColumn headerText="完成时间" dataField="finishTime" textAlign="center"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:Canvas>

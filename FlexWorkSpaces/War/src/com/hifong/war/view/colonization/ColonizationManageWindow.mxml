@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="600" height="400" initialize="doInit()" >
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.colonization.ImposeEvent;
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.colonization.GetCityColonzationListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityColonzationListEvent(model.cityInfo.cityID));
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 征收
+			 */
+			public function impose(colonizationID:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ImposeEvent(colonizationID,1));
+			}
+			
+			/**
+			 * 显示详细信息
+			 */
+			public function showDetailWindow(colonizationID:int):void{
+				
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="殖民管理" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas styleName="CanvasBorder" x="25" y="35" height="37" width="550">
+		<mx:Label x="11" y="6" text="殖民城市数量：{model.colonizationList.length}"/>
+	</mx:Canvas>
+	
+	<mx:DataGrid x="25" y="80" width="550" height="295" dataProvider="{model.colonizationList}" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="城市名称" dataField="targetCityInfo.name" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn headerText="玩家名称" dataField="targetCityInfo.playerName" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn headerText="开始时间" dataField="startTime" textAlign="center" labelFunction="DateFormatUtil.formatColumnDate"/>
+			<mx:DataGridColumn headerText="结束时间" dataField="endTime" textAlign="center" labelFunction="DateFormatUtil.formatColumnDate"/>
+			<mx:DataGridColumn headerText="操作" width="140" dataField="colonzationID">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox>
+							<mx:Button width="70" height="22" label="{data.haveImposed==0?'征收':'已征收'}" enabled="{data.haveImposed==0}" click="outerDocument.impose(data.colonizationID)"/>
+							<mx:Button width="60" height="22" label="详细" click="outerDocument.showDetailWindow(data.colonizationID)" />
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:TitleWindow>

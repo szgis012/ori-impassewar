@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Shbuilding">
+	<typeAlias alias="Shbuilding" type="com.war.domain.Shbuilding" />
+	
+	<insert id="createShbuilding" parameterClass="Shbuilding">
+		INSERT INTO T_SHBUILDING(SHBUILDING_ID, NAME, IMAGE, MAX_LEVEL, DESCRIPTION, ISONLYONE) VALUES(#shbuildingID#, #name#, #image#, #maxLevel#, #description#, #isonlyone#)
+		<selectKey resultClass="Integer" keyProperty="shbuildingID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateShbuilding" parameterClass="Shbuilding">
+		UPDATE T_SHBUILDING SET  NAME=#name#, IMAGE=#image#, MAX_LEVEL=#maxLevel#, DESCRIPTION=#description#, ISONLYONE=#isonlyone# WHERE Shbuilding_ID=#shbuildingID#
+	</update>
+	
+	<delete id="deleteShbuildingByID" parameterClass="Integer">
+		DELETE FROM T_SHBUILDING WHERE Shbuilding_ID=#shbuildingID#
+	</delete>
+	
+	<select id="getShbuildingByID" parameterClass="Integer" resultClass="Shbuilding">
+		SELECT SHBUILDING_ID AS shbuildingID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, ISONLYONE AS isonlyone FROM T_SHBUILDING WHERE Shbuilding_ID=#shbuildingID#
+	</select>
+	
+	<select id="getShbuildingList" resultClass="Shbuilding">
+		SELECT SHBUILDING_ID AS shbuildingID, NAME AS name, IMAGE AS image, MAX_LEVEL AS maxLevel, DESCRIPTION AS description, ISONLYONE AS isonlyone FROM T_SHBUILDING
+	</select>
+
+</sqlMap>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="405" initialize="doInit()" close="doClose()" showCloseButton="false">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.military.GetAttackDetailEvent;
+			import com.hifong.war.events.military.GetSpyDetailEvent;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.events.military.GetMilitaryActionListEvent;
+			import com.hifong.war.events.military.MilitaryArrivedEvent;
+			import com.hifong.war.events.military.MilitaryAttackArrivedEvent;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.events.military.GetCityAttackDepoyQueueListEvent;
+			import com.hifong.war.events.military.GetCityDefenseDepoyQueueListEvent;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.util.DataGridUtil;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.military.GetCityBattleListEvent;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.battle.BattleWindow;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.military.GetCityDepoyQueueListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var battleType:ArrayCollection = new ArrayCollection(new Array("","进攻","防守"));
+			
+			private var militaryType:Object = {1:"侦察",2:"进攻",3:"派遣",9:"返回"};
+			
+			/** 当前Tab索引 */
+			private var currentTabIndex:int = 0;
+			
+			private var timer:Timer = new Timer(1000);
+			
+			private function doInit():void{
+				
+				model.haveNewBattle = false;
+				
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				
+				getCityBattleList();
+				
+				timer.addEventListener(TimerEvent.TIMER,onTimer);
+				
+				timer.start();
+			}
+			
+			private function doClose():void{
+				timer.stop();
+				timer = null;
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function onTimer(event:TimerEvent):void{
+				
+				var i:int;
+				var currentItem:ObjectProxy;
+				var leftTime:int;
+				
+				if(currentTabIndex==1){
+					if(dataGrid_MilitaryAttack.dataProvider!=null){
+						for(i=0;i<dataGrid_MilitaryAttack.dataProvider.length;i++){
+							currentItem = dataGrid_MilitaryAttack.dataProvider.getItemAt(i);
+							leftTime = int((currentItem.finishTime.time-model.serverTime.time)/1000);
+							if(leftTime<=0){
+								if(currentItem.type==2){
+									CairngormEventDispatcher.getInstance().dispatchEvent(new MilitaryArrivedEvent(currentItem.qid));
+									dataGrid_MilitaryAttack.dataProvider.removeItemAt(i);
+									continue;
+								}else{
+									dataGrid_MilitaryAttack.dataProvider.removeItemAt(i);
+									continue;
+								}
+							}
+							currentItem.leftTime = DateFormatUtil.convertSecondToShortTime(leftTime);
+						}
+					}
+				}
+				
+				if(currentTabIndex==2){
+					if(dataGrid_MilitaryDefense.dataProvider!=null){
+						for(i=0;i<dataGrid_MilitaryDefense.dataProvider.length;i++){
+							currentItem = dataGrid_MilitaryDefense.dataProvider.getItemAt(i);
+							leftTime = int((currentItem.finishTime.time-model.serverTime.time)/1000);
+							if(leftTime<=0){
+								CairngormEventDispatcher.getInstance().dispatchEvent(new MilitaryArrivedEvent(currentItem.depoyQueueID));
+								dataGrid_MilitaryDefense.dataProvider.removeItemAt(i);
+								continue;
+							}
+							currentItem.leftTime = DateFormatUtil.convertSecondToShortTime(leftTime);
+						}
+					}
+				}
+				
+			}
+			
+			/**
+			 * Tab导航索引改变
+			 */
+			private function onTabIndexChange(event:IndexChangedEvent):void{
+				currentTabIndex = event.newIndex;
+			}
+			
+			/**
+			 * 获得城市战斗列表
+			 */
+			private function getCityBattleList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityBattleListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 获得军队进攻列表
+			 */
+			private function getMilitaryAttackList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityAttackDepoyQueueListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 获得城市军事行动信息列表
+			 */ 
+			private function getMilitaryActionList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetMilitaryActionListEvent());
+			}
+			
+			/**
+			 * 获得军队防守列表
+			 */
+			private function getMilitaryDefenseList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityDefenseDepoyQueueListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 计算列剩余时间
+			 */
+			private function calculateColumnLeftTime(item:Object, column:DataGridColumn):String{
+				return DateFormatUtil.convertSecondToTime(int((item['finishTime'].time - model.serverTime.time)/1000));
+			}
+			
+			/**
+			 * 获得军事行动信息
+			 */
+			public function showMilitaryActionDetailWindow(data:Object):void{
+				var win:MilitaryActionDetailWindow = new MilitaryActionDetailWindow();
+				win.type = data.type;
+				WindowUtil.showModelWindow(win);
+				
+				switch(data.type){
+					//侦察
+					case 1:
+						CairngormEventDispatcher.getInstance().dispatchEvent(new GetSpyDetailEvent(data.qid));
+						break;
+					//攻击,攻击返回
+					case 2:
+					case 9:
+						CairngormEventDispatcher.getInstance().dispatchEvent(new GetAttackDetailEvent(data.qid));
+						break;
+					//派遣	
+					case 3:
+						break;		
+				}
+			}
+			
+			/**
+			 * 获得敌情警报信息
+			 */
+			public function showDepoyQueueDefenseInfo(depoyQueueID:int):void{
+				
+			}
+			
+			/**
+			 * 进入战场
+			 */
+			public function gotoBattle(battleID:int,battleType:int):void{
+				var battleWindow:BattleWindow = new BattleWindow();
+				battleWindow.battleID = battleID;
+				battleWindow.playerForce = battleType;
+				battleWindow.x = 0;
+				battleWindow.y = 0;
+				
+				model.battleWindow = battleWindow;
+				PopUpManager.addPopUp(battleWindow,model.app,false);
+			}
+
+			/**
+			 * 获得列战斗类型
+			 */
+			private function getColumnBattleType(item:Object, column:DataGridColumn):String{
+				return battleType.getItemAt(item[column.dataField]).toString();
+			}
+			
+			/**
+			 * 获得列战场位置
+			 */
+			private function getColumnBattlePos(item:Object, column:DataGridColumn):String{
+				return "(" + item['stagePosX'] + ":" + item['stagePosY'] + ")";
+			}
+			
+			/**
+			 * 获得出征类型
+			 */
+			private function getColoumnDepoyType(item:Object, column:DataGridColumn):String{
+				return (militaryType[item[column.dataField]]).toString();
+			}
+			
+			/**
+			 * 获得目的地
+			 */ 
+			private function getTarget(item:Object, column:DataGridColumn):String{
+				return item.map.name + "(" +item.posX+","+item.posY+")";
+			}
+			
+			/**
+			 * 获得列地图信息
+			 */
+			private function getColumnMapInfo(item:Object, column:DataGridColumn):String{
+				return item.cityMilitary.cityInfo.name + "(" + item.cityMilitary.cityInfo.posX + "," + item.cityMilitary.cityInfo.posY + ")";
+			}
+			
+			/**
+			 * 获得列敌情警报类型
+			 */
+			private function getColoumnMilitaryDefenseDepoyType(item:Object, column:DataGridColumn):String{
+				return "进攻";
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="军 事" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator x="25" y="37" width="580" height="340" change="onTabIndexChange(event)">
+		<mx:Canvas label="战斗进行" width="100%" height="100%" show="getCityBattleList()" styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10" width="560" height="290" dataProvider="{model.cityBattleList}" sortableColumns="false" doubleClickEnabled="true">
+				<mx:columns>
+					<mx:DataGridColumn headerText="军队" dataField="militaryAttacker.name" labelFunction="DataGridUtil.getColumnProperty"/>
+					<mx:DataGridColumn headerText="类型" dataField="battleType" labelFunction="getColumnBattleType"/>
+					<mx:DataGridColumn headerText="战场" dataField="battleID" labelFunction="getColumnBattlePos"/>
+					<mx:DataGridColumn headerText="开始时间" dataField="startTime" labelFunction="DateFormatUtil.formatColumnDate"/>
+					<mx:DataGridColumn headerText="操作" dataField="battleID" width="60" textAlign="center">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="指挥" width="0" height="0" click="outerDocument.gotoBattle(data.battleID,data.battleType)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas label="军事行动" width="100%" height="100%" show="getMilitaryActionList()" styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10" id="dataGrid_MilitaryAttack" width="560" height="290" dataProvider="{model.cityMilitaryActionList}" sortableColumns="false" doubleClickEnabled="true">
+				<mx:columns>
+					<mx:DataGridColumn headerText="军队" dataField="name"/>
+					<mx:DataGridColumn headerText="目的地" dataField="mapID" labelFunction="getTarget" />
+					<mx:DataGridColumn headerText="类型" dataField="type" labelFunction="getColoumnDepoyType" textAlign="center"/>
+					<mx:DataGridColumn headerText="剩余时间" dataField="leftTime" textAlign="center"/>
+					<mx:DataGridColumn headerText="到达时间" dataField="finishTime" labelFunction="DateFormatUtil.formatColumnDate" textAlign="center"/>
+					<mx:DataGridColumn headerText="操作" dataField="battleID" width="60" textAlign="center">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="查看" width="0" height="0" click="outerDocument.showMilitaryActionDetailWindow(data)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas label="敌情警报" width="100%" height="100%" show="getMilitaryDefenseList()" styleName="ContentCanvas">
+			<mx:DataGrid x="10" y="10" id="dataGrid_MilitaryDefense" width="560" height="290" dataProvider="{model.cityMilitaryDefenseList}" sortableColumns="false" doubleClickEnabled="true">
+				<mx:columns>
+					<mx:DataGridColumn headerText="军队" dataField="cityMilitary.name" labelFunction="DataGridUtil.getColumnProperty"/>
+					<mx:DataGridColumn headerText="来自" dataField="mapID" labelFunction="getColumnMapInfo"/>
+					<mx:DataGridColumn headerText="类型" dataField="type" labelFunction="getColoumnMilitaryDefenseDepoyType" textAlign="center" />
+					<mx:DataGridColumn headerText="剩余时间" dataField="leftTime" textAlign="center"/>
+					<mx:DataGridColumn headerText="到达时间" dataField="finishTime" labelFunction="DateFormatUtil.formatColumnDate" textAlign="center"/>
+					<mx:DataGridColumn headerText="操作" dataField="battleID" width="60" textAlign="center">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="查看" width="0" height="0" click="outerDocument.showDepoyQueueDefenseInfo(data.depoyQueueID)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

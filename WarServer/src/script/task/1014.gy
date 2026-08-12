@@ -1,0 +1,104 @@
+/**
+ * 任务编号:1014
+ *
+ * 要求：使用“轻型伐木机”、“小型熔炉”、“小型炼化塔”与“普通肥料”
+ * 奖励：轻型伐木机×1，小型熔炉×1，小型炼化塔×1，普通肥料×1
+ * 后置任务：1015
+ */
+
+
+// 如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}
+else	//这里为检查任务完成情况的操作
+{
+return checkTask();
+}
+
+
+/*
+ * 检查任务完成情况
+ *
+ */
+def checkTask()
+{
+// flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 宝物编号为311,321,331,341
+def treasureIDs = [311,321,331,341];
+
+// 1. 如果使用了“轻型伐木机”
+if (context.hasUsedTreasure(treasureIDs[0])) 
+{
+	result += "使用“轻型伐木机”<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "使用“轻型伐木机”<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 2. 如果使用了“小型熔炉”
+if (context.hasUsedTreasure(treasureIDs[1])) 
+{
+	result += "使用“小型熔炉”<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "使用“小型熔炉”<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 3. 如果使用了“小型炼化塔”
+if (context.hasUsedTreasure(treasureIDs[2])) 
+{
+	result += "使用“小型炼化塔”<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "使用“小型炼化塔”<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 4. 如果使用了“普通肥料”
+if (context.hasUsedTreasure(treasureIDs[3])) 
+{
+	result += "使用“普通肥料”<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "使用“普通肥料”<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+//如果完成了使用“轻型伐木机”、“小型熔炉”、“小型炼化塔”与“普通肥料”的任务
+if(count == 4)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+ * 领取奖励
+ *
+ */
+def doReceiveReward()
+{
+//奖励：轻型伐木机×1，小型熔炉×1，小型炼化塔×1，普通肥料×1
+context.rewardTreasure(311, 1);
+context.rewardTreasure(321, 1);
+context.rewardTreasure(331, 1);
+context.rewardTreasure(341, 1);
+}

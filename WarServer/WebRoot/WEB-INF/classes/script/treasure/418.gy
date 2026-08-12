@@ -1,0 +1,32 @@
+/**
+ * 宝物编号:418
+ * 
+ * 名称：高级名誉箱
+ * 描述：获得：
+ 
+			国家用来收藏军团名誉章的宝箱，里面装用各种军团名誉章，也会有国家名誉章与荣誉章存在其中。
+			包含：
+			军团名誉章				30%
+			黄金军团名誉章			30%
+			钻石军团名誉章			30%
+			国家名誉章				5%
+			国家荣誉章				5%
+
+
+ * 类型：宝箱
+ */
+
+//出现的装备
+String treasureStr = context.getAdvanceHonorBoxTreasure();
+
+String[] treasureInfo = treasureStr.split(":");
+
+def treasureID = Integer.parseInt(treasureInfo[0]);
+def num = Integer.parseInt(treasureInfo[1]);
+def treasureName = treasureInfo[2];
+def image = "treasure/" + treasureID + ".png";
+
+context.rewardTreasure(treasureID, num);
+String retstr = "${treasureName}:${image}:${num}:2:${treasureID}";
+	
+return retstr;

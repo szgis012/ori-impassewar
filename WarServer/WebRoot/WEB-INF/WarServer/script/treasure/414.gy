@@ -1,0 +1,50 @@
+/**
+ * 宝物编号:414
+ * 
+ * 名称：铜质战功箱
+ * 描述：获得：
+		国家用来收藏铜质战功章的宝箱，里面装用各种铜质战功章。
+		包含：
+		一星铜质战功章
+		二星铜质战功章
+		三星铜质战功章
+		70%开出其中一种，20%开出其中两种，10%开出其中3种
+		若开出一种有80%开出2个，20%开出3个。
+		若开出两种，80%每种一个，20%每种2个。
+		若开出三种，每种为1个。
+		
+
+ * 类型：宝箱
+ */
+
+//出现的装备
+String[] treasures = ["914:一星铜质战功章","917:二星铜质战功章","920:三星铜质战功章"];
+
+String[] result = context.getBattleHonorBoxTreasure(treasures);
+
+int treasureID;
+int num;
+def treasureName;
+def image;
+
+StringBuffer retstr = new StringBuffer();
+String[] treasureInfo;
+
+for(int i=0; i < result.length; i++){
+	
+	if (result[i] != null) {
+		
+		treasureInfo = result[i].split(":");
+		
+		treasureID = Integer.parseInt(treasureInfo[0]);
+		num = Integer.parseInt(treasureInfo[2]);
+		treasureName = treasureInfo[1];
+		image = "treasure/" + treasureID + ".png";
+		
+		context.rewardTreasure(treasureID,num);
+		retstr.append("${treasureName}:${image}:${num}|");
+		
+	}
+}
+
+return retstr.substring(0,retstr.length()-1);

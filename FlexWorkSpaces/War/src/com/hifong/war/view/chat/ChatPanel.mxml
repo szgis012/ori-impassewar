@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="289" height="100" backgroundAlpha="0"  xmlns:chat="com.hifong.war.view.chat.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.model.ModelLocator;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 当前聊天面板(1.世界 2.军团 3.私聊) */
+			private var currentChatPanel:int = 1;
+			
+			/**
+			 * 显示聊天面板
+			 */
+			private function changeChatPanel():void{
+				currentChatPanel = navChatPanel.selectedIndex+1;
+			}
+			
+			/**
+			 * 添加聊天信息
+			 */
+			public function addChatMessage(msg:String,type:int):void{
+				switch(type){
+					case 1:
+						chatContent_Mixed.addText(msg);
+						break;
+					case 2:
+					chatContent_Guild.addText(msg);
+						break;
+					case 3:
+					chatContent_Private.addText(msg);
+						break;
+				}
+			}
+			
+			/**
+			 * 添加系统消息
+			 */
+			public function addSystemMessage(msg:String):void{
+				switch(currentChatPanel){
+					case 1:
+						chatContent_Mixed.addText("<font color=\"#FFFF00\"><b>[系统]" + msg + "</b></font>");
+						break;
+					case 2:
+					chatContent_Guild.addText("<font color=\"#FFFF00\"><b>[系统]" + msg + "</b></font>");
+						break;
+					case 3:
+					chatContent_Private.addText("<font color=\"#FFFF00\"><b>[系统]" + msg + "</b></font>");
+						break;
+				}
+			}
+			
+			private function sendPrivateMessage(event:TextEvent):void{
+				model.app.chatToolbar.textChatMessage.text = "/" + event.text + " ";
+				model.app.chatToolbar.textChatMessage.setFocus();
+				model.app.chatToolbar.textChatMessage.setSelection(model.app.chatToolbar.textChatMessage.text.length,model.app.chatToolbar.textChatMessage.text.length);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Image source="@Embed('images/chat_bg.png')" width="289" height="94" />
+	<mx:TabNavigator id="navChatPanel" styleName="Chat" x="8" width="270" height="100" backgroundAlpha="0" change="changeChatPanel()" creationPolicy="all">
+		<chat:ChatChannel id="chatContent_Mixed" label="综合" width="100%"  height="100%" link="sendPrivateMessage"  backgroundColor="0" backgroundAlpha="0.7" />
+		<chat:ChatChannel id="chatContent_Guild"  label="军团" width="100%" height="100%" link="sendPrivateMessage" backgroundColor="0" backgroundAlpha="0.7"  />
+		<chat:ChatChannel id="chatContent_Private"  label="私聊" width="100%" height="100%" link="sendPrivateMessage" backgroundColor="0"  backgroundAlpha="0.7"  />
+	</mx:TabNavigator>
+	
+</mx:Canvas>

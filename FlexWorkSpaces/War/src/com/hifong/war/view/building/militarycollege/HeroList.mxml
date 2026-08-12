@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="582" height="256" initialize="showCityCandidacyHeroList()" styleName="ContentCanvas">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.RefreshCityCandidacyHeroEvent;
+			import com.hifong.war.events.building.militarycollege.RecruitHeroEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.militarycollege.GetCityCandidacyHeroListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			private function showCityCandidacyHeroList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityCandidacyHeroListEvent(model.cityInfo.cityID));
+			}
+			/**
+			 * 招募英雄
+			 */
+			public function recruitHero(candidacyHeroID:int):void{
+				MsgBox.showConfirm("您确认要招募当前指挥官吗？",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new RecruitHeroEvent(candidacyHeroID));
+					showCityCandidacyHeroList();
+				});
+			}
+			/**
+			 * 刷新城市候选英雄列表
+			 */
+			public function refreshCityCandidacyHeroList():void{
+				MsgBox.showConfirm("您确定要刷新指挥官列表吗？\n刷新指挥官列表将会使用1个征召命令。",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new RefreshCityCandidacyHeroEvent());
+				});
+			}
+			/**
+			 * 计算英雄招募费用
+			 */
+			private function computeHeroRecruitCost(item:Object, column:DataGridColumn):String{
+				return (item['level']*100).toString();
+			}
+			/**
+			 * 计算英雄体力
+			 */
+			private function computeHeroStamina(item:Object, column:DataGridColumn):String{
+				return new String(20+int(item['mind'])*3);
+			}
+			/**
+			 * 计算英雄薪水
+			 */
+			private function computeHeroSalary(item:Object, column:DataGridColumn):String{
+				return (item['level']*10).toString();
+			}
+		]]>
+	</mx:Script>
+	<mx:DataGrid x="0" y="0" width="100%" height="218" dataProvider="{model.cityCandidacyHeroList}">
+				<mx:columns>
+					<mx:DataGridColumn headerText="名称" dataField="name" sortable="false"/>
+					<mx:DataGridColumn width="45" headerText="等级" dataField="level" sortable="false"/>
+					<mx:DataGridColumn width="60" headerText="体力" dataField="cityCandHeroID" sortable="false" labelFunction="computeHeroStamina"/>
+					<mx:DataGridColumn width="45" headerText="指挥" dataField="command" sortable="false"/>
+					<mx:DataGridColumn width="45" headerText="防护" dataField="defense" sortable="false"/>
+					<mx:DataGridColumn width="45" headerText="思维" dataField="mind" sortable="false"/>
+					<mx:DataGridColumn width="45" headerText="行政" dataField="executivepower" sortable="false"/>
+					<mx:DataGridColumn width="80" headerText="招募费用" dataField="level" sortable="false" labelFunction="computeHeroRecruitCost"/>
+					<mx:DataGridColumn width="50" headerText="薪水" dataField="level" sortable="false" labelFunction="computeHeroSalary"/>
+					<mx:DataGridColumn width="55" headerText="操作" dataField="cityCandHeroID" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button width="0" height="0" styleName="DG" label="招募" click="outerDocument.recruitHero(data.cityCandidacyHeroID)" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button x="497" y="224" label="刷新列表" click="refreshCityCandidacyHeroList()"/>
+</mx:Canvas>

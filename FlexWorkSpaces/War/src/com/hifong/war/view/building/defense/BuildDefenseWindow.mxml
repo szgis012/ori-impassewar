@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" layout="absolute" width="430" height="437" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.DefenseVO;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.constant.GlobalConstant;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.defense.BuildCityDefenseEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.vo.BuildingVO;
+			import com.hifong.war.vo.CityDefenseVO;
+			import com.hifong.war.view.building.BuildingGrid;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			// 当前防御工事信息
+			[Bindable]
+			private var _cityDefense:CityDefenseVO;
+			
+			//建筑信息
+			[Bindable]
+			private var _building:DefenseVO;
+			
+			
+			/** 是否满足生产条件 */
+			[Bindable]
+			private var canProduce:Boolean = true;
+			
+			/**前提建筑 */
+			[Bindable]
+			private var preBuildings:String = "无";
+			
+			/** 前提科技 */
+			[Bindable]
+			private var preTeches:String = "无";
+			
+			/** 花费时间 */
+			[Bindable]
+			private var costTime:int ;
+			
+			/** 生产需要资源*/
+			[Bindable]
+			private var needResources:Array ;
+			
+			
+			public function set cityDefense(cd:CityDefenseVO):void{
+				this._cityDefense = cd;
+			}
+			
+			public function set building(b:DefenseVO):void{
+				this._building = b;
+			}
+			
+			/** 初始化绑定的数据*/
+			public function initData():void{
+				//获得依赖对象
+				var depend:Object = this._building.nextConstraintDepend;
+				
+				//前置建筑
+				if(depend.preBuildings){
+					//建筑:等级;建筑:等级;
+					var items:Array = String(depend.preBuildings).split(";");
+					var item:String;
+					var tmp:Array;
+					
+					preBuildings = "";
+					
+					for each(item in items){
+						tmp = item.split(":");
+						//
+						preBuildings += tmp[1] + "级" + model.buildingInfo.buildingMap[tmp[0]].name + " ";
+						
+						//如果建筑的等级没有满足前置条件要求的等级，则不能建造。
+						if(BuildingUtil.getMaxLevel(tmp[0]) < tmp[1]){
+							this.canProduce = false;
+						}
+					}
+				}
+				
+				//花费时间
+				costTime = depend.costTime;
+				
+				
+				//所需资源
+				needResources = [];
+				
+				if(depend.costWood > 0 ){
+					needResources.push({resourceName:'木材',needNum:depend.costWood,currentNum:model.cityInfo.cityResource.woodNum,costNum:depend.costWood});
+				}
+				
+				if(depend.costSteel > 0 ){
+					needResources.push({resourceName:'钢铁',needNum:depend.costSteel,currentNum:model.cityInfo.cityResource.steelNum,costNum:depend.costSteel});
+				}
+				
+				if(depend.costOil > 0 ){
+					needResources.push({resourceName:'石油',needNum:depend.costOil,currentNum:model.cityInfo.cityResource.oilNum,costNum:depend.costOil});
+				}
+				
+				if(depend.costFood > 0 ){
+					needResources.push({resourceName:'食物',needNum:depend.costFood,currentNum:model.cityInfo.cityResource.foodNum,costNum:depend.costFood});
+				}
+				
+				if(depend.costMoney > 0 ){
+					needResources.push({resourceName:'金钱',needNum:depend.costMoney,currentNum:model.cityInfo.cityResource.moneyNum,costNum:depend.costMoney});
+				}
+				
+			}
+			
+			//建造
+			private function doBuild():void{
+				var num:int = int(this.txtProduceNum.text);
+				
+				if(num <= 0){
+					MsgBox.showMessage("建造城防的数量至少为1个");
+					this.txtProduceNum.setFocus();
+					return;
+				}
+				
+				//当前已有的等待队列长度
+				var waitNum:int = model.cityDefenseInfo.defenseProcessList.length - 1;
+				
+				if(waitNum < model.cityDefenseInfo.maxWaitQueueNum){
+					CairngormEventDispatcher.getInstance().dispatchEvent(new BuildCityDefenseEvent(this._cityDefense.defenseID,num));
+					doClose();
+				}else{
+					MsgBox.showMessage("建造队列已满");
+				}
+				
+				
+			}
+			
+			private function doProduceNumChange():void{
+				var num:int = int(this.txtProduceNum.text);
+				
+				if(num <= 0){
+					this.txtProduceNum.text = "1";
+					num = 1;
+				}
+				
+				for each(var item:Object in needResources){
+					item.needNum = item.costNum * num;
+				}
+				
+				this.grdConditions.dataProvider = needResources;
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="建造：{_building.name}" visible="{Boolean(titleBtn.label.length)}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="380" height="80" styleName="CanvasBorder">
+		<mx:Image x="10" y="10" width="60" height="60" toolTip="{_building.description}" source="{model.countryRelatedAssets.getBuildingImageSource(_building.defenseID)}"/>
+		<mx:TextArea x="78" y="10" width="292" height="60" text="{_building.description}" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="329" width="380" height="80" styleName="CanvasBorder">
+		<mx:Label x="10" y="12" text="当前数量："/>
+		<mx:Text x="74" y="12" width="105.5" text="{_cityDefense.num}" id="txtCurrentNum" height="27"/>
+		<mx:Label x="177.5" y="12" text="生产数量："/>
+		<mx:TextInput x="240" y="11" width="130" id="txtProduceNum" restrict="0-9" text="1" change="doProduceNumChange()"/>
+		<mx:Button x="310" y="44" label="确定" enabled="{canProduce}" click="doBuild()" height="26" width="60"/>
+		<mx:Label x="10" y="47" text="生产时间："/>
+		<mx:Text x="74" y="47" text="{DateFormatUtil.convertSecondToTime(int(this.txtProduceNum.text) * this.costTime)}" width="168.5" id="txtProduceTime" height="23"/>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="125" width="380" height="196" styleName="CanvasBorder">
+		<mx:DataGrid x="10" y="34" width="360" height="155" sortableColumns="false" id="grdConditions" dataProvider="{needResources}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="所需资源" dataField="resourceName"/>
+				<mx:DataGridColumn headerText="需要数量" dataField="needNum"/>
+				<mx:DataGridColumn headerText="当前数量" dataField="currentNum"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label x="10" y="6" text="前提建筑："/>
+		<mx:Text x="73" y="6" text="{preBuildings}" width="267" id="txtPrebuilding"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()"  creationComplete="doInit()" layout="absolute" width="330" height="282" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.commands.treasure.GetTreasureMapListByTypeCommand;
+			import com.hifong.war.constant.TreasureConstant;
+			import com.hifong.war.constant.TreasureStateConstant;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.PlayerVO;
+			import com.hifong.war.events.treasure.BuyTreasureEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.vo.TreasureItemVO;
+			
+			private var model:ModelLocator=ModelLocator.getInstance();
+			private var playerInfo:PlayerVO = model.playerInfo;
+			
+			private var _treasureItem:TreasureItemVO;
+			
+			[Bindable]
+			public function get treasureItem():TreasureItemVO{
+				return _treasureItem;
+			}
+			
+			public function set treasureItem(ti:TreasureItemVO):void{
+				_treasureItem = ti;
+				
+				if(ti.state == TreasureStateConstant.HOT_SALE){
+					this.imgTrasureItem.source = new WarAssets.hotSale();
+				}else if(ti.state == TreasureStateConstant.SPECIAL_PRICE){
+					this.imgTrasureItem.source = new WarAssets.specailPrice();
+				}
+			}
+			
+			
+			private function doInit():void{
+				txtNum.setFocus();
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			//购买宝物
+			private function doBuyTreasure():void{
+				var num:int = int(this.txtNum.text);
+				
+				if(num <= 0){
+					MsgBox.showMessage("请输入购买的数量");
+					this.txtNum.setFocus();
+					return;
+				}
+				
+				if(!playerInfo.money || playerInfo.money < treasureItem.cost * num){
+					MsgBox.showMessage("您的元宝数量不足");
+					this.txtNum.setFocus();
+					return;
+				}
+				CairngormEventDispatcher.getInstance().dispatchEvent(new BuyTreasureEvent(treasureItem,num));
+				/** 添加到道具列表 */
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTreasureMapListByTypeEvent(treasureItem.category,treasureItem.type));
+				doClose();
+				//更新正在使用的宝物列表
+				if(ModelLocator.getInstance().currentUseTreasure) ModelLocator.getInstance().currentUseTreasure.callTreasureData();
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="购买：{treasureItem.name}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="280" height="106" styleName="CanvasBorder">
+		<mx:Image x="10" y="10" width="80" height="80" source="{ImagePathUtil.getTreasurePath(treasureItem.imgSrc)}"/>
+		<mx:Image id="imgTrasureItem" x="10" y="10" visible="{treasureItem.state != 0}"/>
+		<mx:TextArea x="98" y="10" width="174" height="86" editable="false" text="{treasureItem.description}"/>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="152" width="280" height="103" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="单价：{treasureItem.cost}" width="127"/>
+		<mx:Label x="10" y="38" text="购买数量：" width="66"/>
+		<mx:TextInput x="84" y="37" width="72" id="txtNum" restrict="0-9" maxChars="6" textAlign="right" text="1"/>
+		<mx:Label x="164" y="38" text="总价：{treasureItem.cost * int(txtNum.text)}" width="106"/>
+		<mx:Button x="210" y="67" label="购 买" click="doBuyTreasure()" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

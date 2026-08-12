@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityWoundedArmy">
+	<typeAlias alias="CityWoundedArmy" type="com.war.domain.CityWoundedArmy" />
+
+	<insert id="createCityWoundedArmy" parameterClass="CityWoundedArmy">
+		INSERT INTO T_CITY_WOUNDED_ARMY(CITY_ID, ARMY_ID, NUM, DEATH_TIME) VALUES(#cityID#, #armyID#, #num#, #deathTime#)
+		<selectKey resultClass="Integer" keyProperty="cityWoundedArmyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateCityWoundedArmy" parameterClass="CityWoundedArmy">
+		UPDATE T_CITY_WOUNDED_ARMY SET CITY_ID=#cityID#, ARMY_ID=#armyID#, NUM=#num#, DEATH_TIME=#deathTime# WHERE CITY_WOUNDED_ARMY_ID=#cityWoundedArmyID#
+	</update>
+
+	<delete id="deleteCityWoundedArmyByID" parameterClass="Integer">
+		DELETE FROM T_CITY_WOUNDED_ARMY WHERE CITY_WOUNDED_ARMY_ID=#cityWoundedArmyID#
+	</delete>
+
+	<select id="getCityWoundedArmyByID" parameterClass="Integer" resultClass="CityWoundedArmy">
+		SELECT CITY_WOUNDED_ARMY_ID AS cityWoundedArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num, DEATH_TIME AS deathTime FROM T_CITY_WOUNDED_ARMY WHERE CITY_WOUNDED_ARMY_ID=#cityWoundedArmyID#
+	</select>
+	
+	<select id="getCityWoundedArmyListByCityID" parameterClass="Integer" resultClass="CityWoundedArmy">
+		SELECT CITY_WOUNDED_ARMY_ID AS cityWoundedArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num, DEATH_TIME AS deathTime FROM T_CITY_WOUNDED_ARMY WHERE CITY_ID=#cityID#
+	</select>
+
+	<select id="getCityWoundedArmyList" resultClass="CityWoundedArmy">
+		SELECT CITY_WOUNDED_ARMY_ID AS cityWoundedArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num, DEATH_TIME AS deathTime FROM T_CITY_WOUNDED_ARMY
+	</select>
+	
+	<select id="getAutoDismissedCityWoundedArmyList" resultClass="CityWoundedArmy">
+		<![CDATA[SELECT CITY_WOUNDED_ARMY_ID AS cityWoundedArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num, DEATH_TIME AS deathTime FROM T_CITY_WOUNDED_ARMY WHERE DEATH_TIME < SYSDATE()]]>
+	</select>
+	
+</sqlMap>

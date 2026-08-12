@@ -1,0 +1,66 @@
+/**
+* 任务编号: 3005
+*
+* 要求：招募30名机枪兵换取装甲车10辆
+* 奖励：装甲车×10
+* 后置任务：--
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 部队等级
+def armyID = 2;
+
+// 1. 招募30名机枪兵换取装甲车10辆
+if(context.getCityArmyNum(armyID) > 29)
+{
+	result = "招募30名机枪兵换取装甲车10辆<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result = "招募30名机枪兵换取装甲车10辆<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+if (count == 1)
+{
+	flag = 1;
+}
+
+// 返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+// 奖励：招募30名机枪兵换取装甲车10辆
+context.exchangeArmy(2, 30, 9, 10);
+}

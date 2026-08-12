@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="410" height="525" showCloseButton="false" initialize="doInit()" close="doClose()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.constant.HeroQualityConstant;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.vo.CityHeroVO;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.constant.HeroStarConstant;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.militarycollege.StrengthenCityHeroStarEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			[Bindable] 
+			private var model:ModelLocator=ModelLocator.getInstance();
+			/** 使用道具类型索引  0为强运符  1为血激符 */
+			private  var useTreasureTypeList:Array=[0,0];
+			
+			private var emptyURL:String="images/treasure/661.png";
+			
+			private var watcher:ChangeWatcher;
+			private function doInit():void{
+				setStarLabel();
+				watcher=BindingUtils.bindSetter(updateCityHeroStar,model,"currentCityHero");
+			}
+			/** 强化结果处理 */
+			public  function backHandler(result:Boolean):void{
+				if(result){ 
+					model.currentCityHero.star+=1;
+					setStarLabel();
+				}else if(model.currentCityHero.star>3){
+					model.currentCityHero.star-=1;
+					setStarLabel();
+				}
+				useTreasureTypeList[0]=0;
+				useTreasureTypeList[1]=0;
+				upgradeLuckTreasure.source=emptyURL;
+				stimulateBloodTreasure.source=emptyURL;
+				upgradeLuckTreasure.toolTip=null;
+				stimulateBloodTreasure.toolTip=null;
+				
+			}
+			/**
+			 *  城市指挥官星级变化信息
+			 */
+			private function updateCityHeroStar(data:Object):void{
+				setStarLabel();
+				useTreasureTypeList[0]=0;
+				useTreasureTypeList[1]=0;
+				upgradeLuckTreasure.source=emptyURL;
+				stimulateBloodTreasure.source=emptyURL;
+				upgradeLuckTreasure.toolTip=null;
+				stimulateBloodTreasure.toolTip=null;
+			}
+			private function doClose():void{
+				watcher.unwatch();
+				watcher=null;
+				WindowUtil.closeModelWindow(this);
+			}
+		/**
+		 * 强化城市英雄星级
+		 * @param playerID
+		 * @param cityHeroID
+		 * @param upgradeLuckTreasureID: (强运符)TreasureConstant中661~662, 0 代表不用道具
+		 * @param stimulateBloodTreasureID: (血激符)TreasureConstant中663~664, 0 代表不用道具
+		 */
+		 private function strengthenCityHeroStar():void{
+		 	MsgBox.showYesNo(getStrengthenTip(),function():void{
+		 		//强化
+		 		CairngormEventDispatcher.getInstance().dispatchEvent(new StrengthenCityHeroStarEvent(model.playerInfo.playerID,model.currentCityHero.cityHeroID,useTreasureTypeList[0],useTreasureTypeList[1],this));
+		 	});
+		 }
+		 /**
+			 * 指挥官星级
+			 */
+			 private function setStarLabel():void{
+			 	var index:int=model.currentCityHero.star;
+			 	if(index>0){
+			 		var s:String="";
+			 		s+="<font color='#FFFEB5'>";
+			 		var i:int=0;
+			 		for( i=0;i<index;i++){
+			 			s+="★";
+			 		}
+			 		s+="</font>";
+			 		index=5-index;
+			 		for(i=0;i<index;i++){
+			 			s+="★";
+			 		}
+			 		starTxt.htmlText=s;
+			 		return;
+			 	}
+		 		starTxt.htmlText="★★★★★";
+			 }
+			 /**
+			 *  使用提升星级道具
+			 */
+			 private function showStarTreasure(type:int):void{
+			 	var params:Object=new Object();
+			 	params.type=type;
+			 	params.window=this;
+			 	var win:UseTreasureWindow=new UseTreasureWindow();
+				win.params=params;
+				win.treasureCategory=TreasureCategoryConstant.COMMANDER;
+				win.treasureType= TreasureTypeConstant.STRENGTHEN_HERO_STAR;
+				win.treasureUseAbel=1;
+				WindowUtil.showModelWindow(win);
+			 }
+			 /**
+			 * 处理使用返回的使用宝物
+			 */
+			 public function handlerBack(params:Object,treasureItem:TreasureItemVO):void{
+			 	useTreasureTypeList[params.type]=treasureItem.treasureID;
+			 	switch(params.type){
+			 		case 0:
+			 			upgradeLuckTreasure.source=treasureItem.imgSrc;
+			 			upgradeLuckTreasure.toolTip=treasureItem.description;
+			 		break;
+			 		case 1:
+			 			stimulateBloodTreasure.source=treasureItem.imgSrc;
+			 			stimulateBloodTreasure.toolTip=treasureItem.description;
+			 		break;
+			 	}
+			 }
+			 /**
+			 * 星级描述
+			 */
+			 private function getStarDescribe():String{
+			 	var s:String="";
+			 	if(model.currentCityHero.star>0){
+			 		s+="当前等级："+HeroStarConstant.STAR_DESCRIBE.getItemAt(model.currentCityHero.star-1)+"\n\r";
+			 	}
+			 	if(model.currentCityHero.star<5){
+			 		s+="下一等级："+HeroStarConstant.STAR_DESCRIBE.getItemAt(model.currentCityHero.star);
+			 	}
+			 	return s;
+			 }
+			 /**
+			 * 星级强化提示
+			 */
+			 private function getStrengthenTip():String{
+			 	var s:String="";
+			 	if(model.currentCityHero.star<5){
+			 		s+=HeroStarConstant.StrengthenTip.getItemAt(model.currentCityHero.star);
+			 	}else{
+			 		s+="该指挥官已强化至最高星级，无法继续强化。";
+			 	}
+			 	return s;
+			 }
+		]]>
+	</mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官强化" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+		 
+		<mx:Image x="69.5" y="40" height="93" width="93" source="images/hero/{model.currentCityHero.head}.png"/>
+		<mx:Label x="209.5" y="41" text="名称：{model.currentCityHero.name}" width="120"/>
+		<mx:Label x="209.5" y="69" text="品质：{HeroQualityConstant.heroQuality.getItemAt(model.currentCityHero.quality-1)}" width="120"/>
+		<mx:Label x="210.5" y="97" text="等级：{model.currentCityHero.level}" width="120"/>
+		<mx:Label x="210.5" y="125" text="经验：{model.currentCityHero.exp}/{model.currentCityHero.expMax}" width="120"/>
+		<mx:Text  id="starTxt"  enabled="false" buttonMode="true"  x="71.5"  y="149"  width="91"  textAlign="center"   />
+		<mx:Label x="52" y="196" text="需要金钱：{HeroStarConstant.NEEDED_MONEY.getItemAt(model.currentCityHero.star)}" width="150"/>
+		<mx:Label x="52" y="224" text="需要军魄：{HeroStarConstant.NEEDED_MILITARYSOUL.getItemAt(model.currentCityHero.star)}" width="150"/>
+		<mx:Label x="52" y="252" text="需要指挥官经验：{HeroStarConstant.NEEDED_EXPERIENCE.getItemAt(model.currentCityHero.star)}" width="150"/>
+		<mx:Label x="210" y="196" text="当前金钱：{model.cityInfo.cityResource.moneyNum}" width="161"/>
+		<mx:Label x="210" y="224" text="当前军魄：{model.currentCityHero.militarySoul}" width="161"/>
+		<mx:Label x="210" y="252" text="当前指挥官经验：{model.currentCityHero.exp}" width="161"/>
+		<mx:TextArea x="52" y="280" text="{getStarDescribe()}" width="294" height="55"/>
+		<mx:Label x="72" y="347" text="强运勋章" width="80" textAlign="center"/>
+		<mx:Image id="upgradeLuckTreasure"  x="72" y="371" width="80" height="80"  source="images/treasure/661.png" buttonMode="true" click="showStarTreasure(0)"/>
+		<mx:Label x="230" y="347" text="血激勋章" width="80" textAlign="center"/>
+		<mx:Image  id="stimulateBloodTreasure"   x="230" y="371" width="80" height="80" source="images/treasure/663.png" buttonMode="true" click="showStarTreasure(1)"/>
+		<mx:Button x="102.5" y="472" label="强化" click="strengthenCityHeroStar()"/>
+		<mx:Button x="215" y="472" label="取消" click="doClose()"/>
+</mx:TitleWindow>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" initialize="init()" layout="absolute" width="630" height="243" xmlns:ns1="com.hifong.war.view.building.*" showCloseButton="false">
+<mx:Script>
+	<![CDATA[
+		import com.hifong.war.util.BuildingUtil;
+		import com.hifong.war.view.assets.WarAssets;
+		import com.hifong.war.events.building.steel.ModifySteelWorkerNumEvent;
+		import com.hifong.war.util.MsgBox;
+		import mx.events.SliderEvent;
+		import com.hifong.war.view.building.BuildingGrid;
+		import com.hifong.war.util.WindowUtil;
+		import com.hifong.war.model.ModelLocator;
+		import com.adobe.cairngorm.control.CairngormEventDispatcher;
+		
+		[Bindable]
+		private var model:ModelLocator = ModelLocator.getInstance();
+		
+		[Bindable]
+		private var _buildingGrid:BuildingGrid;
+			
+		private function init():void{
+			this.sldModifyNum.maximum = model.cityInfo.populationFree+model.cityInfo.cityResource.steelWorkerNum;
+			this.lblMaxNum.text = String(model.cityInfo.populationFree+model.cityInfo.cityResource.steelWorkerNum);
+		}
+		
+		//当建筑被移除时关闭升级窗口
+		private function onCityBuildingRemoved(event:Event):void{
+			MsgBox.showMessage("该建筑已被拆除！");
+			doClose();
+		}
+		
+		private function doClose():void{
+			this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			pnlBuilding.onParentWindowClose();
+			WindowUtil.closeWindow(this);
+		}
+		
+		public function set buildingGrid(bg:BuildingGrid):void{
+			 this._buildingGrid = bg;
+			 this.pnlBuilding.buildingGrid = bg;
+			 
+			 //注册citybuilding被移除时的事件
+			 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+		}
+		
+		//处理滑块值改变的事件
+		private function onSldChange(event:SliderEvent):void{
+			this.txtWorkerNum.text = String(event.value);
+		}
+		
+		private function doDataTipFormat(value:Number):String{
+			return String(value);
+		}
+		
+		//处理文本框改变时的值
+		private function onTxtChange():void{
+			//MsgBox.showDefaultSuccessful();
+			if(this.txtWorkerNum.length==0)
+				this.txtWorkerNum.text = "0";
+				
+			this.sldModifyNum.value = parseInt(this.txtWorkerNum.text);
+		}
+		
+		//处理按钮单击事件
+		private function onClick():void{
+			var num:int = this.sldModifyNum.value;
+			CairngormEventDispatcher.getInstance().dispatchEvent(new ModifySteelWorkerNumEvent(num));
+		}
+		
+		private function changeToMin():void{
+			sldModifyNum.value = 0;
+			this.txtWorkerNum.text = String(0);
+		}
+		
+		private function changeToMax():void{
+			sldModifyNum.value = int(lblMaxNum.text);
+			this.txtWorkerNum.text = lblMaxNum.text;
+		}
+		
+	]]>
+</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<ns1:BuildingItemPanel x="25" y="37" id="pnlBuilding">
+	</ns1:BuildingItemPanel>
+	<mx:Canvas x="25" y="132" width="580" height="84" borderStyle="solid" borderColor="#000000" borderThickness="1" styleName="CanvasBorder">
+		<mx:Label x="10" y="30" text="工作人数："/>
+		<mx:HSlider x="85" y="28" id="sldModifyNum" value="{model.cityInfo.cityResource.steelWorkerNum}"  sliderThumbClass="com.hifong.war.view.assets.skin.CustomSliderThumb" liveDragging="true" minimum="0"  snapInterval="1" dataTipPrecision="0" change="onSldChange(event)" dataTipFormatFunction="doDataTipFormat"/>
+		<mx:Label x="71" y="30" text="0" id="lblMinNum" width="15" useHandCursor="true" buttonMode="true" mouseChildren="false" click="changeToMin()" fontWeight="bold"/>
+		<mx:Label x="242" y="30"  id="lblMaxNum" useHandCursor="true" buttonMode="true" mouseChildren="false" click="changeToMax()" width="48" fontWeight="bold"/>
+		<mx:Label x="367" y="30" text="增加产量："/>
+		<mx:Label x="426" y="30" text="{this.sldModifyNum.value*10}/时" id="lblOutput" width="86"/>
+		<mx:Button x="510" y="27" label="调整" id="btnUpdate" click="onClick()" height="26" width="60"/>
+		<mx:TextInput x="298" y="30" width="58" id="txtWorkerNum" restrict="0-9" change="onTxtChange()" text="{model.cityInfo.cityResource.steelWorkerNum}" textAlign="right" maxChars="6"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

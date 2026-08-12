@@ -1,0 +1,24 @@
+/**
+ * 宝物编号:451
+ * 
+ * 名称：指挥官装备盒
+ * 描述：获得：
+ * 类型：宝箱
+ */
+
+//出现的装备
+int[] equipmentList = [141, 241, 341, 441, 541];
+String[] equipmentName = ["特种少尉肩章", "特种少尉军帽", "特种少尉军装", "特种少尉军靴", "特种少尉权杖"];
+String[] imgs = ["141.jpg", "241.jpg", "341.jpg", "441.jpg", "541.jpg"];
+int[] equipmentNum = [1, 1, 1, 1, 1];
+
+String dirName = "equipment";
+
+StringBuffer retstr = new StringBuffer();
+
+for(int i=0; i<equipmentList.length; i++){
+	context.rewardEquipment(equipmentList[i],equipmentNum[i]);
+	retstr.append("${equipmentName[i]}:${dirName}/${imgs[i]}:${equipmentNum[i]}:3:${equipmentList[i]}|");
+}
+
+return retstr.substring(0,retstr.length()-1);

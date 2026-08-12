@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityTechnology">
+	<typeAlias alias="CityTechnology" type="com.war.domain.CityTechnology" />
+	
+	<insert id="createCityTechnology" parameterClass="CityTechnology">
+		INSERT INTO T_CITY_TECHNOLOGY(CITY_ID, TECHNOLOGY_ID, LEVEL, STATE) VALUES(#cityID#, #technologyID#, #level#, #state#)
+		<selectKey resultClass="Integer" keyProperty="cityTechnologyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityTechnologyState" parameterClass="java.util.Map">
+		UPDATE T_CITY_TECHNOLOGY SET STATE=#state# WHERE CITY_TECHNOLOGY_ID=#cityTechnologyID#
+	</update>
+	
+	<update id="updateCityTechnology" parameterClass="CityTechnology">
+		UPDATE T_CITY_TECHNOLOGY SET CITY_TECHNOLOGY_ID=#cityTechnologyID#, CITY_ID=#cityID#, TECHNOLOGY_ID=#technologyID#, LEVEL=#level#, STATE=#state# WHERE CITY_TECHNOLOGY_ID=#cityTechnologyID#
+	</update>
+	
+	<delete id="deleteCityTechnologyByID" parameterClass="Integer">
+		DELETE FROM T_CITY_TECHNOLOGY WHERE CITY_TECHNOLOGY_ID=#cityTechnologyID#
+	</delete>
+	
+	<select id="getCityTechnologyByID" parameterClass="Integer" resultClass="CityTechnology">
+		SELECT CITY_TECHNOLOGY_ID AS cityTechnologyID, CITY_ID AS cityID, TECHNOLOGY_ID AS technologyID, LEVEL AS level, STATE AS state FROM T_CITY_TECHNOLOGY WHERE CITY_TECHNOLOGY_ID=#cityTechnologyID#
+	</select>
+	
+	<select id="getCityTechnologyByCityIDAndState" parameterClass="java.util.Map" resultClass="CityTechnology">
+		SELECT CITY_TECHNOLOGY_ID AS cityTechnologyID, CITY_ID AS cityID, TECHNOLOGY_ID AS technologyID, LEVEL AS level, STATE AS state FROM T_CITY_TECHNOLOGY WHERE CITY_ID=#cityID# AND STATE=#state#
+	</select>
+	
+	<select id="getCityTechnologyLevelByCityIDAndTechnologyID" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT LEVEL FROM T_CITY_TECHNOLOGY WHERE CITY_ID=#cityID# AND TECHNOLOGY_ID=#technologyID#
+	</select>
+	
+	<select id="getCityTechnologyByCityIDAndTechnologyID" parameterClass="java.util.Map" resultClass="CityTechnology">
+		SELECT CITY_TECHNOLOGY_ID AS cityTechnologyID, CITY_ID AS cityID, TECHNOLOGY_ID AS technologyID, LEVEL AS level, STATE AS state FROM T_CITY_TECHNOLOGY WHERE CITY_ID=#cityID# AND TECHNOLOGY_ID=#technologyID#
+	</select>
+	
+	<select id="getCityTechnologyListByCityID" parameterClass="Integer" resultClass="CityTechnology">
+		SELECT CITY_TECHNOLOGY_ID AS cityTechnologyID, CITY_ID AS cityID, TECHNOLOGY_ID AS technologyID, LEVEL AS level, STATE AS state FROM T_CITY_TECHNOLOGY WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityTechnologyList" resultClass="CityTechnology">
+		SELECT CITY_TECHNOLOGY_ID AS cityTechnologyID, CITY_ID AS cityID, TECHNOLOGY_ID AS technologyID, LEVEL AS level, STATE AS state FROM T_CITY_TECHNOLOGY
+	</select>
+	
+	<select id="getCityTechnologyNumByCityIDAndLevel" parameterClass="java.util.Map" resultClass="java.lang.Integer"> 
+		<![CDATA[
+			SELECT COUNT(*) FROM T_CITY_TECHNOLOGY WHERE LEVEL >= #level# AND CITY_ID=#cityID#
+		]]>
+	</select>
+
+</sqlMap>

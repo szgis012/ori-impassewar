@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="388"
+	 showCloseButton="false" close="doClose()" creationComplete="doInit();">
+	 <mx:Script>
+	 	<![CDATA[
+	 		import mx.controls.dataGridClasses.DataGridColumn;
+	 		import com.hifong.war.events.common.GetCityPopulationEvent;
+	 		import com.hifong.war.events.common.GetCityResourcesEvent;
+	 		import com.hifong.war.events.common.GetCityByIDEvent;
+	 		import com.adobe.cairngorm.control.CairngormEvent;
+	 		import mx.binding.utils.ChangeWatcher;
+	 		import mx.binding.utils.BindingUtils;
+	 		import com.hifong.war.events.building.commandcenter.DismissCityWoundedArmyEvent;
+	 		import com.hifong.war.events.building.commandcenter.CureCityWoundedArmyEvent;
+	 		import mx.controls.Alert;
+	 		import com.hifong.war.events.building.commandcenter.GetWoundArmyEvent;
+	 		import com.adobe.cairngorm.control.CairngormEventDispatcher;
+	 		import com.hifong.war.model.ModelLocator;
+	 		import mx.messaging.AbstractConsumer;
+	 		import mx.collections.ArrayCollection;
+	 		import com.hifong.war.util.WindowUtil;
+		 	import com.hifong.war.view.assets.WarAssets;
+		 	
+		 	[Bindable]
+		 	private var model:ModelLocator=ModelLocator.getInstance();
+		 	[Bindable]
+		 	private var woundArmyList:ArrayCollection=new ArrayCollection();
+		 	private var watch:ChangeWatcher;
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetWoundArmyEvent(model.cityInfo.cityID));
+				//
+				watch=BindingUtils.bindSetter(setWoundArmyList,model,"woundArmyList");
+			}
+	 		private function doClose():void{
+				watch.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			/**
+			 * 绑定伤兵数据
+			 */
+			private function setWoundArmyList(data:*):void{
+				if(model.woundArmyList==null) return;
+				var arr:Array=model.woundArmyList.toArray();
+				for(var k:String in arr){
+					arr[k].treatNum=arr[k].num;
+				}
+				woundArmyList.source=arr;
+			}
+			/**
+			 * 治疗伤兵
+			 */
+			public  function TreatWoundArmy(armyID:int,num:int):void{ 
+				var ac:ArrayCollection=model.woundArmyList;
+			 	for(var k:String in ac){
+			 		if(ac[k].armyID==armyID){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new CureCityWoundedArmyEvent(ac[k].cityWoundedArmyID,Math.min(num,ac[k].num)));
+			 		}
+			 	}
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetWoundArmyEvent(model.cityInfo.cityID));
+			 	//更新资源
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityResourcesEvent(model.cityInfo.cityID));
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityPopulationEvent(model.cityInfo.cityID));
+			}
+			/**
+			 * 遣散伤兵
+			 */
+			 public function dismissCityWoundedArmy(armyID:int,num:int):void{
+			 	var ac:ArrayCollection=model.woundArmyList;
+			 	for(var k:String in ac){
+			 		if(ac[k].armyID==armyID){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new DismissCityWoundedArmyEvent(ac[k].cityWoundedArmyID,Math.min(num,ac[k].num)));
+			 		}
+			 	}
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetWoundArmyEvent(model.cityInfo.cityID));
+			 	//更新资源
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityResourcesEvent(model.cityInfo.cityID));
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityPopulationEvent(model.cityInfo.cityID));
+			 }
+			 private function getArmyByType(item:Object,column:DataGridColumn):String{
+			 	var armyName:String;
+			 	//to do
+//			 	armyName=model.armyInfo.armyList
+			 	armyName=item.army.name;
+			 	armyName==null ? armyName="未知部队": null;
+			 	return armyName;
+			 }
+	 	]]>
+	 </mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="伤兵营" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+		
+	<mx:Canvas width="580" height="59" x="25" y="37" styleName="CanvasBorder">
+		<mx:Text x="10" y="10" width="560" height="42" text="战斗中损失的部队，会有一部分保留下来变成伤兵等待治疗；伤兵不仅占用人口同时需要消耗资源；花费金钱，能立即治疗伤兵。未治疗的伤兵会逐渐死亡。" />
+	</mx:Canvas>
+	<mx:DataGrid id="dataGrid" height="255" width="580" dataProvider="{woundArmyList}"  x="25" y="107" editable="true" sortableColumns="false" >
+		<mx:columns>
+			<mx:DataGridColumn headerText="兵种" width="240" dataField="armyID" labelFunction="getArmyByType" sortable="false" editable="false"/>
+			<mx:DataGridColumn width="70" headerText="数量" dataField="num" sortable="false" textAlign="right" editable="false" />
+			<mx:DataGridColumn width="120" headerText="输入操作数量" dataField="treatNum"  sortable="false" editable="true" textAlign="right"  >
+				<mx:itemEditor>
+					<mx:Component>
+							<mx:TextInput  text="{data.treatNum}" restrict="0-9"  /> 
+					</mx:Component>
+				</mx:itemEditor>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn width="130"  headerText="操作" sortable="false" textAlign="center" editable="false">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox verticalAlign="middle" horizontalAlign="center">
+							<mx:Button  height="22" width="54" label="{data.army.type==1?'治疗':'维修'}" click="outerDocument.TreatWoundArmy(data.armyID,data.treatNum)"   />
+							<mx:Button   height="22" width="54" label="{data.army.type==1?'遣散':'丢弃'}" click="outerDocument.dismissCityWoundedArmy(data.armyID,data.treatNum)"   />
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:TitleWindow>

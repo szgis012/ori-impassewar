@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="413" showCloseButton="false" close="doClose()" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.MessageInboxVO;
+			import com.hifong.war.vo.MessageOutboxVO;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.containers.GridRow;
+			import mx.events.PropertyChangeEvent;
+			import mx.collections.ArrayCollection;
+			import mx.controls.CheckBox;
+			
+			import com.hifong.war.events.message.DeleteOutboxSelectedMessagesEvent;
+			import com.hifong.war.events.message.DeleteInboxSelectedMessagesEvent;
+			import com.hifong.war.events.message.ShowMessageDetailEvent;
+			import com.hifong.war.events.message.ShowMessageInboxListEvent;
+			import com.hifong.war.events.message.ShowMessageOutboxListEvent;
+			import com.hifong.war.events.message.SendMessageEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.DateFormatUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var playerID:int = model.playerInfo.playerID;
+			
+			private var isInboxListCheckedAll:Boolean = false;
+			private var isOutboxListCheckedAll:Boolean = false;
+			
+			private var pageSize:int = model.messagePageSize;
+			
+			/**
+			 * 标志位，true表示发送消息的窗口是由外部打开的
+			 * 如果设置了该标志位outReceiverName字段就是传递进来的接受者名字
+			 */ 
+			public var outLink:Boolean = false;
+			
+			/** 设置outLink标志位时传递的接受者名称*/
+			public var outReceiverName:String;
+			
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				
+				showMessageInboxList(1);
+				
+				model.haveNewMessage = false;
+			}
+
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 显示收件箱列表
+			 */
+			public function showMessageInboxList(pageNum:int):void{
+				
+				model.currentInboxPageNum = pageNum;
+				
+				var start:int = (model.currentInboxPageNum-1)*pageSize;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowMessageInboxListEvent(playerID,start,pageSize));
+			}
+			
+			/**
+			 * 显示收件箱上一页列表
+			 */
+			private function showMessageInboxPreviousPageList():void{
+				if(model.currentInboxPageNum!=1){
+					model.currentInboxPageNum--;
+					showMessageInboxList(model.currentInboxPageNum);
+				}
+			}
+			
+			/**
+			 * 显示收件箱下一页列表
+			 */
+			private function showMessageInboxNextPageList():void{
+				if(model.currentInboxPageNum!=model.messageInboxPage){
+					model.currentInboxPageNum++;
+					showMessageInboxList(model.currentInboxPageNum);
+				}
+			}
+			
+			/**
+			 * 显示发件箱列表
+			 */
+			public function showMessageOutboxList(pageNum:int):void{
+				
+				model.currentOutboxPageNum = pageNum;
+				
+				var start:int = (model.currentOutboxPageNum-1)*pageSize;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowMessageOutboxListEvent(playerID,start,pageSize));
+			}
+			
+			/**
+			 * 显示发件箱上一页列表
+			 */
+			private function showMessageOutboxPreviousPageList():void{
+				if(model.currentOutboxPageNum!=1){
+					model.currentOutboxPageNum--;
+					showMessageOutboxList(model.currentOutboxPageNum);
+				}
+			}
+			
+			/**
+			 * 显示发件箱下一页列表
+			 */
+			private function showMessageOutboxNextPageList():void{
+				if(model.currentOutboxPageNum!=model.messageOutboxPage){
+					model.currentOutboxPageNum++;
+					showMessageOutboxList(model.currentOutboxPageNum);
+				}
+			}
+
+			/**
+			 * 显示收件箱消息详细信息
+			 */
+			public function showMessageInBoxDetail(data:Object):void{
+				var messageDetailWindow:MessageInBoxDetailWindow = new MessageInBoxDetailWindow();
+				messageDetailWindow.parentWindow = this;
+				messageDetailWindow.message = data as MessageInboxVO; 
+				WindowUtil.showModelWindow(messageDetailWindow);
+			} 
+			/**
+			 * 显示发件箱消息详细信息
+			 */
+			public function showMessageOutBoxDetail(message:Object):void{
+				var messageDetailWindow:MessageOutBoxDetailWindow = new MessageOutBoxDetailWindow();
+				messageDetailWindow.parentWindow = this;
+				messageDetailWindow.message = message as MessageOutboxVO; 
+				WindowUtil.showModelWindow(messageDetailWindow);
+			}
+
+			public function selectCheckbox(obj:Object):void{
+				obj.data.selected = obj.selected;
+			} 
+
+			/**
+			 * 全选/取消全选收件箱列表复选框
+			 */
+			private function selectAllInboxCheckboxes(event:MouseEvent):void{
+				var i:int = 0;
+				if(isInboxListCheckedAll==false){
+					for(i=0;i<model.messageInboxList.length;i++){
+						model.messageInboxList.getItemAt(i).selected = true;
+					}
+					isInboxListCheckedAll = true;
+				}else{
+					for(i=0;i<model.messageInboxList.length;i++){
+						model.messageInboxList.getItemAt(i).selected = false;
+					}
+					isInboxListCheckedAll = false;
+				}
+			}
+			
+			/**
+			 * 全选/取消全选发件箱列表复选框
+			 */
+			private function selectAllOutboxCheckboxes(event:MouseEvent):void{
+				var i:int = 0;
+				if(isOutboxListCheckedAll==false){
+					for(i=0;i<model.messageOutboxList.length;i++){
+						model.messageOutboxList.getItemAt(i).selected = true;
+					}
+					isOutboxListCheckedAll = true;
+				}else{
+					for(i=0;i<model.messageOutboxList.length;i++){
+						model.messageOutboxList.getItemAt(i).selected = false;
+					}
+					isOutboxListCheckedAll = false;
+				}
+			}
+
+			/**
+			 * 选中当前行复选框(暂时无效)
+			 */
+			private function selectInboxRow(event:MouseEvent):void{
+				var currentCheckbox:CheckBox = event.currentTarget.getChildren()[0].getChildren()[0] as CheckBox;
+				var isSelected:Boolean = currentCheckbox.selected
+				currentCheckbox.selected = !isSelected;
+				//dataRowSelected(event.currentTarget,!isSelected);
+			}
+
+			/**
+			 * 删除收件箱所选消息
+			 */
+			private function deleteInboxSelectedMessages():void{
+				MsgBox.showConfirm("您确定要删除所选消息吗？",function ():void{
+					var messageInboxIDs:Array = new Array();
+					for(var i:int=0;i<model.messageInboxList.length;i++){
+						if(model.messageInboxList.getItemAt(i).selected==true){
+							messageInboxIDs.push(model.messageInboxList.getItemAt(i).messageInboxID);
+						}
+					}
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteInboxSelectedMessagesEvent(messageInboxIDs));
+				});
+			}
+			
+			/**
+			 * 删除发件箱所选消息
+			 */
+			private function deleteOutboxSelectedMessages():void{
+				MsgBox.showConfirm("您确定要删除所选消息吗？",function ():void{
+					var messageOutboxIDs:Array = new Array();
+					for(var i:int=0;i<model.messageOutboxList.length;i++){
+						if(model.messageOutboxList.getItemAt(i).selected==true){
+							messageOutboxIDs.push(model.messageOutboxList.getItemAt(i).messageOutboxID);
+						}
+					}
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteOutboxSelectedMessagesEvent(messageOutboxIDs));
+				});
+			}
+			
+			/**
+			 * 发送消息
+			 */
+			private function sendMessage():void{
+				
+				if(textReceiverName.text.length==0){
+					MsgBox.showMessage("请输入收件人");
+					return;
+				}
+				if(textareaContent.text.length==0){
+					MsgBox.showMessage("请输入内容");
+					return;
+				}
+				
+				if(textTitle.text.length==0){
+					textTitle.text = "无标题";
+				}
+				
+				var message:MessageOutboxVO = model.sendMessageVO;
+
+				message.senderID = playerID;
+				message.receiverName = textReceiverName.text;
+				message.title = textTitle.text;
+				message.content = textareaContent.text;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new SendMessageEvent(message));
+			}
+			
+			/**
+			 * 
+			 */ 
+			private function onShowSendMessage():void{
+				if(this.outLink){
+					this.textReceiverName.text = this.outReceiverName;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Script source="../../util/CheckboxUtil.as"></mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="消 息" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator id="tabNavigator" x="25" y="37" width="580" height="349" paddingBottom="0">
+		<mx:Canvas label="收件箱" width="100%" height="100%" show="showMessageInboxList(1)" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.messageInboxList}" width="558" x="10" y="10" height="267" doubleClickEnabled="true" itemDoubleClick="showMessageInBoxDetail(event.itemRenderer.data)">
+				<mx:columns>
+					<mx:DataGridColumn width="40" headerText="选择" dataField="messageInboxID" sortable="false" textAlign="center">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:CheckBox selected="{data.selected}" change="outerDocument.selectCheckbox(this)" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="主题" dataField="title" width="230" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Label width="100%" height="100%" htmlText="{data.readFlag==0?'&lt;b&gt;'+data.title+'(未读)&lt;/b&gt;':data.title}"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="发件人" dataField="senderName" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Label width="100%" height="100%" htmlText="{data.senderName}" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="接收时间" dataField="receiveTime" sortable="false" width="120" textAlign="center" labelFunction="DateFormatUtil.formatColumnDate"/>
+					<mx:DataGridColumn headerText="操作" dataField="messageInboxID" width="60" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button width="0" height="0" label="查看" click="parentDocument.showMessageInBoxDetail(data)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button id="buttonInboxPreviousPage" x="418" y="287" label="上一页" click="showMessageInboxPreviousPageList()" width="70" height="26"/>
+			<mx:Button id="buttonInboxNextPage" x="496" y="287" label="下一页" click="showMessageInboxNextPageList()" width="70" height="26"/>
+			<mx:Label id="labelInboxMessagePage" x="276" y="290" text="{model.currentInboxPageNum}/{model.messageInboxPage}"  textAlign="right" fontWeight="bold" width="134"/>
+			<mx:Button x="10" y="286" label="全选" click="selectAllInboxCheckboxes(event)" width="70" height="26"/>
+			<mx:Button x="88" y="286" label="删除" click="deleteInboxSelectedMessages()" width="70" height="26"/>
+		</mx:Canvas>
+		<mx:Canvas label="发件箱" width="100%" height="100%" show="showMessageOutboxList(1)" styleName="ContentCanvas">
+			<mx:DataGrid dataProvider="{model.messageOutboxList}" x="10" y="10" width="558" height="267" doubleClickEnabled="true" itemDoubleClick="showMessageOutBoxDetail(event.itemRenderer.data)">
+				<mx:columns>
+					<mx:DataGridColumn width="40" headerText="选择" dataField="messageOutboxID" sortable="false" textAlign="center">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:CheckBox selected="{data.selected}" change="outerDocument.selectCheckbox(this)" />
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="主题" dataField="title" width="230" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Label width="100%" height="100%" htmlText="{data.title}"/>
+							</mx:Component> 
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="收件人" dataField="receiverName" sortable="false" />
+					<mx:DataGridColumn headerText="发送时间" dataField="sendTime" sortable="false" width="120" textAlign="center" labelFunction="DateFormatUtil.formatColumnDate" />
+					<mx:DataGridColumn headerText="操作" dataField="messageOutboxID" width="60" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button height="0" width="0" label="查看" click="parentDocument.showMessageOutBoxDetail(data)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label id="labelOutboxMessagePage" x="266" y="290" text="{model.currentOutboxPageNum}/{model.messageOutboxPage}"  textAlign="right" fontWeight="bold" width="146"/>
+			<mx:Button id="buttonOutboxPreviousPage" x="420" y="287" label="上一页" click="showMessageOutboxPreviousPageList()" width="70" height="26"/>
+			<mx:Button id="buttonOutboxNextPage" x="498" y="287" label="下一页" click="showMessageOutboxNextPageList()" width="70" height="26"/>
+			<mx:Button x="10" y="286" label="全选" click="selectAllOutboxCheckboxes(event)" width="70" height="26"/>
+			<mx:Button x="88" y="286" label="删除" click="deleteOutboxSelectedMessages()" width="70" height="26"/>
+		</mx:Canvas>
+		<mx:Canvas id="canvasSendMessage" label="写消息" width="100%" height="100%" styleName="ContentCanvas" show="onShowSendMessage()">
+			<mx:Label x="10" y="10" text="收件人："/>
+			<mx:TextInput id="textReceiverName" x="71" y="8" width="350" maxChars="8" text="{model.sendMessageVO.receiverName}"/>
+			<mx:Label x="10" y="38" text="主  题："/>
+			<mx:TextInput id="textTitle" x="71" y="36" width="350" maxChars="32" text="{model.sendMessageVO.title}"/>
+			<mx:Label x="10" y="66" text="内  容："/>
+			<mx:TextArea id="textareaContent" x="71" y="65" width="497" height="213" maxChars="5000" text="{model.sendMessageVO.content}"/>
+			<mx:Button x="71" y="286" label="发送" click="sendMessage()"  width="70" height="26"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

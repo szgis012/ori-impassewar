@@ -1,0 +1,113 @@
+/**
+* 任务编号: 3006
+*
+* 要求：捐献：木材50000，钢铁50000，石油50000，食物50000，金钱25000
+* 奖励：国家宝藏
+* 后置任务：--
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+	//flag为0表示没有完成任务，flag+=1表示完成了任务。
+	def flag = 0;
+	
+	// 记录完成的条件 
+	def count = 0;
+	
+	// 返回结果
+	def result = '';
+	
+	// 资源集合
+	def resources = context.getCityResource();
+	
+	// 1. 捐献：木材50000
+	if(resources.woodNum > 49999)
+	{
+		result += "木材50000<font color='#00ff00'>[已完成]</font><br/>";
+		count++;
+	}
+	else
+	{
+		result += "木材50000<font color='#ff0000'>[未完成]</font><br/>";
+	}
+	
+	// 2. 捐献：钢铁50000
+	if(resources.steelNum > 49999)
+	{
+		result += "钢铁50000<font color='#00ff00'>[已完成]</font><br/>";
+		count++;
+	}
+	else
+	{
+		result += "钢铁50000<font color='#ff0000'>[未完成]</font><br/>";
+	}
+	
+	// 3. 捐献：石油50000
+	if(resources.oilNum > 49999)
+	{
+		result += "石油50000<font color='#00ff00'>[已完成]</font><br/>";
+		count++;
+	}
+	else
+	{
+		result += "石油50000<font color='#ff0000'>[未完成]</font><br/>";
+	}
+	
+	// 4. 食物50000
+	if(resources.foodNum > 49999)
+	{
+		result += "食物50000<font color='#00ff00'>[已完成]</font><br/>";
+		count++;
+	}
+	else
+	{
+		result += "食物50000<font color='#ff0000'>[未完成]</font><br/>";
+	}
+	
+	// 5. 捐献：金钱25000
+	if(resources.moneyNum > 24999)
+	{
+		result += "金钱25000<font color='#00ff00'>[已完成]</font><br/>";
+		count++;
+	}
+	else
+	{
+		result += "金钱25000<font color='#ff0000'>[未完成]</font><br/>";
+	}
+	
+	if (count == 5)
+	{
+		flag = 1;
+	}
+	
+	// 返回格式:任务是否完成标志+任务完成情况字符串
+	return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+	// 捐献：木材50000，钢铁50000，石油50000，食物50000，金钱25000
+	context.minusResource(50000,50000,50000,50000,25000);
+	
+	// 奖励：国家宝藏
+	context.rewardTreasure(461, 1);
+}

@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" styleName="Normal" horizontalScrollPolicy="off" verticalScrollPolicy="off" initialize="initGrid()" width="760" height="470"  xmlns:ns1="com.hifong.war.view.building.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.stronghold.StrongholdBuildingGrid;
+		]]>
+	</mx:Script>
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.stronghold.StrongholdBuildingGrid;
+		]]>
+	</mx:Script>
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.ShbuildingVO;
+			import com.hifong.war.view.stronghold.StrongholdBuildingGrid;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.vo.StrongholdShbuildingVO;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.view.building.citycenter.CityCenterWindow;
+			import com.hifong.war.view.building.oilfield.OilFieldWindow;
+			import com.hifong.war.view.building.steel.SteelWindow;
+			import com.hifong.war.view.building.mill.MillWindow;
+			import com.hifong.war.view.building.lumber.LumberWindow;
+			import com.hifong.war.view.building.market.MarketWindow;
+			import mx.events.CollectionEventKind;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.GetCompletedBuildingListEvent;
+			import com.hifong.war.view.building.CreateBuildingWindow;
+			import com.hifong.war.view.stronghold.StrongholdBuildingGrid;
+			import com.hifong.war.view.building.SimpleUpdateWindow;
+			import com.hifong.war.util.CoordinateUtil;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+						
+			import flash.events.MouseEvent;
+			import flash.filters.ColorMatrixFilter;
+			import flash.geom.Point;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.managers.PopUpManager;
+			
+			
+			/**
+			 * 建造位置数组
+			 * 数组中的每一项为地图上一个可建造的位置起始坐标,map坐标
+			 */ 
+			private static const BUILD_POSITION:Object = { 
+					0:[60,100],//要塞中心
+					1:[0,0],2:[110,-40],3:[220,-80],//row1
+					4:[-40,150],5:[230,50],//row2
+					6:[-60,260],7:[50,220],8:[180,170],//row3
+					9:[-180,310],//围墙
+					10:[-10,420],11:[160,370],//碉堡
+					12:[-160,200],13:[400,70],//火炮
+					14:[-180,300],15:[380,170]//防空炮
+			 };
+																											
+			//图片宽度
+			private static const GRID_WIDTH:int = 100;
+			//图片高度
+			private static const GRID_HEIGHT:int = 100;
+			//地图坐标和屏幕坐标的偏移角度
+			private static const OFFSET_ANGLE:Number = Math.PI / 4;
+			//地图坐标原点在屏幕坐标中的X坐标值
+			private static const OFFSETX:Number = 392;
+			//地图坐标原点在屏幕坐标中的Y坐标值
+			private static const OFFSETY:Number = 0;
+			//城墙坐标和屏幕坐标的偏移角度,479,267分别为城墙图片的宽，高
+			private static const WALL_OFFSET_ANGLE:Number = Math.atan(210/410);
+			//围墙坐标原点在屏幕坐标中的X坐标值
+			private static const WALL_OFFSETX:Number = 10;
+			//围墙坐标原点在屏幕坐标中的Y坐标值
+			private static const WALL_OFFSETY:Number = 210;
+			//默认图片有效宽度
+			private static const IMG_WIDTH:Number = Math.sqrt(2*50*50);//GRID_WIDTH/2
+			//默认图片有效高度
+			private static const IMG_HEIGHT:Number = Math.sqrt(2*50*50);//GRID_HEIGHT/2
+			//高亮滤镜
+			private static var hilightFilter:ColorMatrixFilter = new ColorMatrixFilter([1, 0, 0, 0, 50, 0, 1, 0, 0, 50, 0, 0, 1, 0, 50, 0, 0, 0, 1, 0]);
+			//灰色滤镜
+			//private static var greyFilter:ColorMatrixFilter = new ColorMatrixFilter([0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 1, 0]);
+			
+			//最后一个高亮的建筑
+			private var lastHilightGrid:StrongholdBuildingGrid;
+			//最后一个建筑的其他滤镜
+			private var lastGridFilter:Array;
+			
+			//地图上可建造的位置列表,key为位置，在BUILD_POSITION中定义。
+			private var strongholdGridList:Object = {};
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//将地图坐标转换成屏幕坐标
+			public function getScreenPoint(p:Point):Point{
+				return CoordinateUtil.getOldPoint(p,OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}
+			
+			//将屏幕坐标转换成地图坐标
+			public function getMapPoint(p:Point):Point{
+				return CoordinateUtil.getNewPoint(p,OFFSET_ANGLE,OFFSETX,OFFSETY);
+			}
+			
+			private function doClick(event:MouseEvent):void{
+				//计算该点在当前面板中的坐标
+				var p:Point = this.globalToLocal(new Point(event.stageX,event.stageY));
+//				var pt:Point = getMapPoint(p);
+				var bg:StrongholdBuildingGrid = findBuildingGrid(p);
+				
+				if(bg){
+//					model.currentBuindingGrid = bg;
+					//如果是空地
+					if(bg.isBlankGrid()){
+						MsgBox.showMessage("空地 pos:"+bg.position);
+					}else{
+						MsgBox.showMessage(bg.strongholdBuilding.building.name+" pos:"+bg.position);
+					}
+				}
+			}
+			
+			private function doMouseMove(event:MouseEvent):void{
+				//将上次的高亮建筑滤镜去除
+				if(lastHilightGrid){
+					var filters:Array = [];
+					
+					for(var i:int=0; i<lastHilightGrid.filters.length; i++){
+						if(lastHilightGrid.filters[i] != hilightFilter)
+							filters.push(lastHilightGrid.filters[i]);//保留除高亮外的其他滤镜效果
+					}
+					
+					lastHilightGrid.filters = filters;
+				}
+				
+				//计算该点在当前面板中的坐标
+				var p:Point = this.globalToLocal(new Point(event.stageX,event.stageY));
+				
+				var bg:StrongholdBuildingGrid = findBuildingGrid(p);
+				
+				if(bg){
+					lastGridFilter = bg.filters;//save default filter
+					bg.filters= [hilightFilter].concat(lastGridFilter);
+					lastHilightGrid = bg;
+					
+					buildingToolTip.tipInfo = bg.tipInfo;
+//					buildingToolTip.tipInfo = bg.tipInfo+"("+bg.position+")";
+					var x:Number = p.x + 10;
+					var y:Number = p.y + 10;
+					
+					if(x+buildingToolTip.width>this.width){
+						x = p.x - buildingToolTip.width ;
+					}
+					
+					if(y+buildingToolTip.height>this.height){
+						y = p.y - buildingToolTip.height ;
+					}
+					
+					buildingToolTip.x = x;
+					buildingToolTip.y = y;
+					buildingToolTip.visible = true;
+				}else{
+					buildingToolTip.visible = false;
+				}
+				
+			}
+			
+			/**
+			 * 获得城市建筑所属的BuildingGrid对象
+			 * cityBuildingID 城市建筑编号
+			 */ 
+			public function getBuildingGridByShBID(strongholdBuildingID:int):StrongholdBuildingGrid{
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:StrongholdBuildingGrid in this.strongholdGridList){
+					if(!bg.isBlankGrid()){
+						if(bg.strongholdBuilding.shShbuildingID == strongholdBuildingID){
+							return bg;
+						}
+					}
+				}
+				
+				return null;
+			}
+			
+			/**
+			 * 获得城市建筑所属的BuildingGrid对象
+			 * 注：对于有多个建筑的，返回最高等级的对象
+			 * buildingID 建筑编号
+			 */ 
+			public function getBuildingGridByBID(buildingID:int):StrongholdBuildingGrid{
+				var buildingGrid:StrongholdBuildingGrid;
+				
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:StrongholdBuildingGrid in this.strongholdGridList){
+					if(!bg.isBlankGrid()){
+						if(bg.strongholdBuilding.shbuildingID == buildingID){
+							if(buildingGrid){
+								//保存等级最高的buildingGrid
+								if(bg.strongholdBuilding.level > buildingGrid.strongholdBuilding.level){
+									buildingGrid = bg;
+								}
+							}else{
+								buildingGrid = bg;
+							}
+						}
+					}
+				}
+				
+				return buildingGrid;
+			}
+			
+			/**
+			 * 获得一个空地的BuildingGrid对象
+			 */ 
+			public function findBlankBuildingGrid():StrongholdBuildingGrid{
+				//遍历地图上所有的BuildingGrid
+				for each (var bg:StrongholdBuildingGrid in this.strongholdGridList){
+					if(bg.isBlankGrid()){
+						return bg;
+					}
+				}
+				
+				return null;
+			}
+			
+			//获得指定坐标处的BuildingGrid对象，p为点在当前面板中的坐标
+			private function findBuildingGrid(p:Point):StrongholdBuildingGrid{
+				var bg:StrongholdBuildingGrid;
+				var pt:*;
+				var imgw:Number;
+				var imgh:Number;
+				
+				//如果在防护栏范围就直接返回
+				if(inWallRange(p)){
+					return this.strongholdGridList["9"];
+				}
+				
+				//转化为地图坐标
+				p = getMapPoint(p);
+				
+				//遍历地图上所有的BuildingGrid
+				for(var key:* in this.strongholdGridList){
+					pt = BUILD_POSITION[key];
+					bg = this.strongholdGridList[key];
+					//跳过围墙
+					if(bg.position == 9){
+						continue;
+					}
+					
+					imgw = IMG_WIDTH;
+					imgh = IMG_HEIGHT;
+					//如果不是空地
+					if(!bg.isBlankGrid()){
+						switch(bg.strongholdBuilding.shbuildingID){
+							//如果是要塞中心
+							case 1:
+								imgw = 106;
+								imgh = 106;
+								break;
+							//如果是城防建筑，包括碉堡，火炮，防空炮
+							case 11:
+							case 12:
+							case 13:
+//							case 13:
+//							case 14:
+//							case 15:
+								imgw = 60;
+								imgh = 60;
+								break;
+						}
+					}
+					
+					
+					if(inGridRange(p,new Point(pt[0],pt[1]),imgw,imgh)){
+						return bg;
+					}
+				}
+				
+				return null;
+			}
+			
+			//检查给定的坐标点是否在围墙范围内。p 为屏幕坐标
+			private function inWallRange(p:Point):Boolean{
+				//获得在围墙坐标系中的坐标
+				var pt:Point = this.getWallMapPoint(p);
+				//围墙是3面的，要分别进行检测
+				if(inGridRange(pt,new Point(0,0),450,20)){//下边
+					return true;
+				}
+				
+				if(inGridRange(pt,new Point(-20,-235),20,235)){//左边
+					return true;
+				}
+				
+				if(inGridRange(pt,new Point(430,-235),20,235)){//右边
+					return true;
+				}
+				
+				return false;
+			}
+			
+			//将屏幕坐标转换成围墙坐标系的坐标值
+			private function getWallMapPoint(p:Point):Point{
+				var pt:Point = new Point();
+				var sinx:Number = Math.sin(WALL_OFFSET_ANGLE);
+				var cosx:Number = Math.cos(WALL_OFFSET_ANGLE);
+				
+				pt.x  = (p.x * sinx + p.y * cosx - WALL_OFFSETX * sinx - WALL_OFFSETY * cosx) / ( 2 * sinx * cosx);
+				pt.y  = (p.y * cosx - p.x * sinx + WALL_OFFSETX * sinx - WALL_OFFSETY * cosx) / ( 2 * sinx * cosx);
+				
+				return pt;
+			}
+			
+			//p是否在sp为起点宽高为w，h的区域内
+			private function inGridRange(p:Point,sp:Point,w:Number,h:Number):Boolean{
+				var x1:Number = sp.x + w;
+				var y1:Number = sp.y + h;
+				
+				if((p.x>=sp.x && p.x<=x1) && (p.y>=sp.y && p.y<=y1))
+					return true;
+					
+				return false;
+			}
+			
+			//设置建筑在地图上的位置
+			private function setGridPos(img:Image,p:Array):void{
+				var pt:Point = getScreenPoint(new Point(p[0],p[1]));
+				//图片的顶点坐标的偏移量
+				img.x = pt.x - GRID_WIDTH/2;
+				img.y = pt.y ;
+			}
+			
+			
+			//初始化城池网格
+			public function initGrid():void{
+				var bg:StrongholdBuildingGrid
+				
+				//初始化所有建造点
+				for (var pos:String in BUILD_POSITION){
+					bg = StrongholdBuildingGrid.getBlankBuildingGrid();
+					bg.position = parseInt(pos);
+					this.strongholdGridList[pos] = bg;
+					setGridPos(bg,BUILD_POSITION[pos]);
+					pnlBuilding.addChild(bg);
+				}
+				
+				//如果从后台获得数据这里进行监听实时更新要塞的建筑信息
+				model.strongholdBuildingList.addEventListener(CollectionEvent.COLLECTION_CHANGE,onBuildingListChange);
+				
+				//测试数据
+//				initTestData();
+				
+			}
+			
+			//初始化测试数据
+			private function initTestData():void{
+				var strongholdBuildingList:Array = createTestStrongholdShbuilding();
+				var bg:StrongholdBuildingGrid;
+				
+				for(var i:int=0; i<strongholdBuildingList.length; i++){
+					bg = strongholdGridList[i] as StrongholdBuildingGrid;
+					bg.strongholdBuilding = strongholdBuildingList[i] as StrongholdShbuildingVO;
+				}
+				
+			}
+			
+			private function createTestShBuilding():Array{
+				var names:Array = ["要塞","仓库","导弹发射井","反导平台","钢铁厂","炼油厂","食品厂","修理厂","战地医院","城墙","碉堡","碉堡","火炮","火炮","防空炮","防空炮"];
+				var images:Array = ["要塞.png","仓库.png","导弹发射井.png","反导平台.png","钢铁厂.png","炼油厂.png","食品厂.png","修理厂.png","战地医院.png","城墙.png","碉堡.png","碉堡.png","火炮.png","火炮.png","防空炮.png","防空炮.png"];
+				
+				var arr:Array = new Array();
+				
+				for(var i:int=0; i<names.length; i++){
+					var shb:ShbuildingVO = new ShbuildingVO();
+					shb.isonlyone = 1;
+					shb.maxLevel = 20;
+					shb.shbuildingID = i+1;
+					shb.name = names[i];
+					shb.description = names[i];
+					shb.image = "images/stronghold/1/"+images[i];
+					
+					arr.push(shb);
+				}
+				
+				return arr;
+			}
+			
+			private function createTestStrongholdShbuilding():Array{
+				var buildings:Array = createTestShBuilding();
+				var arr:Array = new Array();
+				
+				for(var i:int=0; i<buildings.length; i++){
+					var sh:StrongholdShbuildingVO = new StrongholdShbuildingVO();
+					sh.strongholdID = 1;
+					sh.state = 1;
+					sh.level = 10;
+					sh.building = buildings[i] as ShbuildingVO;
+					sh.shShbuildingID = i+1;
+					sh.shbuildingID = sh.building.shbuildingID;
+					sh.position = i;
+					
+					arr.push(sh);
+				}
+				
+				return arr;
+			}
+			
+			
+			//根据列表数据的变化，调整界面显示
+			private function onBuildingListChange(event:CollectionEvent):void{
+				//增删的对象
+				var shb:StrongholdShbuildingVO ;
+				var bg:StrongholdBuildingGrid;
+				
+				switch(event.kind){
+					//新建的建筑
+					case CollectionEventKind.ADD:
+						shb = event.items[0] as StrongholdShbuildingVO;
+						bg = this.strongholdGridList[shb.position] as StrongholdBuildingGrid;
+						//更新grid
+						if(bg){
+							bg.strongholdBuilding = shb;
+						}
+						break;
+					//建筑被移除	
+					case CollectionEventKind.REMOVE:
+						shb = event.items[0] as StrongholdShbuildingVO;
+						bg = this.strongholdGridList[shb.position] as StrongholdBuildingGrid;
+						//成为空地
+						if(bg){
+							bg.resetGrid();
+						}
+						break;
+				}
+				
+			}
+
+		]]>
+	</mx:Script>
+	<mx:Image x="0" y="0" source="images/stronghold/bg.jpg" width="100%" height="100%"/>
+	
+	<mx:Canvas id="pnlBuilding" x="0" y="0" width="100%" height="100%" styleName="Transparent" click="doClick(event)"  mouseMove="doMouseMove(event)" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	</mx:Canvas>
+	<ns1:BuildingToolTip x="50" y="410" id="buildingToolTip" visible="false">
+	</ns1:BuildingToolTip>
+</mx:Canvas>

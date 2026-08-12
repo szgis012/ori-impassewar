@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="350" height="80" styleName="InnerBorder">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.tooltip.SkillTooltip;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.militarycollege.StudySkillEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.militarycollege.LevelUpSkillEvent;
+			import com.hifong.war.events.building.militarycollege.ForgetSkillEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.constant.ImagePathConstant;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			public var skill:Object;
+			
+			private function generateTooltip(event:ToolTipEvent):void{
+				event.toolTip = new SkillTooltip(skill);
+			}
+			
+			/**
+			 * 学习技能
+			 */
+			private function studySkill():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new StudySkillEvent(model.currentCityHero.cityHeroID,skill.skillID));
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Image x="10" y="10" width="60" height="60" source="{ImagePathConstant.SKILL_PATH_PREFIX+skill.image}" toolTip=" " toolTipCreate="generateTooltip(event)"/>
+	<mx:Text x="140" y="10" text="{skill.name}" width="70" textAlign="center" fontWeight="bold" height="18"/>
+	<mx:Label x="78" y="50" text="最高等级：{skill.maxLevel}" width="90"/>
+	<mx:Label x="192" y="50" text="花费金钱：{skill.studyMoney}" width="148"/>
+	<mx:Button x="280" y="17" label="学习" click="studySkill()"/>
+	
+</mx:Canvas>

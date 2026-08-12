@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="350" height="284" layout="absolute">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 可以携带的资源*/
+			[Bindable]
+			public var carryResource:CarryResource;
+			/** 携带资源的军队 */
+			private var _cityMilitary:Object;
+			/** 可携带的资源总数*/
+			private var totalNum:Number = 0;
+			
+			public function set cityMilitary(cm:Object):void{
+				_cityMilitary = cm;
+				
+				//计算军队总计可以携带的资源数量
+				var total:Number = 0;
+				
+				var tmp:Array;
+				var avo:ArmyVO;
+				var armyNum:int;
+				
+				var army:String = cm.army1;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army2;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army3;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army4;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army5;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army6;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army7;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				army = cm.army8;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					total += (avo.carry?avo.carry:0) * armyNum ;
+				}
+				
+				totalNum = total;
+			}
+			
+			//重置文本框的内容
+			private function reset(txt:TextInput):void{
+				txt.text = "0";
+			}
+			
+			//设置最大可携带的食物
+			private function setMaxCarryFood():void{
+				this.txtFood.text = "" + (totalNum - parseFloat(this.txtMoney.text) - parseFloat(this.txtOil.text) - parseFloat(this.txtSteel.text) - parseFloat(this.txtWood.text));
+			}
+			
+			//设置最大可携带的木头
+			private function setMaxCarryWood():void{
+				this.txtWood.text = "" + (totalNum - parseFloat(this.txtMoney.text) - parseFloat(this.txtOil.text) - parseFloat(this.txtSteel.text) - parseFloat(this.txtFood.text));
+			}
+			
+			//设置最大可携带的石油
+			private function setMaxCarryOil():void{
+				this.txtOil.text = "" + (totalNum - parseFloat(this.txtMoney.text) - parseFloat(this.txtFood.text) - parseFloat(this.txtSteel.text) - parseFloat(this.txtWood.text));
+			}
+			
+			//设置最大可携带的钢铁
+			private function setMaxCarrySteel():void{
+				this.txtSteel.text = "" + (totalNum - parseFloat(this.txtMoney.text) - parseFloat(this.txtOil.text) - parseFloat(this.txtFood.text) - parseFloat(this.txtWood.text));
+			}
+			
+			//设置最大可携带的金钱
+			private function setMaxCarryMoney():void{
+				this.txtMoney.text = "" + (totalNum - parseFloat(this.txtFood.text) - parseFloat(this.txtOil.text) - parseFloat(this.txtSteel.text) - parseFloat(this.txtWood.text));
+			}
+			
+			private function doConfirm():void{
+				//TODO: 范围校验
+				this.carryResource.carryFood = int(this.txtFood.text);
+				this.carryResource.carryMoney = int(this.txtMoney.text);
+				this.carryResource.carryOil = int(this.txtOil.text);
+				this.carryResource.carrySteel = int(this.txtSteel.text);
+				this.carryResource.carryWood = int(this.txtWood.text);
+				
+				WindowUtil.closeModelWindow(this);
+				
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="携带资源" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="300" height="174" styleName="InnerBorder">
+		<mx:Image x="10" y="14" source="images/food.png"/>
+		<mx:Text x="38" y="14" text="{model.cityInfo.cityResource.foodNum}" width="86" textAlign="left" fontWeight="normal"/>
+		<mx:TextInput x="132" y="12" width="120" id="txtFood" text="{carryResource.carryFood}" textAlign="right" restrict="0-9"/>
+		<mx:Label x="250" y="11" text="最大" width="46" id="btnFoodMax" mouseChildren="false" buttonMode="true" useHandCursor="true" click="setMaxCarryFood()" height="26" textAlign="center" fontWeight="bold"/>
+		<mx:Image x="10" y="46" source="images/wood.png"/>
+		<mx:Text x="38" y="46" text="{model.cityInfo.cityResource.woodNum}" width="86" textAlign="left" fontWeight="normal"/>
+		<mx:TextInput x="132" y="44" width="120" textAlign="right" id="txtWood" text="{carryResource.carryWood}" restrict="0-9"/>
+		<mx:Label x="250" y="43" text="最大" width="46" id="btnWoodMax" mouseChildren="false" buttonMode="true" useHandCursor="true"  click="setMaxCarryWood()" height="26" textAlign="center" fontWeight="bold"/>
+		<mx:Image x="10" y="78" source="images/steel.png"/>
+		<mx:Text x="38" y="78" text="{model.cityInfo.cityResource.steelNum}" width="86" textAlign="left" fontWeight="normal"/>
+		<mx:TextInput x="132" y="76" width="120" text="{carryResource.carrySteel}" id="txtSteel" textAlign="right" restrict="0-9"/>
+		<mx:Label x="250" y="74" text="最大" width="46" id="btnSteelMax" mouseChildren="false" buttonMode="true" useHandCursor="true" click="setMaxCarrySteel()" height="26" textAlign="center" fontWeight="bold"/>
+		<mx:Image x="10" y="110" source="images/oil.png"/>
+		<mx:Text x="38" y="110" text="{model.cityInfo.cityResource.oilNum}" width="86" textAlign="left" fontWeight="normal"/>
+		<mx:TextInput x="132" y="108" width="120" textAlign="right" text="{carryResource.carryOil}" id="txtOil" restrict="0-9"/>
+		<mx:Label x="250" y="106" text="最大" width="46" id="btnOilMax" mouseChildren="false" buttonMode="true" useHandCursor="true" click="setMaxCarryOil()" height="26" textAlign="center" fontWeight="bold"/>
+		<mx:Image x="10" y="142" source="images/money.png"/>
+		<mx:Text x="38" y="142" text="{model.cityInfo.cityResource.moneyNum}" width="86" textAlign="left" fontWeight="normal"/>
+		<mx:TextInput x="132" y="140" width="120" id="txtMoney" text="{carryResource.carryMoney}" textAlign="right" restrict="0-9"/>
+		<mx:Label x="250" y="138" text="最大" width="46" id="btnMoneyMax" mouseChildren="false" buttonMode="true" useHandCursor="true" click="setMaxCarryMoney()" height="26" textAlign="center" fontWeight="bold"/>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="223" width="300" height="37" styleName="InnerBorder">
+		<mx:Button x="71" y="7" label="确定" click="doConfirm()" width="60" height="26"/>
+		<mx:Button x="169" y="7" label="取消" click="doClose()" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

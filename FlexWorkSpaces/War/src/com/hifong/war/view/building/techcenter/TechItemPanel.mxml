@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="80" styleName="InnerBorder">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.tooltip.CommonTooltip;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.TechnologyUtil;
+			import com.hifong.war.util.tooltip.ConstraintDependTooltip;
+			import mx.managers.ToolTipManager;
+			import com.hifong.war.util.DateFormatUtil;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.techcenter.ResearchTechnologyEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.utils.ObjectProxy;
+		
+			[Bindable]
+			private var currentCityTechnology:Object;
+			[Bindable]
+			private var currentTechnology:Object
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean;
+			
+			//刷新标志位
+			private function refreshCanCreate():void{
+				if(currentCityTechnology.technology.constraintDepend){
+					canCreate = BuildingUtil.meetAllConditions(currentCityTechnology.technology.constraintDepend);
+				}else{
+					canCreate = false;
+				}
+			}
+			
+			public function set cityTechnology(cityTechnology:ObjectProxy):void{
+				this.currentCityTechnology = cityTechnology;
+				refreshCanCreate();
+			}
+			
+			private function researchTechnology(cityTechnology:Object):void{
+				if(TechnologyUtil.onTechnologyMaxLevel(cityTechnology)){
+					MsgBox.showMessage(cityTechnology.technology.name+"已经达到最高级别!");
+					return ;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ResearchTechnologyEvent(ModelLocator.getInstance().cityInfo.cityID,cityTechnology.technology.technologyID));
+			}
+			
+			private function showTooltip(event:ToolTipEvent):void{
+				if(TechnologyUtil.onTechnologyMaxLevel(currentCityTechnology)){
+					event.toolTip = new CommonTooltip("<b>"+currentCityTechnology.technology.name+"已经是最高级了!</b>");
+				}else{
+					event.toolTip = new ConstraintDependTooltip("升级",currentCityTechnology.technology.name,currentCityTechnology.technology.constraintDepend);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:TextArea x="147" y="13" width="383" height="55" editable="false" enabled="true">
+		<mx:text>{currentCityTechnology.technology.description}</mx:text>
+	</mx:TextArea>
+	<mx:Label x="10" y="8" text="{currentCityTechnology.technology.name}" width="60" textAlign="center" height="19"/>
+	<mx:Button x="78" y="39" label="研 究" enabled="{ModelLocator.getInstance().haveTechnologyResearching==false &amp;&amp; canCreate}" click="researchTechnology(currentCityTechnology)" toolTip="1" toolTipCreate="showTooltip(event)"/>
+	<mx:Image x="10" y="27" source="images/technology/{currentCityTechnology.technology.image}"/>
+	<mx:Label x="78" y="17" text="等级{currentCityTechnology.level}" textAlign="center" width="61"/>
+</mx:Canvas>

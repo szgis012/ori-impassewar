@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityExt">
+	<typeAlias alias="CityExt" type="com.war.domain.CityExt" />
+	
+	<insert id="createCityExt" parameterClass="CityExt">
+		INSERT INTO T_CITY_EXT(CITY_ID, TECH_ARMY_ATTACK, TECH_ARMY_DEFENSE, TECH_ARMY_SPEED, TECH_ARMY_RANGE, TECH_TRUCK_ATTACK, TECH_TRUCK_DEFENSE, TECH_TRUCK_SPEED, TECH_TRUCK_RANGE, TECH_AIRPLANE_ATTACK, TECH_AIRPLANE_DEFENSE, TECH_AIRPLANE_SPEED, TECH_AIRPLANE_RANGE, TECH_CARRY_ADD, TECH_DEFENSE_ATTACK_ADD, TECH_WOUNDED_ARMY_RATE, TECH_PROTECT_RESOURCE_PERCENT, LAST_MANAGE_TIME) VALUES(#cityID#, #techArmyAttack#, #techArmyDefense#, #techArmySpeed#, #techArmyRange#, #techTruckAttack#, #techTruckDefense#, #techTruckSpeed#, #techTruckRange#, #techAirplaneAttack#, #techAirplaneDefense#, #techAirplaneSpeed#, #techAirplaneRange#, #techCarryAdd#, #techDefenseAttackAdd#, #techWoundedArmyRate#,  #techProtectResourcePercent#, #lastManageTime#)
+	</insert>
+	
+	<update id="updateCityExt" parameterClass="CityExt">
+		UPDATE T_CITY_EXT SET CITY_ID=#cityID#, TECH_ARMY_ATTACK=#techArmyAttack#, TECH_ARMY_DEFENSE=#techArmyDefense#, TECH_ARMY_SPEED=#techArmySpeed#, TECH_ARMY_RANGE=#techArmyRange#, TECH_TRUCK_ATTACK=#techTruckAttack#, TECH_TRUCK_DEFENSE=#techTruckDefense#, TECH_TRUCK_SPEED=#techTruckSpeed#, TECH_TRUCK_RANGE=#techTruckRange#, TECH_AIRPLANE_ATTACK=#techAirplaneAttack#, TECH_AIRPLANE_DEFENSE=#techAirplaneDefense#, TECH_AIRPLANE_SPEED=#techAirplaneSpeed#, TECH_AIRPLANE_RANGE=#techAirplaneRange#, TECH_CARRY_ADD=#techCarryAdd#, TECH_DEFENSE_ATTACK_ADD=#techDefenseAttackAdd#, TECH_WOUNDED_ARMY_RATE=#techWoundedArmyRate#, TECH_PROTECT_RESOURCE_PERCENT=#techProtectResourcePercent#, LAST_MANAGE_TIME=#lastManageTime# WHERE CITY_ID=#cityID#
+	</update>
+	
+	<delete id="deleteCityExtByID" parameterClass="Integer">
+		DELETE FROM T_CITY_EXT WHERE CITY_ID=#cityID#
+	</delete>
+	
+	<select id="getCityExtByID" parameterClass="Integer" resultClass="CityExt">
+		SELECT CITY_ID AS cityID, TECH_ARMY_ATTACK AS techArmyAttack, TECH_ARMY_DEFENSE AS techArmyDefense, TECH_ARMY_SPEED AS techArmySpeed, TECH_ARMY_RANGE AS techArmyRange, TECH_TRUCK_ATTACK AS techTruckAttack, TECH_TRUCK_DEFENSE AS techTruckDefense, TECH_TRUCK_SPEED AS techTruckSpeed, TECH_TRUCK_RANGE AS techTruckRange, TECH_AIRPLANE_ATTACK AS techAirplaneAttack, TECH_AIRPLANE_DEFENSE AS techAirplaneDefense, TECH_AIRPLANE_SPEED AS techAirplaneSpeed, TECH_AIRPLANE_RANGE AS techAirplaneRange, TECH_CARRY_ADD AS techCarryAdd, TECH_DEFENSE_ATTACK_ADD AS techDefenseAttackAdd, TECH_WOUNDED_ARMY_RATE AS techWoundedArmyRate, TECH_PROTECT_RESOURCE_PERCENT AS techProtectResourcePercent, LAST_MANAGE_TIME AS lastManageTime FROM T_CITY_EXT WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getCityExtList" resultClass="CityExt">
+		SELECT CITY_ID AS cityID, TECH_ARMY_ATTACK AS techArmyAttack, TECH_ARMY_DEFENSE AS techArmyDefense, TECH_ARMY_SPEED AS techArmySpeed, TECH_ARMY_RANGE AS techArmyRange, TECH_TRUCK_ATTACK AS techTruckAttack, TECH_TRUCK_DEFENSE AS techTruckDefense, TECH_TRUCK_SPEED AS techTruckSpeed, TECH_TRUCK_RANGE AS techTruckRange, TECH_AIRPLANE_ATTACK AS techAirplaneAttack, TECH_AIRPLANE_DEFENSE AS techAirplaneDefense, TECH_AIRPLANE_SPEED AS techAirplaneSpeed, TECH_AIRPLANE_RANGE AS techAirplaneRange, TECH_CARRY_ADD AS techCarryAdd, TECH_DEFENSE_ATTACK_ADD AS techDefenseAttackAdd, TECH_WOUNDED_ARMY_RATE AS techWoundedArmyRate, TECH_PROTECT_RESOURCE_PERCENT AS techProtectResourcePercent, LAST_MANAGE_TIME AS lastManageTime FROM T_CITY_EXT
+	</select>
+
+	<update id="updateCityExtParams" parameterClass="java.util.Map">
+		UPDATE T_CITY_EXT 
+		<dynamic prepend="SET">
+			<isNotNull prepend="," property="techArmyAttack">
+				TECH_ARMY_ATTACK=#techArmyAttack#
+			</isNotNull>
+			<isNotNull prepend="," property="techArmyDefense">
+				TECH_ARMY_DEFENSE=#techArmyDefense#
+			</isNotNull>
+			<isNotNull prepend="," property="techArmySpeed">
+				TECH_ARMY_SPEED=#techArmySpeed#
+			</isNotNull>
+			<isNotNull prepend="," property="techArmyRange">
+				TECH_ARMY_RANGE=#techArmyRange#
+			</isNotNull>
+			<isNotNull prepend="," property="techTruckAttack">
+				TECH_TRUCK_ATTACK=#techTruckAttack#
+			</isNotNull>
+			<isNotNull prepend="," property="techTruckDefense">
+				TECH_TRUCK_DEFENSE=#techTruckDefense#
+			</isNotNull>
+			<isNotNull prepend="," property="techTruckSpeed">
+				TECH_TRUCK_SPEED=#techTruckSpeed#
+			</isNotNull>
+			<isNotNull prepend="," property="techTruckRange">
+				TECH_TRUCK_RANGE=#techTruckRange#
+			</isNotNull>
+			<isNotNull prepend="," property="techAirplaneAttack">
+				TECH_AIRPLANE_ATTACK=#techAirplaneAttack#
+			</isNotNull>
+			<isNotNull prepend="," property="techAirplaneDefense">
+				TECH_AIRPLANE_DEFENSE=#techAirplaneDefense#
+			</isNotNull>
+			<isNotNull prepend="," property="techAirplaneSpeed">
+				TECH_AIRPLANE_SPEED=#techAirplaneSpeed#
+			</isNotNull>
+			<isNotNull prepend="," property="techAirplaneRange">
+				TECH_AIRPLANE_RANGE=#techAirplaneRange#
+			</isNotNull>
+			<isNotNull prepend="," property="techCarryAdd">
+				TECH_CARRY_ADD=#techCarryAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="techDefenseAttackAdd">
+				TECH_DEFENSE_ATTACK_ADD=#techDefenseAttackAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="techWoundedArmyRate">
+				TECH_WOUNDED_ARMY_RATE=#techWoundedArmyRate#
+			</isNotNull>
+			<isNotNull prepend="," property="techProtectResourcePercent">
+				TECH_PROTECT_RESOURCE_PERCENT=#techProtectResourcePercent#
+			</isNotNull>
+			<isNotNull prepend="," property="lastManageTime">
+				LAST_MANAGE_TIME=#lastManageTime#
+			</isNotNull>
+		</dynamic>
+		WHERE CITY_ID=#cityID#
+	</update>
+
+</sqlMap>

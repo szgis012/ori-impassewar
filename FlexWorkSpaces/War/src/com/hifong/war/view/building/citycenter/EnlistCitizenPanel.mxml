@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="240"   show="onShow()" hide="onHide()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.treasure.TreasureShopWindow;
+			import com.hifong.war.events.building.citycenter.FinishEnlistCitizenEvent;
+			import com.hifong.war.constant.TreasureConstant;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.hifong.war.events.treasure.UseTreasureEvent;
+			import mx.binding.utils.BindingUtils;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.events.building.citycenter.ClientFinishEnlistCitizenEvent;
+			import com.hifong.war.constant.ConsumeConstant;
+			import com.hifong.war.events.building.citycenter.CancelEnlistCitizenEvent;
+			import mx.events.CollectionEventKind;
+			import mx.events.CollectionEvent;
+			import com.hifong.war.common.ClientProcess;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.citycenter.EnlistCitizenEvent;
+			import com.hifong.war.util.DateFormatUtil;
+			import mx.events.SliderEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//监视招募市民进程改变
+			private var enlistCitizenProcessWatcher:ChangeWatcher;
+			
+			//计时器
+			private var processTimer:Timer;
+			
+			//处理文本框改变时的值
+			private function onTxtChange():void{
+				if(this.txtCitizenNum.length==0)
+					this.txtCitizenNum.text = "0";
+					
+				this.sldModifyNum.value = parseInt(this.txtCitizenNum.text);
+				computeTime(this.sldModifyNum.value);
+			}
+		
+			private function enlistCitizen():void{
+				if(model.enlistCitizenProcess){
+					MsgBox.showMessage("目前已有征召市民的进程，完成后才能进行再次征召。");
+					return;
+				}
+				
+				if(this.sldModifyNum.value <= 0){
+					MsgBox.showMessage("征召市民的数量最少为1。");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new EnlistCitizenEvent(this.sldModifyNum.value));
+			}
+		
+			private function onSldChange(event:SliderEvent):void{
+				computeTime(event.value);
+			}
+			
+			private function onShow():void{
+				enlistCitizenProcessWatcher = ChangeWatcher.watch(model,"enlistCitizenProcess",onEnlistCitizenProcessChange);
+				onEnlistCitizenProcessChange(null);
+			}
+			
+			private function onEnlistCitizenProcessChange(event:Object):void{
+				if(model.enlistCitizenProcess){
+					updateProcessTime();
+					this.btnFinish.visible = true;
+					this.btnCancel.visible = true;
+					startTimer();
+				}else{
+					setDefaultState();
+					stopTimer();
+				}
+			}
+			
+			//设置缺省状态
+			private function setDefaultState():void{
+				this.btnFinish.visible = false;
+				this.btnCancel.visible = false;
+				this.lblProcess.htmlText = "当前没有招募市民的进程";
+			}
+			
+			private function onTime(event:TimerEvent):void{
+				if(model.enlistCitizenProcess){
+					updateProcessTime();
+				}else{
+					setDefaultState();
+					stopTimer();
+				}
+			}
+			
+			//更新剩余时间 
+			private function updateProcessTime():void{
+				var str:String = "征召市民(" + model.enlistCitizenProcess.amount + "个)  剩余：";
+				var leavingSeconds:Number = Math.max(0,Math.floor((model.enlistCitizenProcess.finishTime.time-model.serverTime.time)/1000));
+				str += DateFormatUtil.convertSecondToTime(leavingSeconds);
+				str += "  完成时间：" + DateFormatUtil.formatTime(model.enlistCitizenProcess.finishTime);
+				
+				this.lblProcess.htmlText = str;
+			}
+			
+			//如果在显示该面板时关闭会导致onHide无法被调用，所以父窗口关闭的时候需要调用该方法
+			public function onParentWindowClose():void{
+				onHide();
+			}
+			
+			private function onHide():void{
+				stopTimer();
+				
+				if(enlistCitizenProcessWatcher){
+					enlistCitizenProcessWatcher.unwatch();
+					enlistCitizenProcessWatcher=null;
+				}
+			}
+			
+			private function startTimer():void{
+				if(!this.processTimer){
+					this.processTimer = new Timer(1000);
+					this.processTimer.addEventListener(TimerEvent.TIMER,onTime);
+					this.processTimer.start();
+				}
+			}
+			
+			private function stopTimer():void{
+				if(this.processTimer){
+					this.processTimer.removeEventListener(TimerEvent.TIMER,onTime);
+					this.processTimer.stop();
+					this.processTimer = null;
+				}
+			}
+			
+			//计算需要的时间
+			private function computeTime(num:int):void{
+				this.txtNeedTime.text = DateFormatUtil.convertSecondToTime((num * ConsumeConstant.CITIZEN_COST_TIME ));
+				var date:Date = new Date();
+				date.time += (num * ConsumeConstant.CITIZEN_COST_TIME  * 1000);
+				this.txtFinishTime.text = DateFormatUtil.formatLongDate(date);
+			}
+			
+			/**
+			 * 立即完成
+			 */
+			private function onFinish():void {
+				MsgBox.showConfirm("确定要立即完成当前市民征召吗？立即完成当前市民征召需花费1个征召令。", function ():void{
+					var treasure:TreasureItemVO;
+					for each(var treasureItemVO:TreasureItemVO in model.treasureList){
+						if(treasureItemVO.treasureID==TreasureConstant.CITIZEN_EMLIST_COMMAND){
+							treasure=treasureItemVO;
+							break;
+						}
+					}
+					//宝物数量不足
+					if(treasure==null || treasure.num<1){
+							MsgBox.showConfirm("\n征召令道具"+"数量不足，是否去商城购买？ " ,function():void{
+								var win:TreasureShopWindow = new TreasureShopWindow();
+								win.treasureListCategory=TreasureCategoryConstant.ACCELERATE;
+								WindowUtil.showWindow(win); 
+							});
+						return ;
+					}
+					treasure.num-=1;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new FinishEnlistCitizenEvent());
+				});
+			}
+			/**
+			 * 取消征召
+			 */
+			private function onCancel():void{
+				MsgBox.showConfirm("取消只返回部分资源，您确定要进行该操作吗？",function():void{
+					if(model.enlistCitizenProcess){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new CancelEnlistCitizenEvent(model.enlistCitizenProcess.productionQueueID));
+					}else{
+						MsgBox.showMessage("招募市民的进程已被取消！");
+					}
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="560" height="30" styleName="CanvasBorder" id="pnlInfo">
+		<mx:Text x="5" y="4" text="征召1个市民将会占用1个居住空间，同时消耗10食物。" width="546" height="18"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="48" width="560" height="30" id="pnlProcess" styleName="CanvasBorder">
+		<mx:Label x="5" y="4" id="lblProcess"  width="411" height="18"/>
+		<mx:Button x="426" y="2" label="完成" height="22" width="60" click="onFinish()" id="btnFinish"/>
+		<mx:Button x="494" y="2" label="取消" click="onCancel()" id="btnCancel" height="22" width="60"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="86" width="560" height="144" id="pnlEnlist" styleName="CanvasBorder" >
+		<mx:Label x="8" y="7" text="可召人数："/>
+		<mx:Text x="76" y="7" text="{Math.max(0,model.cityInfo.populationMax-model.cityInfo.populationTotal)}" width="108" height="20"/>
+		<mx:Label x="192" y="7" text="当前食物："/>
+		<mx:Text x="260" y="7" text="{model.cityInfo.cityResource.foodNum}" width="124" height="20"/>
+		<mx:Label x="10" y="35" text="征召人数："/>
+		<mx:TextInput id="txtCitizenNum" x="270" y="34" width="80" maxChars="8" text="{this.sldModifyNum.value}" change="onTxtChange()" />
+		<mx:Label x="10" y="63" text="需要时间："/>
+		<mx:Text x="78" y="63" id="txtNeedTime" width="120" text="00时00分00秒"/>
+		<mx:Text x="270" y="63" id="txtFinishTime" width="120" text="0000-00-00 00:00"/>
+		<mx:HSlider x="101" y="34" id="sldModifyNum"  enabled="{!model.enlistCitizenProcess}" sliderThumbClass="com.hifong.war.view.assets.skin.CustomSliderThumb" change="onSldChange(event)" liveDragging="true" minimum="0" maximum="{model.cityInfo.populationMax-model.cityInfo.populationTotal}" snapInterval="1" dataTipPrecision="0" width="100"/>
+		<mx:Label x="78" y="35" text="0" id="lblMinNum" width="15" textAlign="right" useHandCursor="true" buttonMode="true" mouseChildren="false" click="{ if(!model.enlistCitizenProcess ){this.sldModifyNum.value=0 ;computeTime(0)} }"/>
+		<mx:Label x="209" y="35" id="lblMaxNum" text="{Math.max(0,model.cityInfo.populationMax-model.cityInfo.populationTotal)}" useHandCursor="true" buttonMode="true" mouseChildren="false" click="{ if(!model.enlistCitizenProcess ){this.sldModifyNum.value=model.cityInfo.populationMax-model.cityInfo.populationTotal;computeTime(sldModifyNum.value)} }" width="60"/>
+		<mx:Label x="206" y="63" text="完成时间：" />
+		<mx:Button x="477" y="60" label="征召" click="enlistCitizen()" enabled="{!model.enlistCitizenProcess}"/>
+		<mx:Label x="392" y="7" text="消耗食物："/>
+		<mx:Label x="460" y="7" text="{this.sldModifyNum.value * 10}" width="90"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

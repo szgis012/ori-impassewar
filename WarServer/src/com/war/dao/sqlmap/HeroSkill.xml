@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="HeroSkill">
+	<typeAlias alias="HeroSkill" type="com.war.domain.HeroSkill" />
+	
+	<insert id="createHeroSkill" parameterClass="HeroSkill">
+		INSERT INTO T_HERO_SKILL(CITY_HERO_ID, SKILL_ID, LEVEL, PROFICIENCY) VALUES(#cityHeroID#, #skillID#, #level#, #proficiency#)
+		<selectKey resultClass="Integer" keyProperty="heroSkillID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateHeroSkillProficiency" parameterClass="java.util.Map">
+		UPDATE T_HERO_SKILL SET PROFICIENCY=#proficiency# WHERE HERO_SKILL_ID=#heroSkillID#
+	</update>
+	
+	<update id="updateHeroSkill" parameterClass="HeroSkill">
+		UPDATE T_HERO_SKILL SET HERO_SKILL_ID=#heroSkillID#, CITY_HERO_ID=#cityHeroID#, SKILL_ID=#skillID#, LEVEL=#level#, PROFICIENCY=#proficiency# WHERE HERO_SKILL_ID=#heroSkillID#
+	</update>
+	
+	<delete id="deleteHeroSkillByID" parameterClass="Integer">
+		DELETE FROM T_HERO_SKILL WHERE HERO_SKILL_ID=#heroSkillID#
+	</delete>
+	
+	<delete id="deleteHeroSkillListByCityHeroID" parameterClass="Integer">
+		DELETE FROM T_HERO_SKILL WHERE CITY_HERO_ID=#cityHeroID#
+	</delete>
+	
+	<select id="getHeroSkillByID" parameterClass="Integer" resultClass="HeroSkill">
+		SELECT HERO_SKILL_ID AS heroSkillID, CITY_HERO_ID AS cityHeroID, SKILL_ID AS skillID, LEVEL AS level, PROFICIENCY AS proficiency FROM T_HERO_SKILL WHERE HERO_SKILL_ID=#heroSkillID#
+	</select>
+	
+	<select id="getHeroSkillByCityHeroIDAndSkillID" parameterClass="java.util.Map" resultClass="HeroSkill">
+		SELECT HERO_SKILL_ID AS heroSkillID, CITY_HERO_ID AS cityHeroID, SKILL_ID AS skillID, LEVEL AS level, PROFICIENCY AS proficiency FROM T_HERO_SKILL WHERE CITY_HERO_ID=#cityHeroID# AND SKILL_ID=#skillID#
+	</select>
+	
+	<select id="getHeroSkillListByCityHeroID" parameterClass="Integer" resultClass="HeroSkill">
+		SELECT HERO_SKILL_ID AS heroSkillID, CITY_HERO_ID AS cityHeroID, SKILL_ID AS skillID, LEVEL AS level, PROFICIENCY AS proficiency FROM T_HERO_SKILL WHERE CITY_HERO_ID=#cityHeroID#
+	</select>
+	
+	<select id="getHeroSkillList" resultClass="HeroSkill">
+		SELECT HERO_SKILL_ID AS heroSkillID, CITY_HERO_ID AS cityHeroID, SKILL_ID AS skillID, LEVEL AS level, PROFICIENCY AS proficiency FROM T_HERO_SKILL
+	</select>
+
+</sqlMap>

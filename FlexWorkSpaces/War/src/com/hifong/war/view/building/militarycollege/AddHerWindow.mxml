@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="656" height="332" layout="absolute" xmlns:militarycollege="com.hifong.war.view.building.militarycollege.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.WindowUtil;
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官招募" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<militarycollege:HeroList width="600" height="260"  x="28" y="45"/>
+	
+</mx:TitleWindow>

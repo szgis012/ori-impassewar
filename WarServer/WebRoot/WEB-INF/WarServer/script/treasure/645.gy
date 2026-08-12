@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:645
+ * 
+ * 名称：战争详解
+ * 描述：身经百战的先驱者留下的战争心得，指挥官学习后，直接增加指挥官经验10000，每天限购三本。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroExp(params["cityHeroID"], 10000);

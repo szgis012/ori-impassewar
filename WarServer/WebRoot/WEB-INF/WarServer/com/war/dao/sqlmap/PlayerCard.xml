@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="PlayerCard">
+	<typeAlias alias="PlayerCard" type="com.war.domain.PlayerCard" />
+	
+	<insert id="createPlayerCard" parameterClass="PlayerCard">
+		INSERT INTO T_PLAYER_CARD(PLAYER_ID, TYPE, CREATE_TIME) VALUES(#playerID#, #type#, SYSDATE())
+	</insert>
+	
+	<select id="getPlayerCardByPlayerIDAndType" parameterClass="java.util.Map" resultClass="PlayerCard">
+		SELECT PLAYER_ID AS playerID, TYPE AS type, CREATE_TIME AS createTime FROM T_PLAYER_CARD WHERE PLAYER_ID=#playerID# AND TYPE=#type#
+	</select>
+
+</sqlMap>

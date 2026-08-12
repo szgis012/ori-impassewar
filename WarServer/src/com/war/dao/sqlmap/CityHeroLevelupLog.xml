@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityHeroLevelupLog">
+	<typeAlias alias="CityHeroLevelupLog" type="com.war.domain.CityHeroLevelupLog" />
+
+	<insert id="createCityHeroLevelupLog" parameterClass="CityHeroLevelupLog">
+		INSERT INTO T_CITY_HERO_LEVELUP_LOG(CITY_HERO_ID, LEVEL, ADD_COMMAND, ADD_DEFENSE, ADD_MIND, ADD_EXECUTIVEPOWER) VALUES(#cityHeroID#, #level#, #addCommand#, #addDefense#, #addMind#, #addExecutivepower#)
+		<selectKey resultClass="Integer" keyProperty="cityHeroLevelupLogID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateCityHeroLevelupLog" parameterClass="CityHeroLevelupLog">
+		UPDATE T_CITY_HERO_LEVELUP_LOG SET CITY_HERO_ID=#cityHeroID#, LEVEL=#level#, ADD_COMMAND=#addCommand#, ADD_DEFENSE=#addDefense#, ADD_MIND=#addMind#, ADD_EXECUTIVEPOWER=#addExecutivepower# WHERE CITY_HERO_LEVELUP_LOG_ID=#cityHeroLevelupLogID#
+	</update>
+
+	<delete id="deleteCityHeroLevelupLogByID" parameterClass="Integer">
+		DELETE FROM T_CITY_HERO_LEVELUP_LOG WHERE CITY_HERO_LEVELUP_LOG_ID=#cityHeroLevelupLogID#
+	</delete>
+	
+	<delete id="deleteCityHeroLevelupLogByCityHeroID" parameterClass="Integer">
+		DELETE FROM T_CITY_HERO_LEVELUP_LOG WHERE CITY_HERO_ID=#cityHeroID#
+	</delete>
+	
+	<delete id="deleteCityHeroLevelupLogByCityHeroIDAndLevel" parameterClass="java.util.Map">
+		DELETE FROM T_CITY_HERO_LEVELUP_LOG WHERE LEVEL>=#level# AND CITY_HERO_ID=#cityHeroID#
+	</delete>
+
+	<select id="getCityHeroLevelupLogByID" parameterClass="Integer" resultClass="CityHeroLevelupLog">
+		SELECT CITY_HERO_LEVELUP_LOG_ID AS cityHeroLevelupLogID, CITY_HERO_ID AS cityHeroID, LEVEL AS level, ADD_COMMAND AS addCommand, ADD_DEFENSE AS addDefense, ADD_MIND AS addMind, ADD_EXECUTIVEPOWER AS addExecutivepower FROM T_CITY_HERO_LEVELUP_LOG WHERE CITY_HERO_LEVELUP_LOG_ID=#cityHeroLevelupLogID#
+	</select>
+
+	<select id="getCityHeroLevelupLogList" resultClass="CityHeroLevelupLog">
+		SELECT CITY_HERO_LEVELUP_LOG_ID AS cityHeroLevelupLogID, CITY_HERO_ID AS cityHeroID, LEVEL AS level, ADD_COMMAND AS addCommand, ADD_DEFENSE AS addDefense, ADD_MIND AS addMind, ADD_EXECUTIVEPOWER AS addExecutivepower FROM T_CITY_HERO_LEVELUP_LOG
+	</select>
+	
+	<select id="getCityHeroLevelupLogByCityHeroIDAndLevel" resultClass="CityHeroLevelupLog">
+		SELECT CITY_HERO_LEVELUP_LOG_ID AS cityHeroLevelupLogID, CITY_HERO_ID AS cityHeroID, LEVEL AS level, ADD_COMMAND AS addCommand, ADD_DEFENSE AS addDefense, ADD_MIND AS addMind, ADD_EXECUTIVEPOWER AS addExecutivepower FROM T_CITY_HERO_LEVELUP_LOG WHERE LEVEL=#level# AND CITY_HERO_ID=#cityHeroID#
+	</select>
+
+</sqlMap>

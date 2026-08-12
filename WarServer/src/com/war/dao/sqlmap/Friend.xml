@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Friend">
+	<typeAlias alias="Friend" type="com.war.domain.Friend" />
+
+	<insert id="createFriend" parameterClass="Friend">
+		INSERT INTO T_FRIEND(PLAYER_ID, TARGET_PLAYER_ID, STATE, CREATE_TIME) VALUES(#playerID#, #targetPlayerID#, #state#, #createTime#)
+		<selectKey resultClass="Integer" keyProperty="friendID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateFriend" parameterClass="Friend">
+		UPDATE T_FRIEND SET PLAYER_ID=#playerID#, TARGET_PLAYER_ID=#targetPlayerID#, STATE=#state#, CREATE_TIME=#createTime# WHERE FRIEND_ID=#friendID#
+	</update>
+	
+	<update id="updateStateByPlayerIDAndTargetPlayerID" parameterClass="java.util.Map">
+		UPDATE T_FRIEND SET STATE=#state# WHERE ( PLAYER_ID=#playerID# AND TARGET_PLAYER_ID=#targetPlayerID# ) OR ( PLAYER_ID=#targetPlayerID# AND TARGET_PLAYER_ID=#playerID# )
+	</update>
+	
+	<delete id="deleteFriendByPlayerIDAndTargetPlayerID" parameterClass="java.util.Map">
+		DELETE FROM T_FRIEND WHERE ( PLAYER_ID=#playerID# AND TARGET_PLAYER_ID=#targetPlayerID# ) OR ( PLAYER_ID=#targetPlayerID# AND TARGET_PLAYER_ID=#playerID# ) 
+	</delete>
+
+	<delete id="deleteFriendByID" parameterClass="Integer">
+		DELETE FROM T_FRIEND WHERE Friend_ID=#friendID#
+	</delete>
+
+	<select id="getFriendByID" parameterClass="Integer" resultClass="Friend">
+		SELECT FRIEND_ID AS friendID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, STATE AS state, CREATE_TIME AS createTime FROM T_FRIEND WHERE Friend_ID=#friendID#
+	</select>
+
+	<select id="getFriendList" resultClass="Friend">
+		SELECT FRIEND_ID AS friendID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, STATE AS state, CREATE_TIME AS createTime FROM T_FRIEND
+	</select>
+	
+	<select id="getFriendListByPlayerID" parameterClass="java.lang.Integer" resultClass="Friend">
+		SELECT FRIEND_ID AS friendID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, STATE AS state, CREATE_TIME AS createTime FROM T_FRIEND WHERE PLAYER_ID=#playerID#	
+	</select>
+
+	<select id="getFriendListByPlayerIDAndTargetPlayerID" parameterClass="java.util.Map" resultClass="Friend">
+		SELECT FRIEND_ID AS friendID, PLAYER_ID AS playerID, TARGET_PLAYER_ID AS targetPlayerID, STATE AS state, CREATE_TIME AS createTime FROM T_FRIEND WHERE ( PLAYER_ID=#playerID# AND TARGET_PLAYER_ID=#targetPlayerID# ) OR ( PLAYER_ID=#targetPlayerID# AND TARGET_PLAYER_ID=#playerID# )
+	</select>
+	
+	<select id="getFriendNumByPlayerID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_FRIEND WHERE PLAYER_ID=#playerID#
+	</select>
+	
+</sqlMap>

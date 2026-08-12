@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="696" height="478" showCloseButton="false" initialize="doInit()" close="doClose()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.constant.HeroQualityConstant;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.vo.TreasureItemVO;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.events.building.militarycollege.UpdateReinByCityHeroIDEvent;
+			import com.hifong.war.events.building.militarycollege.AddMilitarySpiritEvent;
+			import com.hifong.war.events.building.militarycollege.AddMilitarySoulEvent;
+			import com.hifong.war.events.building.militarycollege.StrengthenCityHeroStarEvent;
+			import mx.core.UIComponent;
+			import mx.core.IUIComponent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.ConvertUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroEvent;
+			import mx.core.IFlexDisplayObject;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.vo.CityHeroVO;
+			import com.hifong.war.events.building.militarycollege.SaveHeroPointEvent;
+			import com.hifong.war.events.building.militarycollege.HeroLevelUpEvent;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.militarycollege.DismissHeroEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			public var cityHero:CityHeroVO;
+			
+			private var window:CityHeroInfoWindow;
+			private var commandAdded:int=0,defenseAdded:int=0,mindAdded:int=0,executivepowerAdded:int=0;
+			
+			private var watcher:ChangeWatcher;
+			/** 英雄品质 */
+			[Bindable]
+			private var heroQuality:ArrayCollection=HeroQualityConstant.heroQuality;
+			private function doInit():void{
+				window=this;
+				if(model.cityHeroList.length>0)
+					cityHero=model.cityHeroList.getItemAt(0) as CityHeroVO;
+				model.currentCityHero=cityHero;
+				setStarLabel();
+				watcher=BindingUtils.bindSetter(updateCityHero,model,"currentCityHero");
+			}
+			/**
+			 * 更新城市指挥官信息
+			 */
+			public function updateCityHero(data:Object):void{
+				cityHero=model.currentCityHero;
+				setStarLabel();
+			}
+			
+			private function doClose():void{
+				
+				var totalPointAdded:int = commandAdded+defenseAdded+mindAdded+executivepowerAdded;
+				
+				if(totalPointAdded!=0){
+					MsgBox.showConfirm("您所分配的指挥属性还未保存，确定关闭当前窗口吗？",function ():void{
+						cityHero.command -= commandAdded;
+						cityHero.defense -= defenseAdded;
+						cityHero.mind -= mindAdded;
+						cityHero.executivepower -= executivepowerAdded;
+						cityHero.unsetPoint += totalPointAdded;
+						watcher.unwatch();
+						watcher=null;
+						cityHero = null;
+						saveCurrentCityHeroTOList();
+						WindowUtil.closeModelWindow(window);
+					});
+				}else{
+						watcher.unwatch();
+						watcher=null;
+					cityHero = null;
+						saveCurrentCityHeroTOList();
+					WindowUtil.closeModelWindow(window);
+				}
+				
+			}
+			
+			/**
+			 * 英雄改名
+			 */
+			private function heroRename():void{
+				var win:HeroRenameWindow = new HeroRenameWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 显示提升忠诚窗口
+			 */
+			private function showAddHeroLoyaltyWindow():void {
+				var win:AddCityHeroLoyalty = new AddCityHeroLoyalty();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 配置英雄装备
+			 */
+			private function configureEquipment():void{
+				var win:HeroEquipmentWindow = new HeroEquipmentWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 显示道具窗口
+			 */
+			private function showItemWindow():void{
+				var win:HeroItemWindow = new HeroItemWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 显示英雄技能
+			 */
+			private function showHeroSkill():void{
+				var win:HeroSkillWindow = new HeroSkillWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 英雄升级
+			 */
+			private function heroLevelUp():void{
+				
+				if(cityHero.exp<cityHero.expMax){
+					MsgBox.showMessage("指挥官经验不足。");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new HeroLevelUpEvent(cityHero.cityHeroID));
+				
+				model.currentCityHero.exp = model.currentCityHero.exp-model.currentCityHero.expMax;
+				model.currentCityHero.level = model.currentCityHero.level+1;
+				model.currentCityHero.unsetPoint = model.currentCityHero.unsetPoint+4;
+				
+				model.currentCityHero.expMax = 45 + model.currentCityHero.level*(cityHero.level-1)*10;
+				
+			}
+			
+			/**
+			 * 英雄加点
+			 */
+			private function addHeroPoint(type:int):void{
+				
+				if(cityHero.unsetPoint<=0){
+					MsgBox.showMessage("指挥官潜力不足。");
+					return;
+				}
+				
+				cityHero.unsetPoint--;
+				switch(type){
+					case 1:
+						cityHero.command++;
+						commandAdded++;
+						break;
+					case 2:
+						cityHero.defense++;
+						defenseAdded++;
+						break;
+					case 3:
+						cityHero.mind++;
+						mindAdded++;
+						break;
+					case 4:
+						cityHero.executivepower++;
+						executivepowerAdded++;
+						break;
+					default:
+						break;
+				}
+				
+				btn_saveHeroPoint.enabled = true;
+				
+			}
+			
+			/**
+			 * 重置英雄属性点数
+			 */
+			private function resetHeroPoint():void {
+				var win:ResetHeroPointWindow = new ResetHeroPointWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 保存英雄属性点数
+			 */
+			private function saveHeroPoint():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new SaveHeroPointEvent(cityHero.cityHeroID,commandAdded,defenseAdded,mindAdded,executivepowerAdded));
+				commandAdded = 0;
+				defenseAdded = 0;
+				mindAdded = 0;
+				executivepowerAdded = 0;
+				btn_saveHeroPoint.enabled = false;
+			}
+			
+			/**
+			 * 解雇英雄
+			 */
+			private function dismissHero():void{
+				MsgBox.showConfirm("您确定要解雇当前指挥官吗？",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DismissHeroEvent(cityHero.cityHeroID));
+					doClose();
+					CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityHeroListEvent(model.cityInfo.cityID));
+				});
+			}
+			/**
+			 * 将英雄状态值转换为对应的字符串形式
+			 */ 
+			private function translateState(item:Object, column:DataGridColumn):String{
+				return ConvertUtil.getCityHeroStateName(item['state']);
+			}
+			/**
+			 * 选择指挥官
+			 */
+			 private function itemClickHandler(data:Object):void{
+			 	saveCurrentCityHeroTOList();
+			 	
+			 	cityHero=data as CityHeroVO;
+			 	model.currentCityHero=cityHero;
+			 	setStarLabel();
+			 }
+			 /**
+			 * 指挥官星级
+			 */
+			 private function setStarLabel():void{
+			 	if(cityHero==null) return;
+			 	var index:int=cityHero.star;
+			 	if(index>0){
+			 		var s:String="";
+			 		s+="<font color='#FFFEB5'>";
+			 		var i:int=0;
+			 		for( i=0;i<index;i++){
+			 			s+="★";
+			 		}
+			 		s+="</font>";
+			 		index=5-index;
+			 		for(i=0;i<index;i++){
+			 			s+="★";
+			 		}
+			 		starTxt.htmlText=s;
+			 		return;
+			 	}
+		 		starTxt.htmlText="★★★★★";
+			 }
+		/**
+		 * 强化城市英雄星级
+		 * @param playerID
+		 * @param cityHeroID
+		 * @param upgradeLuckTreasureID: (强运符)TreasureConstant中661~662, 0 代表不用道具
+		 * @param stimulateBloodTreasureID: (血激符)TreasureConstant中663~664, 0 代表不用道具
+		 */
+		 private function ShowStrengthenCityHeroStarWindow():void{
+		 	var win:StrengthenCityHeroStarWindow=new StrengthenCityHeroStarWindow();
+		 	WindowUtil.showModelWindow(win);
+		 }
+		 //===================================to do============
+		 /**
+		 * 保存指挥官信息到缓存列表 
+		 */
+		 private function saveCurrentCityHeroTOList():void{
+		 	if(model.currentCityHero==null) return;
+		 	for each(var item:CityHeroVO in model.cityHeroList){
+		 		if(item.cityHeroID==model.currentCityHero.cityHeroID) item=model.currentCityHero;
+		 	}
+		 }
+		 /**
+		 * 增加英雄体力
+		 */
+		 private function addHeroStamina():void{
+		 	//用道具提升
+		 	var params:Object=new Object();
+		 	params.playerID=model.playerInfo.playerID;
+		 	params.cityHeroID=cityHero.cityHeroID;
+		 	params.window=this;
+		 	params.type=1;
+		 	
+		 	var win:UseTreasureWindow = new UseTreasureWindow();
+		 	win.treasureCategory=TreasureCategoryConstant.COMMANDER;
+		 	win.treasureType=TreasureTypeConstant.STAMINA_ADD;
+		 	win.params=params;
+		 	win.treasureUseAbel=1;
+		 	WindowUtil.showModelWindow(win);
+		 }
+		 /**
+		 * 增加英雄统御
+		 */
+		 private function addHeroRein():void{
+		 	CairngormEventDispatcher.getInstance().dispatchEvent(new UpdateReinByCityHeroIDEvent(cityHero.cityHeroID,cityHero.rein+1));
+		 }
+		 /**
+		 * 增加英雄士气
+		 */
+		 private function addHeroLeadership():void{
+		 	
+		 }
+		/**
+	 	* 增加军魄点数
+	 	* @param playerID
+	 	* @param cityHeroID
+	 	* @param treasureID TreasureConstant中671~673
+	 	*/
+		 private function addHeroMilitarySoul():void{
+		 	//用道具提升
+		 	var params:Object=new Object();
+		 	params.playerID=model.playerInfo.playerID;
+		 	params.cityHeroID=cityHero.cityHeroID;
+		 	params.window=this;
+		 	params.type=0;
+		 	
+		 	var win:UseTreasureWindow = new UseTreasureWindow();
+		 	win.treasureCategory=TreasureCategoryConstant.COMMANDER;
+		 	win.treasureType=TreasureTypeConstant.MILITARY_SOUL_ADD;
+		 	win.params=params;
+		 	win.treasureUseAbel=1;
+		 	win.canBuy=false;
+		 	WindowUtil.showModelWindow(win);
+		 }
+		   /**
+			 * 处理使用返回的使用宝物
+			 */
+			 public function handlerBack(params:Object,treasureItem:TreasureItemVO):void{
+			 	switch(params.type){
+			 		//提高军魄
+			 		case 0:
+			 			CairngormEventDispatcher.getInstance().dispatchEvent(new AddMilitarySoulEvent(params.playerID,params.cityHeroID,treasureItem.treasureID));
+			 		break;
+		 			//提升体力
+			 		case 1:
+			 		trace(treasureItem.treasureID);
+			 		break;
+			 	}
+			 }
+		 /**
+		 * 增加英雄军魂
+		 */
+		 private function addHeroMilitarySpirit():void{
+		 		CairngormEventDispatcher.getInstance().dispatchEvent(new AddMilitarySpiritEvent(cityHero.cityHeroID));
+		 }
+		 /**
+		 * 提升技能
+		 */
+		 private function addSkill():void{
+		 	
+		 }
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="59" width="646" height="396" styleName="CanvasBorder">
+		<mx:Image x="264" y="10" height="93" width="93" source="images/hero/{cityHero.head}.png"/>
+		<mx:Label x="404" y="11" text="名称：{cityHero.name}" width="120"/>
+		<mx:Label x="404" y="39" text="品质：{heroQuality.getItemAt(cityHero.quality-1)}" width="120"/>
+		<mx:Label x="405" y="67" text="等级：{cityHero.level}" width="120"/>
+		<mx:Label x="405" y="95" text="经验：{cityHero.exp}/{cityHero.expMax}" width="120"/>
+		<mx:Label x="405" y="123" text="状态：{ConvertUtil.getCityHeroStateName(cityHero.state)}" width="105"/>
+		<mx:Label x="244" y="214" text="体力：{cityHero.stamina}/{cityHero.staminaMax}" width="113" toolTip="释放技能会消耗指挥官体力，体力决定指挥官使用技能的次数"/>
+		<mx:Image x="365" y="218" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroStamina()" />
+		<mx:Label x="244" y="240" text="技能：{cityHero.skillList==null?0:cityHero.skillList.length}/{cityHero.maxSkillNum}" width="113" toolTip="技能决定指挥官学习技能的多少"/>
+		<mx:Image x="365" y="244" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addSkill()" />
+		<mx:Label x="244" y="325" text="忠诚：{cityHero.loyalty}" width="100" toolTip="战争失败会降低忠诚，通过金钱可提高忠诚，当指挥官忠诚低于20时，有一定几率叛逃"/>
+		<mx:Button x="366" y="324" label="提升" width="55" height="22" click="showAddHeroLoyaltyWindow()"/>
+		<mx:Label x="469" y="268" text="潜力：{cityHero.unsetPoint}" width="104"/>
+		<mx:Label x="469" y="190" text="指挥：{cityHero.command}" width="80" toolTip="指挥每提升10点增加指挥官指挥部队的攻击1点"/>
+		<mx:Image x="562" y="193" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroPoint(1)" /> 
+		<mx:Label x="469" y="214" text="防护：{cityHero.defense}" width="80" toolTip="防护每提升10点增加指挥官指挥部队的防御1点"/>
+		<mx:Image x="562" y="219" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroPoint(2)" />
+		<mx:Label x="469" y="163" width="80" text="思维：{cityHero.mind}" toolTip="思维每提升1点增加指挥官体力上限3点"/>
+		<mx:Image x="562" y="167" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroPoint(3)" />
+		<mx:Label x="469" y="240" text="行政：{cityHero.executivepower}" width="80" toolTip="行政每提升10点增加城市资源产出加成1%"/>
+		<mx:Image x="562" y="244" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroPoint(4)" />
+		
+		<mx:Label text="统御：{cityHero.rein}"  x="243" y="159" width="114" toolTip="统御决定指挥官的带兵数量"/>
+		<mx:Image x="365" y="163" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroRein()" />
+		<mx:Label text="领导：{cityHero.leadership}"  x="243" y="186" width="114" toolTip="领导影响军队的士气，可以通过训练营提高"/>
+		<mx:Image x="365" y="191" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroLeadership()" />
+		<mx:Label text="军魄：{cityHero.militarySoul}"  x="244" y="268" width="114" toolTip="军魄用来提高军魂与强化指挥官"/>
+		<mx:Image x="365" y="272" source="images/plus.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addHeroMilitarySoul()" />
+		<mx:Label text="军魂：{cityHero.militarySpirit}"  x="244" y="296" width="114" toolTip="军魂影响指挥官升级后获得高潜力点的概率"/>
+		<mx:Button x="366" y="293"  label="提升" width="55" height="22"  click="addHeroMilitarySpirit()" />
+		<mx:Label text="薪水：{cityHero.level *10}"  x="469" y="325" width="114"/>
+		<!--星级 -->
+		<mx:Text  id="starTxt"  enabled="false" buttonMode="true"  x="266"  y="119"  width="91"  textAlign="center"  click="ShowStrengthenCityHeroStarWindow()" />
+		
+		<mx:Button x="532" y="10" label="改名" click="heroRename()" width="55" height="22"/>
+		<mx:Button x="533" y="67" label="升级" enabled="{cityHero.exp>=cityHero.expMax}" width="55" height="22" click="heroLevelUp()"/>
+		<mx:Button x="469" y="295" label="洗点" width="55" height="22" click="resetHeroPoint()"/>
+		<mx:Button x="532" y="295" label="保存" width="55" height="22" enabled="false" id="btn_saveHeroPoint" click="saveHeroPoint()" />
+		<mx:Button x="318" y="360" label="装备" click="configureEquipment()" />
+		<mx:Button x="476" y="360" label="道具" click="showItemWindow()" />
+		<mx:Button x="557" y="360" label="强化" click="ShowStrengthenCityHeroStarWindow()" />
+		<mx:Button x="399" y="360" label="技能" click="showHeroSkill()" />
+		<mx:Button x="237" y="361" label="解雇" enabled="{cityHero.state==1}" click="dismissHero()"/>
+		<mx:Button x="244" y="95" label="提高" width="55" height="22" visible="false"/>
+		<mx:DataGrid  x="10" y="10" width="205" height="376" dataProvider="{model.cityHeroList}" itemClick="itemClickHandler(event.itemRenderer.data)">
+			<mx:columns>
+				<mx:DataGridColumn headerText="名称" sortable="false" dataField="name" />
+				<mx:DataGridColumn headerText="等级" sortable="false" dataField="level"  textAlign="right"/>
+				<mx:DataGridColumn headerText="状态" sortable="false" dataField="state" labelFunction="translateState" textAlign="center"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+</mx:TitleWindow>

@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:641
+ * 
+ * 名称：高卢战记
+ * 描述：增加指挥官获得的经验20%,时限1天
+ * 类型：指挥官
+ */
+
+def params = context.getParams();
+
+context.setCommanderExpAdd(params["cityHeroID"], 20, 1);

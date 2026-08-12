@@ -1,0 +1,31 @@
+/**
+ * 宝物编号:433
+ * 
+ * 名称：888元大礼包
+ * 描述：玩就送
+ * 类型：铜质战功箱*1
+ * 		高级荣誉箱*1 
+ * 		中立照会5*1
+ * 		战争概论*5
+ * 		初级流水线*5
+ * 		计算机*5
+ * 		建筑工*5
+ * 		运输队*10
+ * 		国家宝藏*10
+ */
+
+//出现的宝物
+int[] treasureList = [414, 418, 575, 644, 231, 221, 211, 241, 461];
+String[] treasureName = ["铜质战功箱", "高级名誉箱", "中立照会5", "战争概论", "初级流水线", "计算机", "建筑工", "运输队", "国家宝藏"];
+String[] imgs = ["414.png", "418.png", "575.png", "644.png", "231.png", "221.png", "211.png", "241.png", "461.png"];
+int[] treasureNum = [1, 1, 1, 5, 5, 5, 5, 10, 10];
+String dirName = "treasure";
+
+StringBuffer retstr = new StringBuffer();
+
+for(int i=0; i<treasureList.length; i++){
+	context.rewardTreasure(treasureList[i],treasureNum[i]);
+	retstr.append("${treasureName[i]}:${dirName}/${imgs[i]}:${treasureNum[i]}:2:${treasureList[i]}|");
+}
+
+return retstr.substring(0,retstr.length()-1);

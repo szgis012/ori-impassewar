@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="430" height="199" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.commandcenter.SetDefensiveMilitaryEvent;
+			import com.hifong.war.events.building.commandcenter.CancelDefensiveMilitaryEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.commandcenter.GetCityMilitaryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.constant.CityMilitaryStateConstant;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//监视城市军队列表变化
+			private var cityMilitaryListWatcher:ChangeWatcher;
+			//可以设置为城守军队的列表
+			[Bindable]
+			private var defensiveMilitaryList:ArrayCollection;
+			//不设置留守军队
+			private const CANCEL_DEFENSE_MILITARY:String = "不设置留守军队";
+			
+			
+			private function doInit():void{
+				cityMilitaryListWatcher = ChangeWatcher.watch(model,"cityMilitaryList",refreshDefensiveMilitaryList);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityMilitaryListEvent(model.cityInfo.cityID));
+			}
+			
+			//更新留守军队信息
+			private function refreshDefensiveMilitaryList(event:Object):void{
+				var list:ArrayCollection = new ArrayCollection();
+				var selectedIndex:int = -1;
+				
+				if(model.cityMilitaryList){
+					var cm:Object;
+					
+					for(var i:int=0; i<model.cityMilitaryList.length; i++){
+						cm = model.cityMilitaryList.getItemAt(i);
+						
+						switch(cm.state){
+							case CityMilitaryStateConstant.NORMAL:
+								list.addItem(cm);
+								break;
+							case CityMilitaryStateConstant.STAY:
+								list.addItem(cm);
+								selectedIndex = list.length - 1;
+								break;
+						}
+					}
+				}
+				
+				//如果已经指定了留守部队,就添加移除项
+				if(selectedIndex >= 0){
+					list.addItemAt(CANCEL_DEFENSE_MILITARY,0);
+					selectedIndex += 1;
+				}
+				
+				this.defensiveMilitaryList = list;
+				this.cboDefensivMilistary.selectedIndex = selectedIndex;
+			}
+			
+			//设置留守军队
+			private function onStay():void{
+				if(this.cboDefensivMilistary.selectedIndex < 0){
+					MsgBox.showMessage("请先选择要留守的军队");
+					return;
+				}
+				
+				//如果是取消设置留守军队
+				if(CANCEL_DEFENSE_MILITARY == this.cboDefensivMilistary.selectedLabel){
+					onCancel();
+				}else{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new SetDefensiveMilitaryEvent(cboDefensivMilistary.selectedItem.cityMilitaryID));
+				}
+			}
+			
+			//取消留守军队
+			private function onCancel():void{
+				if(model.cityInfo.defensiveMilitary <= 0){
+					MsgBox.showMessage("还没有设置留守军队");
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CancelDefensiveMilitaryEvent(model.cityInfo.defensiveMilitary));
+			}
+			
+			private function doClose():void{
+				cityMilitaryListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="留守军队" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TextArea x="25" y="37" width="380" height="82" text="设置城市留守军队，它将为您保护城市的安全。设置留守军队之后，城市遭到进攻时，这支军队将会承担守卫城市的重任，加入战斗。1座城市进可以设置1支留守军队。您也可以取消这只军队，设定其他军队为留守军队" editable="false"/>
+	<mx:Canvas x="25" y="127" width="380" height="45" styleName="CanvasBorder">
+		<mx:Label x="6" y="13" text="留守军队：" fontWeight="bold"/>
+		<mx:ComboBox x="73" y="10" width="229" id="cboDefensivMilistary" dataProvider="{defensiveMilitaryList}" labelField="name"/>
+		<mx:Button x="310" y="10" label="确 定" click="onStay()" width="60" height="26"/>
+	</mx:Canvas>
+</mx:TitleWindow>

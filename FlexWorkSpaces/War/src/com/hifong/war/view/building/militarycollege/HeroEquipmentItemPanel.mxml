@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="80" height="100" click="changeEquipment()" mouseOver="onMouseover()" mouseOut="onMouseout()" useHandCursor="true" buttonMode="true" mouseChildren="false" toolTip=" " toolTipCreate="generateTooltip(event)" styleName="InnerBorder">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.militarycollege.ChangeCityHeroEquipmentEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.constant.ImagePathConstant;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.util.tooltip.EquipmentTooltip;
+			import com.hifong.war.model.ModelLocator;
+			import mx.events.ToolTipEvent;
+
+			private var model:ModelLocator = ModelLocator.getInstance();
+
+			[Bindable]
+			public var playerEquipment:Object;
+			
+			private var hilightFilter:ColorMatrixFilter = new ColorMatrixFilter([1, 0, 0, 0, 50, 0, 1, 0, 0, 50, 0, 0, 1, 0, 50, 0, 0, 0, 1, 0]);
+			
+			private function onMouseover():void{
+				img.filters = [hilightFilter];
+			}
+			
+			private function onMouseout():void{
+				img.filters = null;
+			}
+			
+			private function generateTooltip(event:ToolTipEvent):void{
+				event.toolTip = new EquipmentTooltip(playerEquipment.equipment);
+			}
+			
+			/**
+			 * 更换装备
+			 */
+			private function changeEquipment():void{
+				
+				if(model.currentCityHero.level<playerEquipment.equipment.requiredLevel){
+					MsgBox.showMessage("指挥官等级不足，无法更换装备");
+					return;
+				}
+				
+				var currentHeroEquipment:Object = null;
+				
+				switch(playerEquipment.equipment.category){
+					case 1:
+						if(model.currentCityHero.equipmentEpaulet==playerEquipment.equipmentID){
+							return;
+						}
+						
+						if(model.currentCityHero.equipmentEpaulet!=0){
+							currentHeroEquipment = model.currentCityHero.equipmentEpauletObject;
+						}
+						
+						model.currentCityHero.equipmentEpaulet = playerEquipment.equipmentID;
+						model.currentCityHero.equipmentEpauletObject = playerEquipment.equipment;
+						
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,playerEquipment.playerEquipmentID,parentDocument.currentIndex+1));
+						break;
+					case 2:
+						if(model.currentCityHero.equipmentCap==playerEquipment.equipmentID){
+							return;
+						}
+						
+						if(model.currentCityHero.equipmentCap!=0){
+							currentHeroEquipment = model.currentCityHero.equipmentCapObject;
+						}
+						
+						model.currentCityHero.equipmentCap = playerEquipment.equipmentID;
+						model.currentCityHero.equipmentCapObject = playerEquipment.equipment;
+
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,playerEquipment.playerEquipmentID,parentDocument.currentIndex+1));
+						break;
+					case 3:
+						if(model.currentCityHero.equipmentClothes==playerEquipment.equipmentID){
+							return;
+						}
+						
+						if(model.currentCityHero.equipmentClothes!=0){
+							currentHeroEquipment = model.currentCityHero.equipmentClothesObject;
+						}
+						
+						model.currentCityHero.equipmentClothes = playerEquipment.equipmentID;
+						model.currentCityHero.equipmentClothesObject = playerEquipment.equipment;
+
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,playerEquipment.playerEquipmentID,parentDocument.currentIndex+1));
+						break;
+					case 4:
+						if(model.currentCityHero.equipmentShoe==playerEquipment.equipmentID){
+							return;
+						}
+						
+						if(model.currentCityHero.equipmentShoe!=0){
+							currentHeroEquipment = model.currentCityHero.equipmentShoeObject;
+						}
+						
+						model.currentCityHero.equipmentShoe = playerEquipment.equipmentID;
+						model.currentCityHero.equipmentShoeObject = playerEquipment.equipment;
+
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,playerEquipment.playerEquipmentID,parentDocument.currentIndex+1));
+						break;
+					case 5:
+						if(model.currentCityHero.equipmentWeapon==playerEquipment.equipmentID){
+							return;
+						}
+						
+						if(model.currentCityHero.equipmentWeapon!=0){
+							currentHeroEquipment = model.currentCityHero.equipmentWeaponObject;
+						}
+						
+						model.currentCityHero.equipmentWeapon = playerEquipment.equipmentID;
+						model.currentCityHero.equipmentWeaponObject = playerEquipment.equipment;
+
+						CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityHeroEquipmentEvent(model.currentCityHero.cityHeroID,playerEquipment.playerEquipmentID,parentDocument.currentIndex+1));
+						break;
+				}
+				
+				if(currentHeroEquipment!=null){
+					model.currentCityHero.command -= currentHeroEquipment.command;
+					model.currentCityHero.defense -= currentHeroEquipment.defense;
+					model.currentCityHero.mind -= currentHeroEquipment.mind;
+					model.currentCityHero.executivepower -= currentHeroEquipment.executivepower;
+				}
+				
+				model.currentCityHero.command += playerEquipment.equipment.command;
+				model.currentCityHero.defense += playerEquipment.equipment.defense;
+				model.currentCityHero.mind += playerEquipment.equipment.mind;
+				model.currentCityHero.executivepower += playerEquipment.equipment.executivepower;
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Text x="0" y="0" height="20" width="80" text="{playerEquipment.equipment.name}" textAlign="center"/>
+	<mx:Image x="0" y="20" width="80" height="80" id="img" source="{ImagePathConstant.EQUIPMENT_PATH_PREFIX+playerEquipment.equipment.image}"/>
+	
+</mx:Canvas>

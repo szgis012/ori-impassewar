@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProcessQueue">
+	<typeAlias alias="ProcessQueue" type="com.war.domain.ProcessQueue" />
+	
+	<insert id="createProcessQueue" parameterClass="ProcessQueue">
+		INSERT INTO T_PROCESS_QUEUE(PROCESS_QUEUE_ID, CITY_ID, TARGET_ID, TYPE, START_TIME, FINISH_TIME) VALUES(#processQueueID#, #cityID#, #targetID#, #type#, #startTime#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="processQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateProcessQueue" parameterClass="ProcessQueue">
+		UPDATE T_PROCESS_QUEUE SET CITY_ID=#cityID#, TARGET_ID=#targetID#, TYPE=#type#, START_TIME=#startTime#, FINISH_TIME=#finishTime# WHERE PROCESS_QUEUE_ID=#processQueueID#
+	</update>
+	
+	<delete id="deleteProcessQueueByID" parameterClass="Integer">
+		DELETE FROM T_PROCESS_QUEUE WHERE PROCESS_QUEUE_ID=#processQueueID#
+	</delete>
+	
+	<select id="getProcessQueueByID" parameterClass="Integer" resultClass="ProcessQueue">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE WHERE PROCESS_QUEUE_ID=#processQueueID#
+	</select>
+	
+	<select id="getProcessQueueListByCityID" parameterClass="Integer" resultClass="ProcessQueue">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getFinishedProcessQueueList" resultClass="ProcessQueue">
+		<![CDATA[SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE WHERE FINISH_TIME<=SYSDATE()]]>
+	</select>
+	
+	<select id="getProcessQueueList" resultClass="ProcessQueue">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE
+	</select>
+	
+	<select id="getProcessQueueByCityIDAndType" resultClass="ProcessQueue" parameterClass="java.util.Map">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime  FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID# AND TYPE=#type#
+	</select>
+	
+	<select id="getProcessQueue" resultClass="ProcessQueue" parameterClass="java.util.Map">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime  FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID# AND TARGET_ID=#targetID# AND TYPE=#type#
+	</select>
+
+	<select id="getFinishTime" resultClass="java.util.Date" parameterClass="java.util.Map">
+		SELECT FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID# AND TARGET_ID=#targetID# AND TYPE=#type#
+	</select>
+	
+	<select id="getProcessQueueListByCityIDAndType" parameterClass="java.util.Map" resultClass="ProcessQueue">
+		SELECT PROCESS_QUEUE_ID AS processQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID# AND TYPE=#type#
+	</select>
+	
+	<select id="getProcessQueueNumByCityIDAndType" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_PROCESS_QUEUE WHERE CITY_ID=#cityID# AND TYPE=#type#
+	</select>
+	 
+</sqlMap>

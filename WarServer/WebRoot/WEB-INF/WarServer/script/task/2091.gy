@@ -1,0 +1,105 @@
+/**
+* 任务编号: 91
+*
+* 要求：声望45000，金钱450000，初级战场功勋章×3，高级战场功勋章×2
+* 奖励：军衔：中校
+* 后置任务：92
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 宝物编号
+def treasureIDs = [923,924];
+
+// 1. 声望45000
+if(context.getRenown() > 44999)
+{
+	result += "声望45000<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "声望45000<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 2. 金钱450000
+if(context.getMoneyNum() > 449999)
+{
+	result += "金钱450000<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "金钱450000<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 3. 初级战场功勋章×3
+if(context.getPlayerTreasureNum(treasureIDs[0]) > 2)
+{
+	result += "初级战场功勋章×3<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "初级战场功勋章×3<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 4. 高级战场功勋章×2
+if(context.getPlayerTreasureNum(treasureIDs[1]) > 1)
+{
+	result += "高级战场功勋章×2<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "高级战场功勋章×2<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+if (count == 4)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+	// 奖励：军衔：中校
+	context.updateHonor(13);
+	context.rewardTreasure(411,1);
+	
+	// 减去消耗物品
+	context.reduceMoneyNum(450000);
+	context.reduceTreasure(923,3);
+	context.reduceTreasure(924,2);
+}

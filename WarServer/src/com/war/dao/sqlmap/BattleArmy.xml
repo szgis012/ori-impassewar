@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BattleArmy">
+	<typeAlias alias="BattleArmy" type="com.war.domain.BattleArmy" />
+	
+	<insert id="createBattleArmy" parameterClass="BattleArmy">
+		INSERT INTO T_BATTLE_ARMY(BATTLE_ID, ARMY_FORCE, ARMY_INDEX, AMOUNT, POSX, POSY) VALUES(#battleID#, #armyForce#, #armyIndex#, #amount#, #posX#, #posY#)
+		<selectKey resultClass="Integer" keyProperty="battleArmyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateBattleArmyByParams" parameterClass="HashMap">
+		UPDATE T_BATTLE_ARMY
+		<dynamic prepend="set">
+			<isNotNull prepend="," property="amount">
+				AMOUNT=#amount#
+			</isNotNull>
+			<isNotNull prepend="," property="posX">
+				POSX=#posX#
+			</isNotNull>
+			<isNotNull prepend="," property="posY">
+				POSY=#posY#
+			</isNotNull>
+		</dynamic>
+		WHERE ARMY_FORCE=#armyForce# AND ARMY_INDEX=#armyIndex# AND BATTLE_ID=#battleID#
+	</update>
+	
+	<update id="updateBattleArmy" parameterClass="BattleArmy">
+		UPDATE T_BATTLE_ARMY SET BATTLE_ARMY_ID=#battleArmyID#, BATTLE_ID=#battleID#, ARMY_FORCE=#armyForce# ARMY_INDEX=#armyIndex#, AMOUNT=#amount#, POSX=#posX#, POSY=#posY# WHERE BATTLE_ARMY_ID=#battleArmyID#
+	</update>
+	
+	<delete id="deleteBattleArmyByID" parameterClass="Integer">
+		DELETE FROM T_BATTLE_ARMY WHERE BATTLE_ARMY_ID=#battleArmyID#
+	</delete>
+	
+	<delete id="deleteBattleArmyByBattleID" parameterClass="Integer">
+		DELETE FROM T_BATTLE_ARMY WHERE BATTLE_ID=#battleID#
+	</delete>
+	
+	<select id="getBattleArmyByBattleIDAndArmyIndex" parameterClass="HashMap" resultClass="BattleArmy">
+		SELECT BATTLE_ARMY_ID AS battleArmyID, BATTLE_ID AS battleID, ARMY_FORCE AS armyForce, ARMY_INDEX AS armyIndex, AMOUNT AS amount, POSX AS posX, POSY AS posY FROM T_BATTLE_ARMY WHERE BATTLE_ID=#battleID# AND ARMY_FORCE=#armyForce# AND ARMY_INDEX=#armyIndex#
+	</select>
+	
+	<select id="getBattleArmyByID" parameterClass="Integer" resultClass="BattleArmy">
+		SELECT BATTLE_ARMY_ID AS battleArmyID, BATTLE_ID AS battleID, ARMY_FORCE AS armyForce, ARMY_INDEX AS armyIndex, AMOUNT AS amount, POSX AS posX, POSY AS posY FROM T_BATTLE_ARMY WHERE BATTLE_ARMY_ID=#battleArmyID#
+	</select>
+	
+	<select id="getBattleArmyListByBattleIDAndArmyForce" parameterClass="HashMap" resultClass="BattleArmy">
+		SELECT BATTLE_ARMY_ID AS battleArmyID, BATTLE_ID AS battleID, ARMY_FORCE AS armyForce, ARMY_INDEX AS armyIndex, AMOUNT AS amount, POSX AS posX, POSY AS posY FROM T_BATTLE_ARMY WHERE BATTLE_ID=#battleID# AND ARMY_FORCE=#armyForce#
+	</select>
+	
+	<select id="getBattleArmyListByBattleID" parameterClass="Integer" resultClass="BattleArmy">
+		SELECT BATTLE_ARMY_ID AS battleArmyID, BATTLE_ID AS battleID, ARMY_FORCE AS armyForce, ARMY_INDEX AS armyIndex, AMOUNT AS amount, POSX AS posX, POSY AS posY FROM T_BATTLE_ARMY WHERE BATTLE_ID=#battleID#
+	</select>
+
+</sqlMap>

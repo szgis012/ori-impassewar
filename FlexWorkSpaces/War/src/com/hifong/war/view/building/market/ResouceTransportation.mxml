@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="250" initialize="doInit()" show="refreshBusinessManNum()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.common.GetCityBusinessFreeEvent;
+			import com.hifong.war.events.building.market.TransportResouceByCityPosEvent;
+			import com.hifong.war.vo.ResTransportationVO;
+			import com.hifong.war.events.building.market.TransportResouceByCityNameEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var businessmanLoad:int = 1000;
+			
+			private var maxLoad:int;
+			
+			private function doInit():void{
+				maxLoad = model.cityInfo.businessmanFree*businessmanLoad;
+			}
+			
+			//获得城市空闲商人数量
+			private function refreshBusinessManNum():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityBusinessFreeEvent());
+			}
+
+			/**
+			 * 添加资源数量
+			 */
+			private function addAmount(type:int,amount:int):void{
+				switch(type){
+					case 1:
+						var woodAmount:int = int(textWoodAmount.text);
+						woodAmount = woodAmount+amount;
+						if(woodAmount>maxLoad){
+							woodAmount = maxLoad;
+						}
+						textWoodAmount.text = (woodAmount).toString();
+						break;
+					case 2:
+						var steelAmount:int = int(textSteelAmount.text);
+						steelAmount = steelAmount+amount;
+						if(steelAmount>maxLoad){
+							steelAmount = maxLoad;
+						}
+						textSteelAmount.text = (steelAmount).toString();
+						break;
+					case 3:
+						var oilAmount:int = int(textOilAmount.text);
+						oilAmount = oilAmount+amount;
+						if(oilAmount>maxLoad){
+							oilAmount = maxLoad;
+						}
+						textOilAmount.text = (oilAmount).toString();
+						break;
+					case 4:
+						var foodAmount:int = int(textFoodAmount.text);
+						foodAmount = foodAmount+amount;
+						if(foodAmount>maxLoad){
+							foodAmount = maxLoad;
+						}
+						textFoodAmount.text = (foodAmount).toString();
+						break;
+					case 5:
+						var moneyAmount:int = int(textMoneyAmount.text);
+						moneyAmount = moneyAmount+amount;
+						if(moneyAmount>maxLoad){
+							moneyAmount = maxLoad;
+						}
+						textMoneyAmount.text = (moneyAmount).toString();
+						break;
+				}
+			}
+			
+			/**
+			 * 运送资源
+			 */
+			private function transportResource():void{
+				
+				if(textCityX.text.length==0 && textCityY.text.length==0 && textCityName.text.length==0){
+					MsgBox.showMessage("请输入城市坐标或城市名称");
+					return;
+				}
+				if((textCityX.text.length==0 || textCityY.text.length==0) && textCityName.text.length==0){
+					MsgBox.showMessage("请输入完整城市坐标");
+					return;
+				}
+				
+				if(int(textWoodAmount.text)==0 && int(textSteelAmount.text)==0 && int(textOilAmount.text)==0 && int(textFoodAmount.text)==0 && int(textMoneyAmount.text)==0){
+					MsgBox.showMessage("请输入运送资源数量");
+					return;
+				}
+				
+				if(int(textCityX.text)==model.cityInfo.posX && int(textCityY.text)==model.cityInfo.posY){
+					MsgBox.showMessage("非法坐标");
+					return;
+				}
+				
+				if(textCityName.text==model.cityInfo.name){
+					MsgBox.showMessage("非法城市名称");
+					return;
+				}
+				
+				var resTransportation:ResTransportationVO = new ResTransportationVO();
+					
+				resTransportation.woodAmount = int(textWoodAmount.text);
+				resTransportation.steelAmount = int(textSteelAmount.text); 
+				resTransportation.oilAmount = int(textOilAmount.text);
+				resTransportation.foodAmount = int(textFoodAmount.text);
+				resTransportation.moneyAmount = int(textMoneyAmount.text);
+				
+				var totalAmount:int = resTransportation.woodAmount + resTransportation.steelAmount + resTransportation.oilAmount + resTransportation.foodAmount + resTransportation.moneyAmount; 
+				
+				//判断商人是否足够
+				if(totalAmount>maxLoad){
+					MsgBox.showMessage("运送资源数量超过当前商人负载量总和");
+					return;
+				}
+				
+				if(textCityX.text.length!=0 && textCityY.text.length!=0){
+					//运送至指定坐标
+					CairngormEventDispatcher.getInstance().dispatchEvent(new TransportResouceByCityPosEvent(resTransportation,model.cityInfo.cityID,int(textCityX.text),int(textCityY.text)));
+				}else{
+					//运送至指定城市
+					CairngormEventDispatcher.getInstance().dispatchEvent(new TransportResouceByCityNameEvent(resTransportation,model.cityInfo.cityID,textCityName.text));
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="560" height="230" styleName="InnerBorder">
+		<mx:Canvas x="10" y="10" width="303" height="174" styleName="ThirdBorder">
+			
+			<mx:Label x="4" y="9" text="木材："/>
+			<mx:TextInput x="42" y="9" id="textWoodAmount" restrict="0-9" width="115" text="0" textAlign="right"/>
+			<mx:Label x="165" y="11" text="(+500)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(1,500)"/>
+			<mx:Label x="225" y="11" text="(+1000)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(1,1000)"/>
+			
+			<mx:Label x="4" y="43" text="钢铁："/>
+			<mx:TextInput x="42" y="42" id="textSteelAmount" restrict="0-9" width="115" text="0" textAlign="right"/>
+			<mx:Label x="165" y="43" text="(+500)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(2,500)"/>
+			<mx:Label x="225" y="45" text="(+1000)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(2,1000)"/>
+			
+			<mx:Label x="4" y="74" text="石油："/>
+			<mx:TextInput x="42" y="73" id="textOilAmount" restrict="0-9" width="115" text="0" textAlign="right"/>
+			<mx:Label x="165" y="74" text="(+500)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(3,500)"/>
+			<mx:Label x="225" y="74" text="(+1000)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(3,1000)"/>
+			
+			<mx:Label x="4" y="105" text="食物："/>
+			<mx:TextInput x="42" y="104" id="textFoodAmount" restrict="0-9" width="115" text="0" textAlign="right"/>
+			<mx:Label x="165" y="104" text="(+500)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(4,500)"/>
+			<mx:Label x="225" y="104" text="(+1000)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(4,1000)"/>
+			
+			<mx:Label x="4" y="135" text="金钱："/>
+			<mx:TextInput x="42" y="134" id="textMoneyAmount" restrict="0-9" width="115" text="0" textAlign="right"/>
+			<mx:Label x="165" y="135" text="(+500)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(5,500)"/>
+			<mx:Label x="225" y="135" text="(+1000)" fontWeight="bold" useHandCursor="true" buttonMode="true" mouseChildren="false" click="addAmount(5,1000)" textAlign="center"/>
+			
+		</mx:Canvas>
+		<mx:Button x="10" y="195" label="确定" click="transportResource()" width="70"/>
+		<mx:Canvas x="321" y="10" width="229" height="174" styleName="ThirdBorder">
+			
+			<mx:Label x="8" y="10" text="运送坐标："/>
+			<mx:Label x="69" y="11" text="X:"/>
+			<mx:TextInput x="89" y="11" id="textCityX" restrict="0-9" maxChars="3" width="40"/>
+			<mx:Label x="138" y="11" text="Y:"/>
+			<mx:TextInput x="157" y="10" id="textCityY" restrict="0-9" maxChars="3" width="40"/>
+			
+			<mx:Label x="8" y="39" text="城市名称："/>
+			<mx:TextInput x="68" y="38" id="textCityName" maxChars="8" width="133"/>
+			
+			<mx:Label x="8" y="67" text="空闲商人："/>
+			<mx:Label x="68" y="67" text="{model.cityInfo.businessmanFree}/{model.currentBuindingGrid.cityBuilding.level}" width="133"/>
+			<mx:Label x="10" y="109" text="(每个商人可运送1000资源)"/>
+			
+		</mx:Canvas>
+	</mx:Canvas>
+	
+</mx:Canvas>

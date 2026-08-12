@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ConstraintDepend">
+	<typeAlias alias="ConstraintDepend" type="com.war.domain.ConstraintDepend" />
+	
+	<insert id="createConstraintDepend" parameterClass="ConstraintDepend">
+		INSERT INTO T_CONSTRAINT_DEPEND(CONSTRAINT_DEPEND_ID, LEVEL, TARGET_ID, TYPE, DESCRIPTION, PREBUILDINGS, COST_POPULATION, COST_WOOD, COST_STEEL, COST_OIL, COST_FOOD, COST_MONEY, COST_TIME) VALUES(#constraintDependID#, #level#, #targetID#, #type#, #description#, #preBuildings#, #costPopulation#, #costWood#, #costSteel#, #costOil#, #costFood#, #costMoney#, #costTime#)
+		<selectKey resultClass="Integer" keyProperty="constraintDependID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateConstraintDepend" parameterClass="ConstraintDepend">
+		UPDATE T_CONSTRAINT_DEPEND SET LEVEL=#level#, TARGET_ID=#targetID#, TYPE=#type#, DESCRIPTION=#description#, PREBUILDINGS=#preBuildings#, COST_POPULATION=#costPopulation#, COST_WOOD=#costWood#, COST_STEEL=#costSteel#, COST_OIL=#costOil#, COST_FOOD=#costFood#, COST_MONEY=#costMoney#, COST_TIME=#costTime# WHERE CONSTRAINT_DEPEND_ID=#constraintDependID#
+	</update>
+	
+	<delete id="deleteConstraintDependByID" parameterClass="Integer">
+		DELETE FROM T_CONSTRAINT_DEPEND WHERE CONSTRAINT_DEPEND_ID=#constraintDependID#
+	</delete>
+	
+	<select id="getConstraintDependByID" parameterClass="Integer" resultClass="ConstraintDepend">
+		SELECT CONSTRAINT_DEPEND_ID AS constraintDependID, LEVEL AS level, TARGET_ID AS targetID, TYPE AS type, DESCRIPTION AS description, PREBUILDINGS AS preBuildings, COST_POPULATION AS costPopulation, COST_WOOD AS costWood, COST_STEEL AS costSteel, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, COST_TIME AS costTime FROM T_CONSTRAINT_DEPEND WHERE CONSTRAINT_DEPEND_ID=#constraintDependID#
+	</select>
+	
+	<select id="getConstraintDependByTypeAndTargetID" parameterClass="Map" resultClass="ConstraintDepend">
+		SELECT CONSTRAINT_DEPEND_ID AS constraintDependID, LEVEL AS level, TARGET_ID AS targetID, TYPE AS type, DESCRIPTION AS description, PREBUILDINGS AS preBuildings, COST_POPULATION AS costPopulation, COST_WOOD AS costWood, COST_STEEL AS costSteel, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, COST_TIME AS costTime FROM T_CONSTRAINT_DEPEND WHERE TYPE=#type# AND TARGET_ID=#targetID#
+	</select>
+	
+	<select id="getConstraintDependByTypeAndTargetIDAndLevel" parameterClass="Map" resultClass="ConstraintDepend">
+		SELECT CONSTRAINT_DEPEND_ID AS constraintDependID, LEVEL AS level, TARGET_ID AS targetID, TYPE AS type, DESCRIPTION AS description, PREBUILDINGS AS preBuildings, COST_POPULATION AS costPopulation, COST_WOOD AS costWood, COST_STEEL AS costSteel, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, COST_TIME AS costTime FROM T_CONSTRAINT_DEPEND WHERE TYPE=#type# AND TARGET_ID=#targetID# AND LEVEL=#level#
+	</select>
+	
+	<select id="getConstraintDependList" resultClass="ConstraintDepend">
+		SELECT CONSTRAINT_DEPEND_ID AS constraintDependID, LEVEL AS level, TARGET_ID AS targetID, TYPE AS type, DESCRIPTION AS description, PREBUILDINGS AS preBuildings, COST_POPULATION AS costPopulation, COST_WOOD AS costWood, COST_STEEL AS costSteel, COST_OIL AS costOil, COST_FOOD AS costFood, COST_MONEY AS costMoney, COST_TIME AS costTime FROM T_CONSTRAINT_DEPEND
+	</select>
+
+</sqlMap>

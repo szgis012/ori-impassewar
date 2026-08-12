@@ -1,0 +1,63 @@
+/**
+* 任务编号: 4
+*
+* 要求：进行一次节日庆典
+* 奖励：金钱1000
+* 后置任务：5
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 1. 进行一次节日庆典
+if(context.hasPerformTheOperation(com.war.constant.OperationLogConstant.HOLIDAY_CELEBRATE))
+{
+	result = "进行一次“节日庆典”<font color='#00ff00'>[已完成]</font>";
+	count++;
+}
+else
+{
+	result = "进行一次“节日庆典”<a href='event:1'><font color='#ffff00'><b>[点击进入城市中心]</b></font></a><font color='#ff0000'>[未完成]</font>";
+}
+
+if(count == 1)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+// 奖励：金钱1000
+context.rewardResource(0,0,0,0,1000);
+}

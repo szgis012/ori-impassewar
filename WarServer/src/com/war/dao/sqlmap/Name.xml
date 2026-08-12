@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Name">
+	<typeAlias alias="Name" type="com.war.domain.Name" />
+	
+	<insert id="createName" parameterClass="Name">
+		INSERT INTO T_NAME(NAME, TYPE) VALUES(#name#, #type#)
+	</insert>
+	
+	<select id="getFirstNameArray" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_NAME WHERE TYPE=1 ORDER BY RAND() LIMIT #amount#
+	</select>
+	
+	<select id="getLastNameArray" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_NAME WHERE TYPE=2 ORDER BY RAND() LIMIT #amount#
+	</select>
+	
+	<select id="getNameList" resultClass="Name">
+		SELECT NAME AS name, TYPE AS type FROM T_NAME
+	</select>
+
+</sqlMap>

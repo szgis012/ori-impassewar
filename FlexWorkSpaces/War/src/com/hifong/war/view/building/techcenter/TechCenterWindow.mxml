@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="442" initialize="doInit()" showCloseButton="false" close="doClose()" xmlns:building="com.hifong.war.view.building.*" xmlns:techCenter="com.hifong.war.view.building.techcenter.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.util.BuildingUtil;
+			import mx.utils.ObjectProxy;
+			import mx.core.Container;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.DateFormatUtil;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.events.building.techcenter.TechnologyResearchFinishedEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.techcenter.CancelResearchTechnologyEvent;
+			import com.hifong.war.events.building.techcenter.GetCurrentResearchingTechnologyEvent;
+			import com.hifong.war.events.building.techcenter.GetCityTechnologyListEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.building.BuildingGrid;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityID:int = model.cityInfo.cityID;
+			//监视科技研究进程对象的改变
+			private var techProcessWatcher:ChangeWatcher;
+			//technologyList的监视对象
+			private var technologyListWatcher:ChangeWatcher;
+			//更新科技研究进度的计时器
+			private var processTimer:Timer ;
+			//剩余时间
+			[Bindable]
+			private var leavingTime:String;
+			//保存对5中科技类型的引用,key为科技的类型，value为显示该类别的容器
+			[Bindable]
+			private var techPanelMap:Object;
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				 this._buildingGrid = bg;
+				 this.pnlBuilding.buildingGrid = bg;
+				 
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doInit():void{
+				techProcessWatcher = ChangeWatcher.watch(model,"techProcess",onTechProcessChange);
+				technologyListWatcher = ChangeWatcher.watch(model,"technologyList",onTechnologyListChange)
+				techPanelMap = {1:this.resourceTech, 2:this.soldierTech, 3:this.vehicleTech, 4:this.planeTech, 5:this.otherTech};
+				
+				if(model.techProcess ){
+					onTechProcessChange(null);
+				}
+				
+				showCurrentResearchingTechnology();
+				showTechnologyList(1);
+			}
+			
+			private function onTechnologyListChange(event:Object):void{
+				if(model.technologyList && (model.technologyList.length > 0) ){
+					//获得返回科技的类型信息
+					var type:int = model.technologyList.getItemAt(0).technology.type;
+					//显示该类型科技的容器
+					var curpnl:Canvas = this.techPanelMap[type] as Canvas;
+					var techItem:TechItemPanel;
+					
+					//因为科技条目不会变化，所以只需要更新其引用的数据就行
+					if(curpnl.numChildren > 0){
+						for(var i:int=0; i<curpnl.numChildren; i++){
+							techItem = curpnl.getChildAt(i) as TechItemPanel;
+							techItem.cityTechnology = model.technologyList.getItemAt(i) as ObjectProxy;
+						}
+					}else{
+						//创建TechItemPanel
+						for(var j:int=0; j<model.technologyList.length; j++){
+							techItem = new TechItemPanel();
+							techItem.cityTechnology = model.technologyList.getItemAt(j) as ObjectProxy;
+							techItem.x = 10;
+							techItem.y =  5 * (j+1) + techItem.height * j;
+							curpnl.addChild(techItem);
+						}
+					}
+				}
+			}
+			
+			private function onTechProcessChange(event:Object):void{
+				if(model.techProcess ){
+					//如果当前有已完成的科技研究信息,就同步服务器
+					if( model.techProcess.finishTime.time < model.serverTime.time){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new TechnologyResearchFinishedEvent(model.techProcess.processQueueID));
+					}else{
+						//及时更新显示
+						updateProcessInfo();
+						startTimer();
+					}
+				}else{
+					stopTimer();
+				}	
+			}
+			
+			private function startTimer():void{
+				if(!processTimer){
+					processTimer = new Timer(1000);
+					processTimer.addEventListener(TimerEvent.TIMER,onTime);
+					processTimer.start();
+				}
+			}
+			
+			private function stopTimer():void{
+				if(processTimer){
+					processTimer.removeEventListener(TimerEvent.TIMER,onTime);
+					processTimer.stop();
+					processTimer = null;
+				}
+			}
+			
+			private function onTime(event:TimerEvent):void{
+				//如果研究时间还未完成就继续更新
+				if(model.techProcess && model.techProcess.finishTime.time > model.serverTime.time){
+					updateProcessInfo();
+				}else{
+					doFinishTechResearch();
+				}
+			}
+			
+			//更新进度信息
+			private function updateProcessInfo():void{
+				var leavingSeconds:Number = Math.max(0,Math.floor((model.techProcess.finishTime.time-model.serverTime.time)/1000));
+				this.leavingTime = DateFormatUtil.convertSecondToTime(leavingSeconds);
+			}
+			
+			//科技研究完成时的处理方法
+			private function doFinishTechResearch():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TechnologyResearchFinishedEvent(model.techProcess.processQueueID));
+				stopTimer();
+			}
+			
+			private function doClose():void{
+				techProcessWatcher.unwatch();
+				technologyListWatcher.unwatch();
+				stopTimer();
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 根据科技类型显示科技列表
+			 */
+			private function showTechnologyList(type:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityTechnologyListEvent(cityID,type));
+			}
+			
+			/**
+			 * 科技研究加速
+			 */
+			private function accelerateResearching():void {
+				//加载可以使用的宝物信息
+				//传递给宝物的参数
+				var params:Object = {queueID:model.techProcess.processQueueID};
+				var win:UseTreasureWindow = new UseTreasureWindow();
+				win.params = params;
+				win.treasureCategory = TreasureCategoryConstant.ACCELERATE;
+				win.treasureType = TreasureTypeConstant.ACCELERATE_TECHNOLOGY;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 取消科技研究
+			 */
+			private function cancelResearchTechnology():void{
+				MsgBox.showConfirm("您确定要取消研究当前科技吗？\n取消后不返还任何资源！",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelResearchTechnologyEvent(cityID));
+				});
+			}
+			
+			/**
+			 * 显示当前正在研究科技
+			 */
+			private function showCurrentResearchingTechnology():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCurrentResearchingTechnologyEvent(cityID));
+			}
+			
+			/**
+			 * 科技研究完成
+			 */
+			public static function completeResearchingTechnolgy(event:TimerEvent):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TechnologyResearchFinishedEvent(ModelLocator.getInstance().techProcess.processQueueID));
+			}
+			
+			private function onTabChange(event:IndexChangedEvent):void{
+				showTechnologyList(event.newIndex + 1);
+			}
+		]]>
+	</mx:Script>
+	
+	<building:BuildingItemPanel id="pnlBuilding" x="25" y="37">
+	</building:BuildingItemPanel>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator x="24" y="172" id="tabTech" width="581" height="243" change="onTabChange(event)">
+		<mx:Canvas label="资源科技" width="100%" height="100%" styleName="BugFixBorder" id="resourceTech">
+		</mx:Canvas>
+		
+		<mx:Canvas label="步兵科技" width="100%" height="100%" styleName="BugFixBorder" id="soldierTech">
+		</mx:Canvas>
+		
+		<mx:Canvas label="车辆科技" width="100%" height="100%" styleName="BugFixBorder" id="vehicleTech">
+		</mx:Canvas>
+		
+		<mx:Canvas label="飞机科技" width="100%" height="100%" styleName="BugFixBorder" id="planeTech">
+		</mx:Canvas>
+		
+		<mx:Canvas label="其他科技" width="100%" height="100%" styleName="BugFixBorder" id="otherTech">
+		</mx:Canvas>
+		
+	</mx:TabNavigator>
+	<mx:Canvas x="25" y="132" width="580" height="27" styleName="CanvasBorder">
+		<mx:Label x="8" y="3" visible="{model.haveTechnologyResearching==false}" text="{model.currentResearchingTechnology}"/>
+		<mx:Label x="6" y="3" visible="{model.haveTechnologyResearching==true}" text="{model.currentResearchingTechnology}  剩余:{leavingTime}  结束:{DateFormatUtil.formatTime(model.techProcess.finishTime)}" width="512"/>
+		<mx:Button height="22" width="55" label="加速" click="accelerateResearching()" x="460" y="4" visible="{model.haveTechnologyResearching==true}"/>
+		<mx:Button height="22" width="55" label="取消" click="cancelResearchTechnology()" x="520" y="4" visible="{model.haveTechnologyResearching==true}"/>
+	</mx:Canvas>
+	
+	
+</mx:TitleWindow>

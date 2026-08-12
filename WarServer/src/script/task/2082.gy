@@ -1,0 +1,117 @@
+/**
+* 任务编号: 82
+*
+* 要求： 声望1000，金钱10000，★铜质战功章×5，★白银战功章×3，★黄金战功章×2
+* 奖励：军衔：三等兵
+* 后置任务：83
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 宝物编号
+def treasureIDs = [914,915,916];
+
+// 1. 声望1000
+if(context.getRenown() > 999)
+{
+	result += "声望1000<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "声望1000<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 2. 金钱10000
+if(context.getMoneyNum() > 9999)
+{
+	result += "金钱10000<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "金钱10000<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 3. ★铜质战功章×5
+if(context.getPlayerTreasureNum(treasureIDs[0]) > 4)
+{
+	result += "★铜质战功章×5<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "★铜质战功章×5<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 4. ★白银战功章×3
+if(context.getPlayerTreasureNum(treasureIDs[1]) > 2)
+{
+	result += "★白银战功章×3<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "★白银战功章×3<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+// 5. ★黄金战功章×2
+if(context.getPlayerTreasureNum(treasureIDs[2]) > 1)
+{
+	result += "★黄金战功章×2<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "★黄金战功章×2<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+if(count == 5)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+	// 奖励：军衔：三等兵
+	context.updateHonor(4);
+	context.rewardTreasure(411,1);
+	
+	// 减去消耗物品
+	context.reduceMoneyNum(10000);
+	context.reduceTreasure(914,5);
+	context.reduceTreasure(915,3);
+	context.reduceTreasure(916,2);
+}

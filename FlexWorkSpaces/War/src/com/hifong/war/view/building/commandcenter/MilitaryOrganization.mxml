@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="630" height="520" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.commandcenter.*">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.common.GetCityArmyListEvent;
+			import com.hifong.war.events.common.GetArmyListEvent;
+			import com.hifong.war.commands.common.GetArmyListCommand;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.constant.CityMilitaryStateConstant;
+			import com.hifong.war.util.ImagePathUtil;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.events.building.commandcenter.TuneCityMilitaryEvent;
+			import com.hifong.war.events.building.commandcenter.BatchModifyCityArmyEvent;
+			import com.hifong.war.util.MsgBox;
+			import mx.effects.Move;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.vo.CityArmyVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.building.commandcenter.GetCityMilitaryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityID:int = model.cityInfo.cityID;
+			
+			//当前显示的行数
+			[Bindable]
+			private var curRow:int = 0;
+			//当前显示的行数
+			[Bindable]
+			private var curRow2:int = 0;
+			[Bindable]
+			private var cityHero:ObjectProxy;
+			
+			//当前选择的兵种
+			private var currentSelectedItem:MilitaryItemPanel;
+			//当前选择的军队
+			private var currentCityMilitary:Object;
+			
+			//军队是否调整过
+			[Bindable]
+			public var militaryChanged:Boolean = false;
+			
+			//最后选择的索引
+			[Bindable]
+			private var lastSelectedIndex:int = -1;
+			
+			private var dispatcher:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			
+			private var cityArmyListWatcher:ChangeWatcher;
+			
+			private var cityMilitaryListWatcher:ChangeWatcher;
+			
+			private function doInit():void{
+				
+	//			CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityArmyListEvent());
+				
+				//cityArmyListWatcher = BindingUtils.bindSetter(initCityArmy,model,"armyInfo.cityArmyList");
+				
+				cityMilitaryListWatcher = BindingUtils.bindSetter(watchCityMilitaryList,model,"cityMilitaryList");
+				
+				initCityArmy();
+				
+				initMilitary();
+			}
+			
+			//CityMilitaryList改变时的处理函数
+			private function watchCityMilitaryList(event:Object):void{
+				this.comboMilitary.selectedIndex = this.lastSelectedIndex;
+			}
+			
+			//将未编制军队信息包装成MilitaryInfo列表
+			private function wrapMilitaryInfoList():ArrayCollection{
+				var list:ArrayCollection = new ArrayCollection();
+				var armyList:ArrayCollection  = model.armyInfo.armyList;
+				var army:ArmyVO;
+				var cityArmy:CityArmyVO;
+				var mi:MilitaryInfo;
+				
+				for(var i:int=0; i<armyList.length; i++){
+					army = armyList.getItemAt(i) as ArmyVO;
+					//得到未编制部队的信息
+					cityArmy = model.armyInfo.nosetArmyMap[army.armyID] as CityArmyVO;
+					
+					mi = new MilitaryInfo();
+					mi.armyID = army.armyID;
+					mi.armyName = army.name;
+					mi.imgsrc = ImagePathUtil.getBuildArmyPath(army.image);
+					mi.num = (cityArmy == null)? 0 : cityArmy.num;
+					mi.type = 1;
+					
+					list.addItem(mi);
+				}
+				
+				return list;
+			}
+			
+			
+			//初始化城市未编制军队信息
+			private function initCityArmy():void{
+				var list:ArrayCollection = wrapMilitaryInfoList();
+				
+				var minfo:MilitaryInfo;
+				var mi:MilitaryItemPanel;
+				var ind:int = 0;
+				var row:int = 0;
+				
+				//遍历
+				for each(minfo in list){
+					mi = new MilitaryItemPanel();
+					mi.x = 10 + ind * (mi.width + 10); 
+					mi.y = 5 + row * (mi.height + 5);
+					mi.militaryInfo = minfo;
+					//注册事件
+					mi.addEventListener(MouseEvent.CLICK,doSelectCityArmy);
+					this.pnlCityArmy.addChild(mi);
+					ind++;
+					//换行
+					if(ind == 5){
+						ind = 0;
+						row++;
+					}
+				}
+				
+			}
+			
+			private function initMilitary():void{
+				var mi:MilitaryItemPanel;
+				var minfo:MilitaryInfo;
+				var ind:int = 0;
+				var row:int = 0;
+				//最多8只部队
+				for(var i:int=0; i<8; i++){
+					mi = new MilitaryItemPanel();
+					minfo = new MilitaryInfo();
+					minfo.type = 0;//空格子
+					mi.x = 10 + ind * (mi.width + 10); 
+					mi.y = 5 + row * (mi.height + 5);
+					mi.militaryInfo = minfo;
+					
+					mi.addEventListener(MouseEvent.CLICK,doSelectMilitary);
+					this.pnlMilitary.addChild(mi);
+					ind++;
+					//换行
+					if(i == 3){
+						ind = 0;
+						row++;
+					}
+				}
+			}
+			
+			//选择城市兵种时的操作
+			private function doSelectCityArmy(event:MouseEvent):void{
+				var dest:MilitaryItemPanel = event.currentTarget as MilitaryItemPanel;
+				
+				if(this.currentSelectedItem ){
+					//如果选择的是自己
+					if(this.currentSelectedItem == event.currentTarget){
+						//取消选择项
+						this.currentSelectedItem.filters = null;
+						this.currentSelectedItem = null;
+						return;
+					}
+					
+					//如果从已编制到未编制
+					if(this.currentSelectedItem.militaryInfo.type == 2){
+						//如果兵种不同
+						if(this.currentSelectedItem.militaryInfo.armyID != dest.militaryInfo.armyID){
+							this.currentSelectedItem.filters = null;
+							this.currentSelectedItem = dest;
+							this.currentSelectedItem.filters = [this.glowFilter];
+						}else{
+							showTuneWindow(dest,this.currentSelectedItem);
+							//取消选择项
+							this.currentSelectedItem.filters = null;
+							this.currentSelectedItem = null;
+						}
+					}else{//如果源为空格子或者为无编制军队
+						this.currentSelectedItem.filters = null;
+						this.currentSelectedItem = dest;
+						this.currentSelectedItem.filters = [this.glowFilter];
+					}
+					
+				}else{
+					this.currentSelectedItem = event.currentTarget  as MilitaryItemPanel;
+					this.currentSelectedItem.filters = [this.glowFilter];
+				}
+			}
+			
+			//显示调整兵力窗口
+			private function showTuneWindow(srcItem:MilitaryItemPanel,destItem:MilitaryItemPanel):void{
+				var win:MilitaryTuneWindow = new MilitaryTuneWindow();
+				win.militaryName = this.currentCityMilitary.name;
+				win.srcItem = srcItem;
+				win.destItem = destItem;
+				win.src = srcItem.militaryInfo.clone();
+				win.dest = destItem.militaryInfo.clone();
+				//如果目标为空格子
+				if(win.dest.type == 0){
+					win.dest.armyName = win.src.armyName;
+					win.dest.armyID = win.src.armyID;
+					win.dest.imgsrc = win.src.imgsrc;
+					
+				}
+				win.moWin  = this;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			//显示合并兵力窗口
+			private function showMergeWindow(srcItem:MilitaryItemPanel,destItem:MilitaryItemPanel):void{
+				var win:MilitaryMergeWindow = new MilitaryMergeWindow();
+				win.militaryName = this.currentCityMilitary.name;
+				win.srcItem = srcItem;
+				win.destItem = destItem;
+				win.src = srcItem.militaryInfo.clone();
+				win.dest = destItem.militaryInfo.clone();
+				win.moWin  = this;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			//选择军队兵种时的操作
+			private function doSelectMilitary(event:MouseEvent):void{
+				if(!this.currentCityMilitary){
+					MsgBox.showMessage("请先选择军队然后再进行操作！");
+					comboMilitary.filters = [this.glowFilter];
+					return;
+				}
+					
+				if(this.currentSelectedItem ){
+					//目标
+					var dest:MilitaryItemPanel = event.currentTarget as MilitaryItemPanel;
+					
+					//如果从未编制到已编制
+					if(this.currentSelectedItem.militaryInfo.type == 1){
+						//如果兵种不同并且目标不为空格子就返回
+						if(this.currentSelectedItem.militaryInfo.armyID != dest.militaryInfo.armyID && dest.militaryInfo.type != 0 ){
+							this.currentSelectedItem.filters = null;
+							this.currentSelectedItem = dest;
+							this.currentSelectedItem.filters = [this.glowFilter];
+							return;
+						}
+						
+						//如果相同就显示调整兵力数量界面
+						showTuneWindow(this.currentSelectedItem,dest);
+						
+						//取消选择项
+						this.currentSelectedItem.filters = null;
+						this.currentSelectedItem = null;
+						
+					}else if(this.currentSelectedItem.militaryInfo.type == 2){
+						//如果是同一个格子就取消之前的选择
+						if(this.currentSelectedItem == dest){
+							this.currentSelectedItem.filters = null;
+							this.currentSelectedItem = null;
+							return;
+						}
+						
+						//如果兵种相同就出现合并窗口
+						if(this.currentSelectedItem.militaryInfo.armyID == dest.militaryInfo.armyID){
+							showMergeWindow(this.currentSelectedItem,dest);
+							//取消选择项
+							this.currentSelectedItem.filters = null;
+							this.currentSelectedItem = null;
+						}else{
+							//位置互换
+							exchangeMilitaryPosition(this.currentSelectedItem,dest);
+						}
+						
+					}else{
+						this.currentSelectedItem.filters = null;
+						this.currentSelectedItem = dest;
+						this.currentSelectedItem.filters = [this.glowFilter];
+					}
+				}else{
+					this.currentSelectedItem = event.currentTarget  as MilitaryItemPanel;
+					this.currentSelectedItem.filters = [this.glowFilter];
+				}
+			}
+			
+			//交换兵的位置
+			private function exchangeMilitaryPosition(src:MilitaryItemPanel,dest:MilitaryItemPanel):void{
+				this.militaryChanged = true;
+				
+				//交换二个格子
+				var srcMi:MilitaryInfo = src.militaryInfo;
+				src.militaryInfo = dest.militaryInfo;
+				dest.militaryInfo = srcMi;
+				
+				this.currentSelectedItem.filters = null;
+				this.currentSelectedItem = null;
+			}
+			
+			private function doScrollUp():void{
+				if(curRow>0){
+					var mi:MilitaryItemPanel;
+					var len:int = this.pnlCityArmy.numChildren;
+					
+					for(var i:int=0; i<len;i++){
+						mi = this.pnlCityArmy.getChildAt(i) as MilitaryItemPanel;
+						mi.y += (mi.height + 5);
+					}
+					
+					curRow--;
+				}
+			}
+			
+			private function doScrollDown():void{
+				var rows:int = Math.ceil(this.pnlCityArmy.numChildren / 5) - 1;
+				
+				if(curRow<rows){
+					var mi:MilitaryItemPanel;
+					var len:int = this.pnlCityArmy.numChildren;
+					
+					for(var i:int=0; i<len;i++){
+						mi = this.pnlCityArmy.getChildAt(i) as MilitaryItemPanel;
+						mi.y -= (mi.height + 5);
+					}
+					
+					curRow++;
+				}
+			}
+			
+			private function doScrollUp2():void{
+				if(curRow2>0){
+					var mi:MilitaryItemPanel;
+					var len:int = this.pnlMilitary.numChildren;
+					
+					for(var i:int=0; i<len;i++){
+						mi = this.pnlMilitary.getChildAt(i) as MilitaryItemPanel;
+						mi.y += (mi.height + 5);
+					}
+					
+					curRow2--;
+				}
+			}
+			
+			private function doScrollDown2():void{
+				//只有两行
+				if(curRow2<1){
+					var mi:MilitaryItemPanel;
+					var len:int = this.pnlMilitary.numChildren;
+					
+					for(var i:int=0; i<len;i++){
+						mi = this.pnlMilitary.getChildAt(i) as MilitaryItemPanel;
+						mi.y -= (mi.height + 5);
+					}
+					
+					curRow2++;
+				}
+			}
+			
+			private function doClose():void {
+				//如果军队有调整
+				if(militaryChanged){
+					MsgBox.showYesNo("您对军队的调整还未保存，是否保存？",doCloseSave);
+				}else{
+					this.cityMilitaryListWatcher.unwatch();
+					WindowUtil.closeModelWindow(this);
+				}
+				
+			}
+			
+			private function doCloseSave(isSave:Boolean):void{
+				if(isSave){
+					doSave()
+				}
+				
+				this.cityMilitaryListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function setMilitaryItemInfo(pos:int,armyInfo:String):void{
+					var mi:MilitaryItemPanel;
+					var minfo:MilitaryInfo;
+					var arr:Array;
+					var army:ArmyVO;
+					//armyID:数量
+					arr = armyInfo.split(":");
+					army = model.armyInfo.armyMap[arr[0]] as ArmyVO;
+					
+					mi = this.pnlMilitary.getChildAt(pos) as MilitaryItemPanel;
+					minfo = new MilitaryInfo();
+					
+					minfo.armyID = army.armyID;
+					minfo.armyName = army.name;
+					minfo.imgsrc = ImagePathUtil.getBuildArmyPath(army.image);
+					minfo.type = 2;//已编制
+					minfo.num = arr[1];
+					
+					mi.militaryInfo = minfo;
+					
+			}
+			
+			//将未编制的兵种信息调整到未改变时的状态
+			private function resetCityArmyState():void{
+				var num:int = this.pnlCityArmy.numChildren;
+				var mi:MilitaryItemPanel ;
+				var minfo:MilitaryInfo;
+				var cityArmy:CityArmyVO;
+				var nosetMap:Object = model.armyInfo.nosetArmyMap;
+				
+				//处理所有未编制的军队
+				for(var i:int=0; i<num; i++){
+					mi = this.pnlCityArmy.getChildAt(i) as MilitaryItemPanel;
+					minfo = mi.militaryInfo;
+					cityArmy = nosetMap[minfo.armyID] as CityArmyVO;
+					
+					//如果没有兵
+					if(!cityArmy){
+						minfo.num = 0;
+					}else{
+						minfo.num = cityArmy.num;
+					}
+				}
+			}
+			
+			//执行未编制军队的数量更改处理
+			private function doCityArmyChange():void{
+				var num:int = this.pnlCityArmy.numChildren;
+				var mi:MilitaryItemPanel ;
+				var minfo:MilitaryInfo;
+				var cityArmy:CityArmyVO;
+				var str:String = "";
+				var nosetMap:Object = model.armyInfo.nosetArmyMap;
+				
+				//处理所有未编制的军队
+				for(var i:int=0; i<num; i++){
+					mi = this.pnlCityArmy.getChildAt(i) as MilitaryItemPanel;
+					minfo = mi.militaryInfo;
+					cityArmy = nosetMap[minfo.armyID] as CityArmyVO;
+					
+					//如果没有兵
+					if(!cityArmy)
+						continue;
+						
+					//如果数量有变化,拼接需要调整的军力信息
+					if(minfo.num != cityArmy.num){
+						str += cityArmy.cityArmyID;
+						str += ":"+minfo.num;
+						str += ",";
+					}
+				}
+				
+				//如果有变化,发送消息
+				if(str.length>0){
+					dispatcher.dispatchEvent(new BatchModifyCityArmyEvent(str.substr(0,str.length-1)));
+				}
+				
+			}
+			
+			private function getCityArmyStr():String {
+				
+				var num:int = this.pnlCityArmy.numChildren;
+				var mi:MilitaryItemPanel ;
+				var minfo:MilitaryInfo;
+				var cityArmy:CityArmyVO;
+				var str:String = "";
+				var nosetMap:Object = model.armyInfo.nosetArmyMap;
+				
+				//处理所有未编制的军队
+				for(var i:int=0; i<num; i++){
+					mi = this.pnlCityArmy.getChildAt(i) as MilitaryItemPanel;
+					minfo = mi.militaryInfo;
+					cityArmy = nosetMap[minfo.armyID] as CityArmyVO;
+					
+					//如果没有兵
+					if(!cityArmy)
+						continue;
+						
+					//如果数量有变化,拼接需要调整的军力信息
+					if(minfo.num != cityArmy.num){
+						str += cityArmy.cityArmyID;
+						str += ":"+minfo.num;
+						str += ",";
+					}
+				}
+				
+				return str.substr(0, str.length-1);
+			}
+			
+			//执行军队调整的处理
+			private function doMilitaryChange():void{
+				var num:int = this.pnlMilitary.numChildren;
+				var mi:MilitaryItemPanel ;
+				var minfo:MilitaryInfo;
+				var str:String = "";
+				
+				//处理所有已编制的军队
+				for(var i:int=0; i<num; i++){
+					mi = this.pnlMilitary.getChildAt(i) as MilitaryItemPanel;
+					minfo = mi.militaryInfo;
+					
+					if(minfo.num>0){
+						str += minfo.armyID;
+						str += ":" + minfo.num;
+					}
+					
+					str += ",";
+				}
+				
+				//dispatcher.dispatchEvent(new TuneCityMilitaryEvent(this.currentCityMilitary.cityMilitaryID,str.substr(0,str.length-1)));
+			}
+			
+			private function getCityMilitaryStr():String {
+				var num:int = this.pnlMilitary.numChildren;
+				var mi:MilitaryItemPanel ;
+				var minfo:MilitaryInfo;
+				var str:String = "";
+				
+				//处理所有已编制的军队
+				for(var i:int=0; i<num; i++){
+					mi = this.pnlMilitary.getChildAt(i) as MilitaryItemPanel;
+					minfo = mi.militaryInfo;
+					
+					if(minfo.num>0){
+						str += minfo.armyID;
+						str += ":" + minfo.num;
+					}
+					
+					str += ",";
+				}
+				
+				return str.substr(0, str.length-1);
+			}
+			
+			private function doMilitaryChanged():void{
+				this.militaryChanged = false;
+				
+				this.resetMilitaryInfo();
+				this.doScrollUp2();
+				
+				//对应服务端的CityMilitary
+				var cityMilitary:Object = comboMilitary.selectedItem;
+				var cityHero:Object = model.cityHeroMap[cityMilitary.cityHeroID];
+				this.cityHero = new ObjectProxy(cityHero);
+				this.currentCityMilitary = cityMilitary;
+				
+				//军队名称
+				this.lblMilitaryName.text = cityMilitary.name;
+				
+				if(cityMilitary.army1){
+					setMilitaryItemInfo(0,cityMilitary.army1);
+				}
+				
+				if(cityMilitary.army2){
+					setMilitaryItemInfo(1,cityMilitary.army2);
+				}
+				
+				if(cityMilitary.army3){
+					setMilitaryItemInfo(2,cityMilitary.army3);
+				}
+				
+				if(cityMilitary.army4){
+					setMilitaryItemInfo(3,cityMilitary.army4);
+				}
+				
+				if(cityMilitary.army5){
+					setMilitaryItemInfo(4,cityMilitary.army5);
+				}
+				
+				if(cityMilitary.army6){
+					setMilitaryItemInfo(5,cityMilitary.army6);
+				}
+				
+				if(cityMilitary.army7){
+					setMilitaryItemInfo(6,cityMilitary.army7);
+				}
+				
+				if(cityMilitary.army8){
+					setMilitaryItemInfo(7,cityMilitary.army8);
+				}
+			}
+			
+			
+			/**
+			 * 选中的军队改变
+			 */
+			private function onMilitaryChanged():void{
+				//如果军队有调整
+				if(militaryChanged){
+					MsgBox.showYesNo("您对军队的调整还未保存，是否保存？",function(isSave:Boolean):void{
+						if(isSave){
+							doSave();
+						}else{
+							resetCityArmyState();
+						}
+						doMilitaryChanged();
+					});
+				}else{
+					doMilitaryChanged();
+				}
+			}
+			
+			private function resetMilitaryInfo():void{
+				var len:int = this.pnlMilitary.numChildren;
+				var mi:MilitaryItemPanel;
+				
+				for(var i:int=0; i<len; i++){
+					mi = this.pnlMilitary.getChildAt(i) as MilitaryItemPanel;
+					mi.militaryInfo = new MilitaryInfo();
+				}
+			}
+			
+			private function doSave():void{
+				this.lastSelectedIndex = this.comboMilitary.selectedIndex;
+				
+				//如果军队有调整
+				//doCityArmyChange();
+				//doMilitaryChange();
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TuneCityMilitaryEvent(this.currentCityMilitary.cityMilitaryID, this.getCityMilitaryStr()));
+				
+				//重置修改标志位
+				militaryChanged = false;
+			}
+			
+			//过滤可以编制的军队列表
+			private function filterMilitaryList(list:ArrayCollection):ArrayCollection{
+				var result:ArrayCollection = new ArrayCollection();
+				
+				if(list && list.length>0){
+					var cm:Object;
+					
+					for(var i:int=0; i<list.length; i++){
+						cm = list.getItemAt(i) ;
+						//将正常状态的军队放到列表中
+						if(cm.state == CityMilitaryStateConstant.NORMAL){
+							result.addItem(cm);
+						}
+					}
+				}
+				return result;
+			}
+			
+			/**
+			 * 创建军队
+			 */
+			private function doCreateMilitary():void{
+				var win:CreateMilitary = new CreateMilitary();
+				WindowUtil.showModelWindow(win);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Canvas x="25" y="265" width="580" height="43" styleName="CanvasBorder">
+		<mx:Label x="10" y="13" text="军队："/>
+		<mx:ComboBox x="48" y="10" id="comboMilitary" prompt="请选择军队" dataProvider="{filterMilitaryList(model.cityMilitaryList)}" labelField="name" change="onMilitaryChanged()" width="200" click="comboMilitary.filters=null"></mx:ComboBox>
+		<mx:Button x="256" y="10" label="创建军队" height="26" click="doCreateMilitary()"/>
+		<mx:Button x="510" y="9" label="保存" enabled="{militaryChanged}" click="doSave()" width="60" height="26"/>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="80" width="580" height="180"  styleName="CanvasBorder">
+		<mx:Label x="192" y="13" text="未编制军队" textAlign="center" fontWeight="bold" width="193"/>
+		<mx:Button x="442" y="13" label="▲" height="20" width="60" click="doScrollUp()" enabled="{curRow!=0}"/>
+		<mx:Button x="510" y="13" label="▼" height="20" width="60" click="doScrollDown()" enabled="{curRow!=2}"/>
+		<mx:Canvas x="10" y="36" width="560" height="130" id="pnlCityArmy" horizontalScrollPolicy="off" verticalScrollPolicy="off" styleName="InnerBorder">
+		</mx:Canvas>
+	</mx:Canvas>
+	<mx:Canvas x="25" y="316" width="580" height="180" styleName="CanvasBorder">
+		<mx:Label x="192" y="13" id="lblMilitaryName" textAlign="center" fontWeight="bold" width="193"/>
+		<mx:Canvas x="119" y="36" width="451" height="130" id="pnlMilitary" horizontalScrollPolicy="off" verticalScrollPolicy="off" styleName="InnerBorder">
+		</mx:Canvas>
+		<mx:Canvas x="5" y="37" width="110" height="130" styleName="ThirdBorder">
+			<mx:Text x="10" y="99" text="LV：{cityHero.level}" width="90" textAlign="center" height="22" fontWeight="bold"/>
+			<mx:Image x="24" y="36" width="60" height="60" source="images/hero/{cityHero.head}.png"/>
+			<mx:Label x="14" y="13" text="{cityHero.name}" width="80" textAlign="center" fontWeight="bold"/>
+		</mx:Canvas>
+		<mx:Button x="442" y="13" label="▲" height="20" width="60" click="doScrollUp2()" enabled="{curRow2==1}"/>
+		<mx:Button x="510" y="13" label="▼" height="20" width="60" click="doScrollDown2()" enabled="{curRow2==0}"/>
+	</mx:Canvas>
+	<flash.filters:GlowFilter id='glowFilter'  xmlns:flash.filters='flash.filters.*' 
+          blurX='5' blurY='5'
+          alpha='1' color='#ffff00' 
+          knockout='false' quality='10'
+          strength='1' inner='false'/>
+	<mx:Button x="583" y="26" styleName="closeWindow" click="doClose()" width="22" height="22"/>
+	<mx:Label x="141" y="26" text="军队编制" width="348" styleName="windowTitle"/>
+	<mx:Image x="156" y="57" source="{WarAssets.titleLine}"/>
+</mx:TitleWindow>

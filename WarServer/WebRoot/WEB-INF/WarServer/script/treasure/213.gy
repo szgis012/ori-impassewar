@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:213
+ * 
+ * 名称：建筑承包商
+ * 描述：缩减建筑时间1小时
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceBuildCostTime(params["queueID"], 1*60*60);

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="578" height="495">
+	<mx:Script>
+		<![CDATA[
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="战斗报告" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<!--进攻方-->	
+	<mx:Canvas  x="28" y="41" width="130" height="147">
+		<mx:Label text="进攻方" width="100%" textAlign="center" />
+		<mx:Image x="35" y="28" width="60" height="80" source="images/playerHead/m2.jpg"/>
+		<mx:Label x="0" y="116" text="xxx" width="130" textAlign="center"/>
+		
+	</mx:Canvas>
+	<!--防守方-->
+	<mx:Canvas x="421" y="41" width="130" height="147">
+		<mx:Label text="防守方" width="100%" textAlign="center" />
+		<mx:Image x="35" y="28" width="60" height="80" source="images/playerHead/f5.jpg"/>
+		<mx:Label x="0" y="117" text="astema" width="130" textAlign="center"/>
+	</mx:Canvas>
+	<!--战斗概述-->
+	<mx:TextArea x="181" y="41" text="  发生在 连级部队(等级2)(15:7) 的战斗已结束，我方获得胜利！&#xa;战斗自2009年10月26日 17:50:55开始，共进行7回合，持续3分4秒。&#xa;" width="215" height="147"/>
+	<mx:Label x="28" y="200" text="胜利方获得" width="523" textAlign="center"/>
+	<mx:HBox x="28" y="228" width="523" height="72">
+	</mx:HBox>
+	<!--进攻方伤亡-->
+	<mx:Label x="27.5" y="319" text="进攻方伤亡情况" width="239" textAlign="center"/>
+	<mx:Tile  x="27.5" y="347" width="239" height="121">
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50" />
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+	</mx:Tile>
+	<!--防守方伤亡-->
+	<mx:Label x="311.5" y="319" text="防守方伤亡情况" width="239" textAlign="center"/>
+	<mx:Tile  x="311.5" y="347" width="239" height="121">
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+		<mx:Image width="50" height="50"/>
+	</mx:Tile>
+	
+</mx:TitleWindow>

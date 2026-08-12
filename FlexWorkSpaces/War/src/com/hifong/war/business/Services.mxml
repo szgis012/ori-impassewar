@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cairngorm:ServiceLocator xmlns:mx="http://www.adobe.com/2006/mxml" 
+	                      xmlns:cairngorm="com.adobe.cairngorm.business.*" >
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+		]]>
+	</mx:Script>
+	
+	<!--时间Service-->
+	<mx:RemoteObject id="timeService" destination="TimeService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+	<!--玩家Service-->
+	<mx:RemoteObject id="playerService" destination="PlayerService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+	<!--城市Service-->
+	<mx:RemoteObject id="cityService" destination="CityService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+	<!--殖民Service-->
+	<mx:RemoteObject id="colonizationService" destination="ColonizationService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+	<!--宝物Service-->
+    <mx:RemoteObject id="treasureService" destination="TreasureService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--消息Service-->
+    <mx:RemoteObject id="messageService" destination="MessageService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--工会Service-->
+    <mx:RemoteObject id="guildService" destination="GuildService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--任务Service-->
+    <mx:RemoteObject id="taskService" destination="TaskService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--排名Service-->
+    <mx:RemoteObject id="rankService" destination="RankService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--进程队列Service-->
+    <mx:RemoteObject id="processQueueService" destination="ProcessQueueService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--建筑Service-->
+    <mx:RemoteObject id="buildingService" destination="BuildingService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--科技Service-->
+    <mx:RemoteObject id="technologyService" destination="TechnologyService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--资源Service-->
+    <mx:RemoteObject id="resourcesTuneService" destination="ResourcesTuneService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--市场Service-->
+    <mx:RemoteObject id="marketService" destination="MarketService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--城镇中心Service-->
+    <mx:RemoteObject id="cityCenterService" destination="CityCenterService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--英雄Service-->
+    <mx:RemoteObject id="heroService" destination="HeroService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--生产队列Service-->
+    <mx:RemoteObject id="productionQueueService" destination="ProductionQueueService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--兵营Service-->
+    <mx:RemoteObject id="barracksService" destination="BarracksService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--军队Service-->
+    <mx:RemoteObject id="armyService" destination="ArmyService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--军械Service-->
+    <mx:RemoteObject id="ordnanceService" destination="OrdnanceService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--兵工厂Service-->
+    <mx:RemoteObject id="armoryService" destination="ArmoryService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--指挥中心Service-->
+    <mx:RemoteObject id="militaryService" destination="MilitaryService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--重型工厂Service-->
+    <mx:RemoteObject id="heavyFactoryService" destination="HeavyFactoryService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--飞机场Service-->
+    <mx:RemoteObject id="airportService" destination="AirportService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--地图Service-->
+    <mx:RemoteObject id="mapService" destination="MapService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--报告Service-->
+    <mx:RemoteObject id="reportService" destination="ReportService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--战斗Service-->
+    <mx:RemoteObject id="battleService" destination="BattleService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--用户Service-->
+    <!--<mx:RemoteObject id="userService" destination="UserService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />-->
+    <!--宣战Service-->
+    <mx:RemoteObject id="declareWarService" destination="DeclareWarService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--城市防御Service-->
+    <mx:RemoteObject id="cityDefenseService" destination="CityDefenseService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--出征队列Service-->
+    <mx:RemoteObject id="depoyQueueService" destination="DepoyQueueService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--宝物效果Service-->
+    <mx:RemoteObject id="treasureQueueService" destination="TreasureQueueService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--装备Service-->
+    <mx:RemoteObject id="equipmentService" destination="EquipmentService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    
+    <!--要塞Service-->
+    <mx:RemoteObject id="strongholdService" destination="StrongholdService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    <!--要塞建筑Service-->
+    <mx:RemoteObject id="shbuildingService" destination="ShbuildingService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    
+    <!--游戏卡Service-->
+    <mx:RemoteObject id="gameCardService" destination="GameCardService" showBusyCursor="true" endpoint="{model.SERVER_ENDPOINT}" />
+    
+</cairngorm:ServiceLocator>

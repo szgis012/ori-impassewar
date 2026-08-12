@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:223
+ * 
+ * 名称：巨型计算机
+ * 描述：缩短科技研究时间2小时。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceTechResearchCostTime(params["queueID"], 2*60*60);

@@ -1,0 +1,12 @@
+/**
+ * 宝物编号:241
+ * 
+ * 名称：运输队
+ * 描述：交易时间缩短50%
+ * 类型：加速类
+ */
+
+def params = context.getParams();
+
+context.reduceTradeCostTime(params["queueID"]);
+

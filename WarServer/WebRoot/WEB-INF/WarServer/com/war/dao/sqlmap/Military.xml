@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Military">
+	
+	<select id="getMilitaryActionList" parameterClass="Integer" resultClass="java.util.HashMap">
+		SELECT A.DEPOY_QUEUE_ID qid,(SELECT C.NAME FROM T_CITY_MILITARY C WHERE CITY_MILITARY_ID=A.CITY_MILITARY_ID) AS name,B.POSX AS posX,B.POSY posY,A.TYPE AS type,A.FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE A , T_MAP B WHERE CITY_ID=#cityID# AND A.MAP_ID=B.MAP_ID
+		UNION ALL
+		SELECT SPY_QUEUE_ID ,'侦察' , POSX ,POSY ,1,FINISH_TIME FROM T_SPY_QUEUE WHERE CITY_ID=#cityID#
+	</select>
+
+	<select id="getAttackDetail" parameterClass="Integer" resultClass="java.util.HashMap">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID,C.NAME AS militaryName,D.NAME AS heroName,D.LEVEL AS level,
+			B.POSX AS posX,B.POSY AS posY, A.TYPE AS type,FINISH_TIME AS finishTime 
+			,C.ARMY1 AS army1,C.ARMY2 AS army2,C.ARMY3 AS army3,ARMY4 AS army4,ARMY5 AS army5,ARMY6 AS army6,ARMY7 AS army7,ARMY8 AS army8
+		FROM T_DEPOY_QUEUE A,T_MAP B,T_CITY_MILITARY C,T_CITY_HERO D 
+		WHERE A.MAP_ID=B.MAP_ID AND A.CITY_MILITARY_ID=C.CITY_MILITARY_ID AND C.CITY_HERO_ID=D.CITY_HERO_ID AND DEPOY_QUEUE_ID=#depoyQueueID#
+	</select>
+	
+	<select id="getMilitaryDefenseList" parameterClass="Integer" resultClass="com.war.domain.DepoyQueue">
+		SELECT DQ.DEPOY_QUEUE_ID AS depoyQueueID, DQ.CITY_ID AS cityID, DQ.CITY_MILITARY_ID AS cityMilitaryID, DQ.MAP_ID AS mapID, DQ.TYPE AS type, DQ.REMARK AS remark, DQ.FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE DQ, T_MAP M, T_CITY_MILITARY CM
+		WHERE
+		CM.CITY_ID!=#cityID# AND CM.CITY_MILITARY_ID=DQ.CITY_MILITARY_ID AND M.MAP_ID=DQ.MAP_ID AND M.TYPE=1 AND M.TARGET_ID=#cityID#
+	</select>
+	
+</sqlMap>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="220">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.constant.ConsumeConstant;
+			import com.hifong.war.events.building.barracks.ReduceSoldierEvent;
+			import com.hifong.war.events.building.barracks.EnlistSoldierEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//招募
+			private function doEnlist():void{
+				//征兵数量
+				var num:int = int(this.txtEnlistNum.text);
+				
+				if(num <= 0){
+					MsgBox.showMessage("请输入要招募的新兵数量！");
+					this.txtEnlistNum.setFocus();
+					return;
+				}
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new EnlistSoldierEvent(num));
+			}
+			
+			//裁减
+			private function doReduce():void{
+				//裁减数量
+				var num:int = int(this.txtReduceNum.text);
+				
+				if(num > model.cityInfo.recruitNum){
+					MsgBox.showMessage("城内新兵数量不足！");
+					return;
+				}
+				
+				MsgBox.showConfirm("您确认要裁军吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ReduceSoldierEvent(num));
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="6" width="560" height="46" styleName="InnerBorder">
+		<mx:Text x="10" y="6" text="在此征募新兵，武装部队、组建车辆、战机都将消耗新兵。征募新兵将会消耗相应的资源，新兵将会持续消耗相应资源。新兵也可以解散，解散返还人口，不返还资源。" width="540" height="36"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="60" width="560" height="150" styleName="InnerBorder">
+		<mx:Label x="10" y="10" text="可以招募：" height="19"/>
+		<mx:Label x="10" y="40" text="招募数量："/>
+		<mx:TextInput x="72" y="37" width="70" text="{model.cityInfo.populationFree}" restrict="0-9" id="txtEnlistNum"  maxChars="10"/>
+		<mx:Button x="149" y="37" label="招募" click="doEnlist()" id="btnEnlist" height="26" width="60"/>
+		<mx:Label x="223" y="40" text="消耗金钱："/>
+		<mx:Text x="279" y="40" text="{int(this.txtEnlistNum.text) * ConsumeConstant.SOLDIER_COST_MONEY }" width="104" id="txtConsumeMoney" height="23"/>
+		<mx:Text x="446" y="40" text="{int(this.txtEnlistNum.text) * ConsumeConstant.SOLDIER_COST_FOOD }" width="104" id="txtConsumeMoney0" height="23"/>
+		<mx:Label x="10" y="71" text="裁军数量："/>
+		<mx:TextInput x="72" y="69" width="70" text="{model.cityInfo.recruitNum}" restrict="0-9" id="txtReduceNum"/>
+		<mx:Button x="149" y="68" label="裁军" click="doReduce()" id="btnReduce" width="60" height="26"/>
+		<mx:Text x="72" y="10" text="{model.cityInfo.populationFree}" width="140" id="txtRecruitNum" height="19"/>
+		<mx:Label x="220" y="9" text="城内新兵："/>
+		<mx:Text x="282" y="9" text="{model.cityInfo.recruitNum}" width="140" id="txtRecruitNum0" height="19"/>
+		<mx:Label x="383" y="40" text="消耗食物："/>
+	</mx:Canvas>
+	
+</mx:Canvas>

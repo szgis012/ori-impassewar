@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="150" backgroundAlpha="0" creationComplete="show()" show="show()" hide="hide()">
+	<mx:states>
+		<mx:State name="hide">
+			<mx:SetProperty target="{canvas1}" name="x" value="-270"/>
+			<mx:SetProperty target="{button1}" name="label" value="&gt;"/>  
+			<mx:SetEventHandler target="{button1}" name="click" handler="this.currentState=''"/>
+		</mx:State>
+	</mx:states>
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.view.building.ProcessItem;
+			import com.hifong.war.events.military.GetMilitaryActionListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.collections.SortField;
+			import mx.collections.Sort;
+			import mx.utils.ObjectProxy;
+			import com.hifong.war.constant.CityBuildingStateConstant;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.vo.CityBuildingVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import mx.events.ItemClickEvent;
+			
+			[Bindable]
+			private var model:ModelLocator=ModelLocator.getInstance();
+			
+			private var timer:Timer;
+			private function show():void{
+				
+				onTimer(null);
+				startTime();
+			}
+			private function hide():void{
+				stopTimer();
+			}
+			private function startTime():void{
+				if(!timer){
+					timer = new Timer(1000);
+					timer.addEventListener(TimerEvent.TIMER,onTimer);
+					timer.start();
+				}
+			}
+			private function stopTimer():void{
+				if(timer){
+					timer.removeEventListener(TimerEvent.TIMER,onTimer);
+					timer.stop();
+					timer = null;
+				}
+			}
+			
+			private function onTimer(e:TimerEvent):void{
+				switch(viewStack.selectedIndex){
+					case 0:	
+					//处理建筑队列
+					buildQueueHandler();
+					break;
+					case 1:
+					//处理生产队列
+					produceQueueHandler();
+					break;
+					case 2:
+					//处理军事队列
+					armyQueueHandler();
+					break;
+					
+				}
+			
+				
+				
+			}
+			/**
+			 * 建筑
+			 */
+			private function buildQueueHandler():void{
+				var buildingList:ArrayCollection=model.cityBuildingList;
+				var cityBuilding:CityBuildingVO;
+				//建筑建造的信息
+				var buildingInfo:ObjectProxy;
+				//将要显示的建筑排程列表
+				var showBuildingList:ArrayCollection = new ArrayCollection();
+				
+				if(buildingList && buildingList.length>0){
+					for(var i:int=0; i<buildingList.length; i++){
+						cityBuilding = buildingList.getItemAt(i) as CityBuildingVO;
+						//如果建筑处在升级或者拆除中
+						if(cityBuilding.state != CityBuildingStateConstant.NORMAL){
+							//显示列表
+							buildingInfo = new ObjectProxy();
+							//城市建筑编号
+							buildingInfo.cityBuildingID = cityBuilding.cityBuildingID;
+							buildingInfo.type=0;
+							buildingInfo.queueID=cityBuilding.processQueue.processQueueID;
+							
+							if(cityBuilding.building==null) continue;
+							//建筑名称
+							buildingInfo.name = cityBuilding.building.name;
+							//结束时间
+							if(cityBuilding.processQueue==null) continue;
+							buildingInfo.finishTime = DateFormatUtil.formatTime(cityBuilding.processQueue.finishTime);
+							//建筑任务描述
+							buildingInfo.task = "";
+							
+							//如果是建造或者升级
+							if(cityBuilding.state == CityBuildingStateConstant.BUILDING){
+									buildingInfo.task =   cityBuilding.level + "->" + (cityBuilding.level+1) ;
+							}else if(cityBuilding.state == CityBuildingStateConstant.DESTROYING){
+								//拆除
+								buildingInfo.task = cityBuilding.level + "->" + (cityBuilding.level-1) ;
+							}
+							
+							//剩余时间
+							var leavingSeconds:Number = Math.max((cityBuilding.processQueue.finishTime.time - model.serverTime.time)/1000,0)
+							buildingInfo.leavingTime = DateFormatUtil.convertSecondToTimeE(int(leavingSeconds));
+							
+							buildingInfo.label=buildingInfo.name+" "+buildingInfo.task+" "+buildingInfo.leavingTime;
+							
+							showBuildingList.addItem(buildingInfo);
+						}
+					}
+					//sort
+					var sort:Sort = new Sort();
+					sort.fields = [new SortField("leavingTime")];
+					showBuildingList.sort = sort;
+					showBuildingList.refresh();
+				}
+				this.buildingQueueList.dataProvider=showBuildingList;
+			}
+			/**
+			 * 生产
+			 */
+			private function produceQueueHandler():void{
+				var productionList:ArrayCollection=new ArrayCollection();
+				var productionProcessList:ArrayCollection=model.ordnanceInfo.ordnanceProcessList;
+				var productionProcessVO:ProductionQueueVO;
+				if(productionProcessList && productionProcessList.length){
+					for(var i:int=0;i<productionProcessList.length;i++){
+					var info:ObjectProxy=new ObjectProxy();
+					productionProcessVO=productionProcessList.getItemAt(i) as ProductionQueueVO;
+					info.productionType=productionProcessVO.type;
+					info.type=1;
+					info.queueID=productionProcessVO.productionQueueID;
+					info.amount=productionProcessVO.amount;
+					
+					info.leavingTime=DateFormatUtil.convertSecondToTimeE((productionProcessVO.finishTime.time-model.serverTime.time)/1000 >>0);
+					info.label=info.type+" "+info.amount+" "+info.leavingTime;
+					productionList.addItem(info);
+					}
+				//sort
+					var sort:Sort = new Sort();
+					sort.fields = [new SortField("leavingTime")];
+					productionList.sort = sort;
+					productionList.refresh(); 
+				}
+				
+				this.produceQueueList.dataProvider=productionList; 
+			}
+			/**
+			 * 军事
+			 */
+			private function armyQueueHandler():void{
+				var armyList:ArrayCollection=new ArrayCollection();
+				var armyActionList:ArrayCollection=model.cityMilitaryActionList;
+				var info:ObjectProxy;
+				if(armyActionList && armyActionList.length){
+					for(var i:String in armyActionList){
+						info=new ObjectProxy();
+						info.name=armyActionList.getItemAt(int(i)).name;
+						info.type=2;
+						info.armyType=armyActionList.getItemAt(int(i)).type;
+						info.mapName=armyActionList.getItemAt(int(i)).map.name;
+						info.leavingTime=DateFormatUtil.convertSecondToTimeE((armyActionList.getItemAt(int(i)).finishTime.time-model.serverTime.time)/1000 >>0);
+						if(info.leavingTime<=0) continue;
+						info.label=info.name+" "+info.mapName+" "+info.mapName+" "+info.leavingTime;
+						armyList.addItem(info);
+					}
+					//sort
+					var sort:Sort = new Sort();
+					sort.fields = [new SortField("leavingTime")];
+					armyList.sort = sort;
+					armyList.refresh(); 
+				}
+				this.armyQueueList.dataProvider=armyList;
+			}
+			private function clickHandler(e:ItemClickEvent):void{
+				viewStack.selectedIndex=e.index;
+				if(e.index==2) 
+				{
+					//获取军队信息列表
+					CairngormEventDispatcher.getInstance().dispatchEvent(new GetMilitaryActionListEvent()); 
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="100%" height="150" id="canvas1">
+		<mx:ViewStack id="viewStack" width="270" height="120">
+			<mx:Canvas width="100%" height="100%" backgroundAlpha=".3"> 
+				<mx:List width="100%" height="100%"  id="buildingQueueList" itemRenderer="com.hifong.war.view.building.ProcessItem"   backgroundColor="0" backgroundAlpha=".3"/>
+				</mx:Canvas>
+			<mx:Canvas  width="100%" height="100%" backgroundAlpha=".3">
+				<mx:List width="100%" height="100%"  id="produceQueueList"  itemRenderer="com.hifong.war.view.building.ProcessItem"   backgroundColor="0" backgroundAlpha=".3"/>
+			</mx:Canvas>
+			<mx:Canvas  width="100%" height="100%" backgroundAlpha=".3">
+				<mx:List width="100%" height="100%"  id="armyQueueList"  itemRenderer="com.hifong.war.view.building.ProcessItem"  backgroundColor="0" backgroundAlpha=".3"/>
+			</mx:Canvas>
+		</mx:ViewStack>
+		<mx:Image y="120" source="images/processNav.png"  />
+		<mx:ButtonBar  y="120" height="23" horizontalGap="0" itemClick="clickHandler(event)"  styleName="Queue" x="14">
+			<mx:dataProvider>
+				<mx:Array>
+					<mx:String>建筑</mx:String>
+					<mx:String>生产</mx:String>
+					<mx:String>军事</mx:String>
+				</mx:Array>
+			</mx:dataProvider>
+		</mx:ButtonBar>
+		<mx:Button x="270"  label="&lt;" width="36" height="29" id="button1" click="this.currentState='hide'"/>
+	</mx:Canvas>
+</mx:Canvas>

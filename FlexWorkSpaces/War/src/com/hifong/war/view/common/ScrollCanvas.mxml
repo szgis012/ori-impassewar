@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="760" height="22" horizontalScrollPolicy="off" backgroundColor="#000000" alpha="0.7" visible="false" showEffect="{fadeIn}" hideEffect="{fadeOut}">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import flash.utils.clearInterval;
+			import flash.utils.setInterval;
+			
+			private var handle:Number;
+			
+			/** 滚动速度 */
+			private var speed:int = 3;
+			
+			/** 信息等待队列 */
+			private var messageList:ArrayCollection = new ArrayCollection();
+			
+			public function scrollText(text:String):void{
+				
+				messageList.addItem(text);
+				
+				if (messageList.length>1) {
+					return;
+				}
+				
+				startScrollText();
+			}
+			
+			private function doScroll():void{
+				pText.x = pText.x-speed;
+				if(pText.x<=-pText.width) {
+					messageList.removeItemAt(0);
+					clearInterval(handle);
+					this.visible = false;
+					
+					if (messageList.length>0) {
+						setTimeout(function ():void {
+							startScrollText();
+						}, 3000);
+					}
+				}
+			}
+			
+			private function startScrollText():void {
+				this.visible = true;
+				pText.text = messageList.getItemAt(0).toString();
+				pText.x = this.width;
+				handle = setInterval(doScroll,40);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Text x="0" y="0" id="pText" fontSize="14"/>
+	<mx:Fade id="fadeOut" duration="1000" alphaFrom="0.7" alphaTo="0"/>
+    <mx:Fade id="fadeIn" duration="1000" alphaFrom="0" alphaTo="0.7"/>
+	
+</mx:Canvas>

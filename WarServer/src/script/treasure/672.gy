@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:672
+ * 
+ * 名称：战魂银章
+ * 描述：品质为稀有的指挥官可用，提高该指挥官军魄10点，100点军魄可以提高1点军魂。(也可提高普通指挥官20点军魄)
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.useFightSoulSilverMedal(params["cityHeroID"]);

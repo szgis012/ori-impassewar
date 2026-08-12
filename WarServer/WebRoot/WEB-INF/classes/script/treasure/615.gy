@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:615
+ * 
+ * 名称：调遣令
+ * 描述：使用调遣令可以指挥更多部队，对1个指挥官使用，可提升统御10%，使指挥官增加10%部队指挥上限，时限3天。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.setCityHeroReinAdd(params["cityHeroID"], 10, 3);

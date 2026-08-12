@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="330" height="80" styleName="InnerBorder">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.tooltip.HeroSkillTooltip;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.militarycollege.LevelUpSkillEvent;
+			import com.hifong.war.events.building.militarycollege.ForgetSkillEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.constant.ImagePathConstant;
+			
+			[Bindable]
+			public var heroSkill:Object;
+			
+			private function generateTooltip(event:ToolTipEvent):void{
+				event.toolTip = new HeroSkillTooltip(heroSkill);
+			}
+			
+			/**
+			 * 升级技能
+			 */
+			private function levelUpSkill():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new LevelUpSkillEvent(heroSkill.cityHeroID,heroSkill.heroSkillID));
+			}
+			
+			/**
+			 * 遗忘技能
+			 */
+			private function forgetSkill():void{
+				MsgBox.showConfirm("您确定要让指挥官遗忘" + heroSkill.skill.name + "技能吗？",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ForgetSkillEvent(heroSkill.cityHeroID,heroSkill.heroSkillID));
+				})
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Image x="10" y="10" width="60" height="60" source="{ImagePathConstant.SKILL_PATH_PREFIX+heroSkill.skill.image}" toolTip=" " toolTipCreate="generateTooltip(event)"/>
+	<mx:Text x="115" y="15" text="{heroSkill.skill.name}" width="100" textAlign="center" fontWeight="bold" height="22"/>
+	<mx:Label x="78" y="50" text="等级：{heroSkill.level}/{heroSkill.skill.maxLevel}" width="70"/>
+	<mx:Label x="156" y="50" text="熟练度：{heroSkill.proficiency}/{heroSkill.nextLevelSkill.studyProficiency}" width="97"/>
+	<mx:Button x="261" y="13" label="升级" enabled="{heroSkill.proficiency>=heroSkill.skill.studyProficiency}" click="levelUpSkill()" height="24"/>
+	<mx:Button x="261" y="45" label="遗忘" click="forgetSkill()" height="24"/>
+	
+</mx:Canvas>

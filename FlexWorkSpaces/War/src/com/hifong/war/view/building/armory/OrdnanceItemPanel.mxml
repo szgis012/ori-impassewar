@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="90" styleName="InnerBorder">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.WindowUtil;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.util.tooltip.ConstraintDependTooltip;
+			import com.hifong.war.constant.GlobalConstant;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.vo.OrdnanceVO;
+			import mx.managers.PopUpManager;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 当前军械信息*/
+			private var _ordnance:OrdnanceVO;
+			
+			/** 当前军械数量信息 */
+			[Bindable]
+			public var cityOrdnance:CityOrdnanceVO;
+			
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean = true;
+			
+			[Bindable]
+			public function set ordnance(od:OrdnanceVO):void{
+				this._ordnance = od;
+				canCreate = BuildingUtil.meetAllConditions(ordnance.constraintDepend);
+			}
+			
+			public function get ordnance():OrdnanceVO{
+				return this._ordnance;
+			}
+			
+			private function doProduce():void{
+				var win:ProduceOrdnanceWindow = new ProduceOrdnanceWindow();
+				win.ordnance = ordnance;
+				win.cityOrdnance = cityOrdnance;
+				win.initData();//初始化绑定数据
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function doBackout():void{
+				var win:BackoutOrdnanceWindow = new BackoutOrdnanceWindow();
+				win.ordnance = ordnance;
+				win.cityOrdnance = cityOrdnance;
+				win.initData();//初始化绑定数据
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			private function showTooltip(event:ToolTipEvent):void{
+				canCreate = BuildingUtil.meetAllConditions(ordnance.constraintDepend);
+				event.toolTip = new ConstraintDependTooltip("制造",ordnance.name,ordnance.constraintDepend);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Button x="79" y="29" label="制造" id="btnProduce" enabled="{canCreate}" width="60" click="doProduce()"  toolTip=" " toolTipCreate="showTooltip(event)" height="24"/>
+	<mx:Button x="79" y="57" label="拆卸" id="btnBackout"  width="60" click="doBackout()" enabled="{cityOrdnance.num>0}" height="24"/>
+	<mx:TextArea x="145" y="30" width="384" height="50" text="{ordnance.description}" editable="false" id="txtDesc">
+	</mx:TextArea>
+	<mx:Label x="295" y="6" text="数量：" fontWeight="bold" textAlign="left"/>
+	<mx:Text x="333" y="6" text="{cityOrdnance.num}" width="160" id="txtOrdnanceNum" fontWeight="bold" textAlign="left"/>
+	<mx:Image x="11" y="19" width="60" height="60" source="{GlobalConstant.ORDNANCE_DIR_PREFIX+ordnance.image}" toolTip="{ordnance.description}"/>
+	<mx:Label x="146" y="6" text="{ordnance.name}" width="141" textAlign="left" fontWeight="bold"/>
+	
+</mx:Canvas>

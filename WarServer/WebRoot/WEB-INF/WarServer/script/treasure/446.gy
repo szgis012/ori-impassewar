@@ -1,0 +1,16 @@
+/**
+ * 宝物编号:446
+ * 
+ * 名称：中型资金袋
+ * 描述：获得金钱，金钱不多于1000
+ * 类型：宝箱
+ */
+
+//rand{1,5}
+int rnd = Math.random() * 10 % 5 + 1;
+
+int moneyNum = 200 * rnd;
+
+context.rewardResource(0,0,0,0,moneyNum);
+
+return "金钱:resource/5.png:${moneyNum}".toString();

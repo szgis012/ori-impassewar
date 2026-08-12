@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="323" height="340" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.stat.ExchangedCityResourcesEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var woodNum:Number;
+			[Bindable]
+			private var steelNum:Number;
+			[Bindable]
+			private var oilNum:Number;
+			[Bindable]
+			private var foodNum:Number;
+			
+			[Bindable]
+			private var assignableNum:Number = 0;
+			
+			private function doInit():void {
+				//4种资源数量镜像，防止资源刷新当前调整数据进行变化
+				woodNum = model.cityInfo.cityResource.woodNum;
+				steelNum = model.cityInfo.cityResource.steelNum;
+				oilNum = model.cityInfo.cityResource.oilNum;
+				foodNum = model.cityInfo.cityResource.foodNum;
+			}
+			
+			private function doClose():void {
+				WindowUtil.closeModelWindow(this);
+			}
+
+			private function onResourcesNumChanges():void {
+				
+				assignableNum = 0;
+				assignableNum += woodNum-int(textWoodNum.text);
+				assignableNum += steelNum-int(textSteelNum.text);
+				assignableNum += oilNum-int(textOilNum.text);
+				assignableNum += Math.floor((foodNum-int(textFoodNum.text))/3);
+				
+			}
+			
+			private function doReset():void {
+				assignableNum = 0;
+				textWoodNum.text = woodNum.toString();
+				textSteelNum.text = steelNum.toString();
+				textOilNum.text = oilNum.toString();
+				textFoodNum.text = foodNum.toString();
+			}
+			
+			private function doExchange():void {
+				
+				trace(int(textWoodNum.text));
+				if(!(int(textWoodNum.text)>=0)) {
+					MsgBox.showMessage("木材数量必须大于等于0。");
+					return;
+				}
+				
+				if(!(int(textSteelNum.text)>=0)) {
+					MsgBox.showMessage("钢铁数量必须大于等于0。");
+					return;
+				}
+				
+				if(!(int(textOilNum.text)>=0)) {
+					MsgBox.showMessage("石油数量必须大于等于0。");
+					return;
+				}
+				
+				if(!(int(textFoodNum.text)>=0)) {
+					MsgBox.showMessage("食物数量必须大于等于0。");
+					return;
+				}
+				
+				if(assignableNum!=0) {
+					MsgBox.showMessage("请将可分配资源完全分配(可分配数量必须为0)。");
+					return;
+				}
+				
+				MsgBox.showConfirm("您确定要兑换资源吗？\n兑换1次资源需要消耗1张资源兑换卡。", function ():void {
+					var exchangedWoodNum:Number = int(textWoodNum.text)-woodNum;
+					var exchangedSteelNum:Number = int(textSteelNum.text)-steelNum;
+					var exchangedOilNum:Number = int(textOilNum.text)-oilNum;
+					var exchangedFoodNum:Number = int(textFoodNum.text)-foodNum;
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ExchangedCityResourcesEvent(model.cityInfo.cityID, exchangedWoodNum, exchangedSteelNum, exchangedOilNum, exchangedFoodNum));
+					doClose();
+				});
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="资源兑换" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="27" y="39" width="268" height="70" styleName="CanvasBorder">
+		<mx:Text x="10" y="10" text="食物每3点增加1可分配数量；&#xa;其他资源每1增加1点可分配数量。&#xa;兑换一次资源需要消耗1张资源兑换卡。"/>
+	</mx:Canvas>
+	
+	<mx:Canvas x="27" y="117" width="268" height="195" styleName="CanvasBorder">
+		<mx:Label x="10" y="10" text="可分配数量：{assignableNum}"/>
+		<mx:Image x="10" y="39" source="images/wood.png" toolTip="木材"/>
+		<mx:Image x="10" y="67" source="images/steel.png" toolTip="钢铁"/>
+		<mx:Image x="10" y="95" source="images/oil.png" toolTip="石油"/>
+		<mx:Image x="10" y="123" source="images/food.png" toolTip="食物"/>
+		<mx:Label x="45" y="39" text="现有数量：{woodNum}" width="120"/>
+		<mx:Label x="45" y="67" text="现有数量：{steelNum}" width="120"/>
+		<mx:Label x="45" y="95" text="现有数量：{oilNum}" width="120"/>
+		<mx:Label x="45" y="123" text="现有数量：{foodNum}" width="120"/>
+		<mx:TextInput x="173" y="38" width="80" textAlign="right" id="textWoodNum" text="{woodNum}" maxChars="8" keyUp="onResourcesNumChanges()"/>
+		<mx:TextInput x="173" y="66" width="80" textAlign="right" id="textSteelNum" text="{steelNum}" maxChars="8" keyUp="onResourcesNumChanges()"/>
+		<mx:TextInput x="173" y="94" width="80" textAlign="right" id="textOilNum" text="{oilNum}" maxChars="8" keyUp="onResourcesNumChanges()"/>
+		<mx:TextInput x="173" y="122" width="80" textAlign="right" id="textFoodNum" text="{foodNum}" maxChars="8" keyUp="onResourcesNumChanges()"/>
+		<mx:Button x="103" y="159" label="还原" click="doReset()"/>
+		<mx:Button x="180" y="159" label="交换" click="doExchange()"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

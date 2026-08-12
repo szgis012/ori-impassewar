@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="630" height="422" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.stat.UpdateResourcesWorkerEvent;
+			import com.hifong.war.vo.CityVO;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.common.GetCityWithCityResourceByIDEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			/** 一个工人单位时间的粮食产量 */
+			public static const FOOD_OUTPUT_PER_WORKER:int = 30;
+			/** 一个工人单位时间的木材产量 */
+			public static const WOOD_OUTPUT_PER_WORKER:int = 10;
+			/** 一个工人单位时间的钢铁产量 */
+			public static const STEEL_OUTPUT_PER_WORKER:int = 10;
+			/** 一个工人单位时间的石油产量 */
+			public static const OIL_OUTPUT_PER_WORKER:int = 10;
+			/** 基础木材产量 */
+			public static const BASE_WOOD_OUTPUT:int = 60;
+			/** 基础钢铁产量 */
+			public static const BASE_STEEL_OUTPUT:int = 60;
+			/** 基础石油产量 */
+			public static const BASE_OIL_OUTPUT:int = 60;
+			/** 基础食物产量 */
+			public static const BASE_FOOD_OUTPUT:int = 110;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			//基础木材产量
+			[Bindable]
+			private var baseWoodOutput:Number;
+			//基础钢铁产量
+			[Bindable]
+			private var baseSteelOutput:Number;
+			//基础石油产量
+			[Bindable]
+			private var baseOilOutput:Number;
+			//基础食物产量
+			[Bindable]
+			private var baseFoodOutput:Number;
+			//木材产量
+			[Bindable]
+			private var woodOutput:Number;
+			//钢铁产量
+			[Bindable]
+			private var steelOutput:Number;
+			//石油产量
+			[Bindable]
+			private var oilOutput:Number;
+			//食物产量
+			[Bindable]
+			private var foodOutput:Number;
+			//总计可以拥有的工人数量
+			[Bindable]
+			private var totalWorkerNum:Number = model.cityInfo.populationFree + model.cityInfo.cityResource.woodWorkerNum + model.cityInfo.cityResource.steelWorkerNum + model.cityInfo.cityResource.oilWorkerNum + model.cityInfo.cityResource.foodWorkerNum;
+			
+			
+			//计算资源产出
+			private function calculateOutput():void{
+				var tax:int = model.cityInfo.tax;
+				
+				this.baseOilOutput = BASE_OIL_OUTPUT +  Math.floor(OIL_OUTPUT_PER_WORKER * this.nsOilWorkerNum.value  * (100 - tax) / 100 );
+				this.baseSteelOutput =  BASE_STEEL_OUTPUT + Math.floor(STEEL_OUTPUT_PER_WORKER * this.nsSteelWorkerNum.value * (100 - tax) / 100 );
+				this.baseWoodOutput = BASE_WOOD_OUTPUT + Math.floor(WOOD_OUTPUT_PER_WORKER * this.nsWoodWorkerNum.value * (100 - tax) / 100 );
+				this.baseFoodOutput = BASE_FOOD_OUTPUT + Math.floor(FOOD_OUTPUT_PER_WORKER * this.nsFoodWorkerNum.value * (100 - tax) / 100 );
+				
+				this.oilOutput = BASE_OIL_OUTPUT + Math.floor((baseOilOutput - BASE_OIL_OUTPUT) * (100 + model.cityInfo.cityResource.oilBuildingAdd + model.cityInfo.cityResource.oilFieldAdd + model.cityInfo.cityResource.oilOfficerAdd + model.cityInfo.cityResource.oilTechAdd + model.cityInfo.cityResource.oilTreasureAdd) / 100  - model.cityInfo.cityResource.oilConsume);
+				this.steelOutput = BASE_STEEL_OUTPUT + Math.floor((baseSteelOutput - BASE_STEEL_OUTPUT)  * (100 + model.cityInfo.cityResource.steelBuildingAdd + model.cityInfo.cityResource.steelFieldAdd + model.cityInfo.cityResource.steelOfficerAdd + model.cityInfo.cityResource.steelTechAdd + model.cityInfo.cityResource.steelTreasureAdd) / 100);
+				this.foodOutput =  BASE_FOOD_OUTPUT + Math.floor((baseFoodOutput  - BASE_FOOD_OUTPUT) * (100 + model.cityInfo.cityResource.foodBuildingAdd + model.cityInfo.cityResource.foodFieldAdd + model.cityInfo.cityResource.foodOfficerAdd + model.cityInfo.cityResource.foodTechAdd + model.cityInfo.cityResource.foodTreasureAdd) / 100 - model.cityInfo.cityResource.foodConsume);
+				this.woodOutput =  BASE_WOOD_OUTPUT +  Math.floor((baseWoodOutput - BASE_WOOD_OUTPUT) * (100 + model.cityInfo.cityResource.woodBuildingAdd + model.cityInfo.cityResource.woodFieldAdd + model.cityInfo.cityResource.woodOfficerAdd + model.cityInfo.cityResource.woodTechAdd + model.cityInfo.cityResource.woodTreasureAdd) / 100);
+				
+				//对入不敷出的进行标示
+				if(this.oilOutput < 0){
+					this.txtOilOutput.htmlText = "<font color='#ff0000'>" + this.oilOutput + "</font>";
+				}else{
+					this.txtOilOutput.htmlText = "" + this.oilOutput;
+				}
+				
+				if(this.steelOutput < 0){
+					this.txtSteelOutput.htmlText = "<font color='#ff0000'>" + this.steelOutput + "</font>";
+				}else{
+					this.txtSteelOutput.htmlText = "" + this.steelOutput ;
+				}
+				
+				if(this.foodOutput < 0){
+					this.txtFoodOutput.htmlText = "<font color='#ff0000'>" + this.foodOutput + "</font>";
+				}else{
+					this.txtFoodOutput.htmlText = "" + this.foodOutput ;
+				}
+				
+				if(this.woodOutput < 0){
+					this.txtWoodOutput.text =  "<font color='#ff0000'>" + this.woodOutput + "</font>";
+				}else{
+					this.txtWoodOutput.text =  "" + this.woodOutput ;
+				}
+			}
+			
+			private function doModifyWorker():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new UpdateResourcesWorkerEvent(this.nsWoodWorkerNum.value,this.nsSteelWorkerNum.value,this.nsOilWorkerNum.value,this.nsFoodWorkerNum.value));
+				calculateOutput();
+			}
+			
+			private function doInit():void{
+//				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityByIDEvent(model.cityInfo.cityID));
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityWithCityResourceByIDEvent(model.cityInfo.cityID)); 
+				calculateOutput();
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function showExchangeResourceWindow():void {
+				var win:ExchangeCityResourcesWindow = new ExchangeCityResourcesWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="资源生产总览" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Grid x="25" y="37" width="580" height="315">
+		<mx:GridRow width="100%" height="100%" styleName="GrildRowHeader">
+			<mx:GridItem width="100%" height="100%"  borderColor="#B7BABC" borderSides="right" borderStyle="solid" borderThickness="1">
+			</mx:GridItem>
+			<mx:GridItem  borderColor="#B7BABC" borderSides="left right" borderStyle="solid" borderThickness="1">
+				<mx:Label text="木材" width="100%" height="100%" textAlign="center"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%"  borderColor="#B7BABC" borderSides="left right" borderStyle="solid" borderThickness="1">
+				<mx:Label text="钢铁" width="100%" height="100%" textAlign="center"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%"  borderColor="#B7BABC" borderSides="left right" borderStyle="solid" borderThickness="1">
+				<mx:Label text="石油" width="100%" height="100%" textAlign="center"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%"  borderColor="#B7BABC" borderSides="left" borderStyle="solid" borderThickness="1">
+				<mx:Label text="食物" width="100%" height="100%" textAlign="center"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="基础产量"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{baseWoodOutput}" width="100%" height="100%" id="txtWoodBaseOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{baseSteelOutput}" width="100%" height="100%" id="txtSteelBaseOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{baseOilOutput}" width="100%" height="100%" id="txtOilBaseOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{baseFoodOutput}" width="100%" height="100%" id="txtFoodBaseOutput"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="EvenRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="工作人数"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%" paddingLeft="5">
+				<mx:NumericStepper width="95%" id="nsWoodWorkerNum" value="{model.cityInfo.cityResource.woodWorkerNum}" change="calculateOutput()" minimum="0" maximum="{totalWorkerNum-nsSteelWorkerNum.value-nsOilWorkerNum.value-nsFoodWorkerNum.value}"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%" paddingLeft="5">
+				<mx:NumericStepper width="95%" id="nsSteelWorkerNum" value="{model.cityInfo.cityResource.steelWorkerNum}" change="calculateOutput()" minimum="0" maximum="{totalWorkerNum-nsWoodWorkerNum.value-nsOilWorkerNum.value-nsFoodWorkerNum.value}"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%" paddingLeft="5">
+				<mx:NumericStepper width="95%" id="nsOilWorkerNum" value="{model.cityInfo.cityResource.oilWorkerNum}" change="calculateOutput()" minimum="0" maximum="{totalWorkerNum-nsSteelWorkerNum.value-nsWoodWorkerNum.value-nsFoodWorkerNum.value}"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%" paddingLeft="5">
+				<mx:NumericStepper width="95%" id="nsFoodWorkerNum" value="{model.cityInfo.cityResource.foodWorkerNum}" change="calculateOutput()" minimum="0" maximum="{totalWorkerNum-nsSteelWorkerNum.value-nsOilWorkerNum.value-nsWoodWorkerNum.value}"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="建筑加成"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodBuildingAdd+'%'}" width="100%" height="100%" id="txtWoodBuildingAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelBuildingAdd+'%'}" width="100%" height="100%" id="txtSteelBuildingAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilBuildingAdd+'%'}" width="100%" height="100%" id="txtOilBuildingAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodBuildingAdd+'%'}" width="100%" height="100%" id="txtFoodBuildingAdd"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="EvenRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="科技加成"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodTechAdd+'%'}" width="100%" height="100%" id="txtWoodTechAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelTechAdd+'%'}" width="100%" height="100%" id="txtSteelTechAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilTechAdd+'%'}" width="100%" height="100%" id="txtOilTechAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodTechAdd+'%'}" width="100%" height="100%" id="txtFoodTechAdd"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="执政官加成"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodOfficerAdd+'%'}" width="100%" height="100%" id="txtWoodOfficerAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelOfficerAdd+'%'}" width="100%" height="100%" id="txtSteelOfficerAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilOfficerAdd+'%'}" width="100%" height="100%" id="txtOilOfficerAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodOfficerAdd+'%'}" width="100%" height="100%" id="txtFoodOfficerAdd"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="EvenRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="野地加成"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodFieldAdd+'%'}" width="100%" height="100%" id="txtWoodFieldAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelFieldAdd+'%'}" width="100%" height="100%" id="txtSteelFieldAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilFieldAdd+'%'}" width="100%" height="100%" id="txtOilFieldAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodFieldAdd+'%'}" width="100%" height="100%" id="txtFoodFieldAdd"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="宝物加成"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodTreasureAdd+'%'}" width="100%" height="100%" id="txtWoodTreasureAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelTreasureAdd+'%'}" width="100%" height="100%" id="txtSteelTreasureAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilTreasureAdd+'%'}" width="100%" height="100%" id="txtOilTreasureAdd"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodTreasureAdd+'%'}" width="100%" height="100%" id="txtFoodTreasureAdd"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="EvenRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="资源消耗"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="0" width="100%" height="100%" id="txtWoodConsume"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="0" width="100%" height="100%" id="txtSteelConsume"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilConsume}" width="100%" height="100%" id="txtOilConsume"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodConsume}" width="100%" height="100%" id="txtFoodConsume"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="资源产出"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text width="100%" height="100%" id="txtWoodOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text width="100%" height="100%" id="txtSteelOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text  width="100%" height="100%" id="txtOilOutput"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text width="100%" height="100%" id="txtFoodOutput"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="EvenRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="当前数量"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodNum}" width="100%" height="100%" id="txtWoodNum"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelNum}" width="100%" height="100%" id="txtSteelNum"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilNum}" width="100%" height="100%" id="txtOilNum"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodNum}" width="100%" height="100%" id="txtFoodNum"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%" height="100%" styleName="OddRow">
+			<mx:GridItem width="100%" height="100%">
+				<mx:Label text="资源上限"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.woodNumMax}" width="100%" height="100%" id="txtWoodNumMax"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.steelNumMax}" width="100%" height="100%" id="txtSteelNumMax"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.oilNumMax}" width="100%" height="100%" id="txtOilNumMax"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%" height="100%">
+				<mx:Text text="{model.cityInfo.cityResource.foodNumMax}" width="100%" height="100%" id="txtFoodNumMax"/>
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>
+	
+	<mx:Canvas width="580" height="35" x="25" y="360" styleName="CanvasBorder">
+		<mx:Label x="10" y="7" text="工作人数："/>
+		<mx:TextInput x="70" y="6" width="80" text="{model.cityInfo.cityResource.foodWorkerNum+model.cityInfo.cityResource.steelWorkerNum+model.cityInfo.cityResource.oilWorkerNum+model.cityInfo.cityResource.woodWorkerNum}" editable="false" id="txtTotalWorkerNum" textAlign="right"/>
+		<mx:Label x="160" y="7" text="空闲人数："/>
+		<mx:TextInput x="220" y="6" width="80" text="{model.cityInfo.populationFree}" editable="false" id="txtPopulationFree" textAlign="right"/>
+		<mx:Button x="315" y="6" label="修改工作人数" click="doModifyWorker()" width="105" height="24"/>
+		<mx:Button x="492" y="6" label="资源兑换" click="showExchangeResourceWindow()" height="24"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

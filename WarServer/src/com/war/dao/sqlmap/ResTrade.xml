@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ResTrade">
+	<typeAlias alias="ResTrade" type="com.war.domain.ResTrade" />
+	
+	<insert id="createResTrade" parameterClass="ResTrade">
+		INSERT INTO T_RES_TRADE(RES_TRADE_ID, CITY_ID, CITY_POSX, CITY_POSY, RESOURCE_TYPE, AMOUNT, PRICE, MAX_TIME, IS_ALLY_ONLY, STATE) VALUES(#resTradeID#, #cityID#, #cityPosX#, #cityPosY#, #resourceType#, #amount#, #price#, #maxTime#, #isAllyOnly#, #state#)
+		<selectKey resultClass="Integer" keyProperty="resTradeID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateResTradeState" parameterClass="HashMap">
+		UPDATE T_RES_TRADE SET STATE=#state# WHERE RES_TRADE_ID=#resTradeID#
+	</update>
+	
+	<update id="updateResTrade" parameterClass="ResTrade">
+		UPDATE T_RES_TRADE SET CITY_ID=#cityID#, CITY_POSX=#cityPosX#, CITY_POSY=#cityPosY#, RESOURCE_TYPE=#resourceType#, AMOUNT=#amount#, PRICE=#price#, MAX_TIME=#maxTime#, IS_ALLY_ONLY=#isAllyOnly#, STATE=#state# WHERE RES_TRADE_ID=#resTradeID#
+	</update>
+	
+	<delete id="deleteResTradeByID" parameterClass="Integer">
+		DELETE FROM T_RES_TRADE WHERE RES_TRADE_ID=#resTradeID#
+	</delete>
+	
+	<select id="getResTradeByID" parameterClass="Integer" resultClass="ResTrade">
+		SELECT RES_TRADE_ID AS resTradeID, CITY_ID AS cityID, CITY_POSX AS cityPosX, CITY_POSY AS cityPosY, RESOURCE_TYPE AS resourceType, AMOUNT AS amount, PRICE AS price, MAX_TIME AS maxTime, IS_ALLY_ONLY AS isAllyOnly, STATE AS state FROM T_RES_TRADE WHERE RES_TRADE_ID=#resTradeID#
+	</select>
+	
+	<select id="getResTradePagingListOrderByDistance" parameterClass="HashMap" resultClass="ResTrade">
+		<![CDATA[SELECT RES_TRADE_ID AS resTradeID, CITY_ID AS cityID, CITY_POSX AS cityPosX, CITY_POSY AS cityPosY, RESOURCE_TYPE AS resourceType, AMOUNT AS amount, PRICE AS price, MAX_TIME AS maxTime, IS_ALLY_ONLY AS isAllyOnly, STATE AS state FROM T_RES_TRADE WHERE STATE=1 AND CITY_ID<>#cityID#]]>
+		<isNotNull property="resourceType" prepend="AND">
+		RESOURCE_TYPE=#resourceType#
+		</isNotNull>
+		ORDER BY SQRT(POW((#cityPosX#-CITY_POSX),2)+POW((#cityPosY#-CITY_POSY),2)) LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getResourceSalesAmount" parameterClass="HashMap" resultClass="Integer">
+		<![CDATA[SELECT COUNT(*) FROM T_RES_TRADE WHERE CITY_ID<>#cityID#]]>
+		AND STATE=1
+		<isNotNull property="resourceType" prepend="AND">
+		RESOURCE_TYPE=#resourceType#
+		</isNotNull>
+	</select>
+	
+	<select id="getResourceSalesListByCityID" parameterClass="Integer" resultClass="ResTrade">
+		SELECT RES_TRADE_ID AS resTradeID, CITY_ID AS cityID, CITY_POSX AS cityPosX, CITY_POSY AS cityPosY, RESOURCE_TYPE AS resourceType, AMOUNT AS amount, PRICE AS price, MAX_TIME AS maxTime, IS_ALLY_ONLY AS isAllyOnly, STATE AS state FROM T_RES_TRADE WHERE CITY_ID=#cityID# AND STATE=1
+	</select>
+	
+	<select id="getResTradeList" resultClass="ResTrade">
+		SELECT RES_TRADE_ID AS resTradeID, CITY_ID AS cityID, CITY_POSX AS cityPosX, CITY_POSY AS cityPosY, RESOURCE_TYPE AS resourceType, AMOUNT AS amount, PRICE AS price, MAX_TIME AS maxTime, IS_ALLY_ONLY AS isAllyOnly, STATE AS state FROM T_RES_TRADE
+	</select>
+	
+	<select id="getResTradeNumByCityID" resultClass="ResTrade">
+		SELECT RES_TRADE_ID AS resTradeID, CITY_ID AS cityID, CITY_POSX AS cityPosX, CITY_POSY AS cityPosY, RESOURCE_TYPE AS resourceType, AMOUNT AS amount, PRICE AS price, MAX_TIME AS maxTime, IS_ALLY_ONLY AS isAllyOnly, STATE AS state FROM T_RES_TRADE
+	</select>
+
+</sqlMap>

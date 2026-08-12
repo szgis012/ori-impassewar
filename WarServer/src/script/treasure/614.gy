@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:614
+ * 
+ * 名称：行政实务
+ * 描述：指挥官学习行政实务学，对1个指挥官使用，使用后提升指挥官行政属性20点，时限3天。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.setCityHeroExecutivepowerAdd(params["cityHeroID"], 20, 3);

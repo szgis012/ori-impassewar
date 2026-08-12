@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Report">
+	<typeAlias alias="Report" type="com.war.domain.Report" />
+	
+	<insert id="createReport" parameterClass="Report">
+		INSERT INTO T_REPORT(REPORT_ID, PLAYER_ID, TITLE, CONTENT, TYPE, READ_FLAG, SAVE_FLAG, RECEIVE_TIME) VALUES(#reportID#, #playerID#, #title#, #content#, #type#, #readFlag#, #saveFlag#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="reportID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateReport" parameterClass="Report">
+		UPDATE T_REPORT SET REPORT_ID=#reportID#, PLAYER_ID=#playerID#, TITLE=#title#, CONTENT=#content#, TYPE=#type#, READ_FLAG=#readFlag#, SAVE_FLAG=#saveFlag#, RECEIVE_TIME=#receiveTime# WHERE Report_ID=#reportID#
+	</update>
+	
+	<delete id="deleteReportByID" parameterClass="Integer">
+		DELETE FROM T_REPORT WHERE Report_ID=#reportID#
+	</delete>
+	
+	<delete id="deleteReport" parameterClass="Integer">
+		<![CDATA[DELETE FROM T_REPORT WHERE SAVE_FLAG=0 AND (SYSDATE() > RECEIVE_TIME + INTERVAL #day# DAY)]]>
+	</delete>
+	
+	<select id="getReportNumByReadFlagAndPlayerID" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) FROM T_REPORT WHERE READ_FLAG=#readFlag# AND PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getReportByID" parameterClass="Integer" resultClass="Report">
+		SELECT REPORT_ID AS reportID, PLAYER_ID AS playerID, TITLE AS title, CONTENT AS content, TYPE AS type, READ_FLAG AS readFlag, SAVE_FLAG AS saveFlag, RECEIVE_TIME AS receiveTime FROM T_REPORT WHERE Report_ID=#reportID#
+	</select>
+	
+	<select id="getReportList" resultClass="Report">
+		SELECT REPORT_ID AS reportID, PLAYER_ID AS playerID, TITLE AS title, CONTENT AS content, TYPE AS type, READ_FLAG AS readFlag, SAVE_FLAG AS saveFlag, RECEIVE_TIME AS receiveTime FROM T_REPORT ORDER BY RECEIVE_TIME DESC
+	</select>
+	
+	<update id="saveReport" parameterClass="Integer">
+		UPDATE T_REPORT SET SAVE_FLAG=1 WHERE Report_ID=#reportID#
+	</update>
+	
+	<update id="readReport" parameterClass="Integer">
+		UPDATE T_REPORT SET READ_FLAG=1 WHERE REPORT_ID=#reportID#
+	</update>
+	
+	<select id="getPlayerReportList" parameterClass="Integer" resultClass="Report">
+		SELECT REPORT_ID AS reportID, PLAYER_ID AS playerID, TITLE AS title, CONTENT AS content, TYPE AS type, READ_FLAG AS readFlag, SAVE_FLAG AS saveFlag, RECEIVE_TIME AS receiveTime FROM T_REPORT WHERE PLAYER_ID=#playerID# ORDER BY RECEIVE_TIME DESC
+	</select>
+	
+	 <select id="getPaginateReportList" parameterClass="java.util.Map" resultClass="Report">
+		SELECT REPORT_ID AS reportID, PLAYER_ID AS playerID, TITLE AS title, CONTENT AS content, TYPE AS type, READ_FLAG AS readFlag, SAVE_FLAG AS saveFlag, RECEIVE_TIME AS receiveTime FROM T_REPORT WHERE PLAYER_ID=#playerID# AND TYPE=#type# ORDER BY RECEIVE_TIME DESC LIMIT #start#,#offset# 
+	</select>
+	
+	<select id="getReportCount" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT count(*) FROM T_REPORT WHERE PLAYER_ID=#playerID# AND TYPE=#type# 
+	</select>
+
+</sqlMap>

@@ -1,0 +1,66 @@
+/**
+* 任务编号: 55
+*
+* 要求：军事学院15级
+* 奖励：木材95000，钢铁75000，石油53000，食物75000，金钱35000
+* 后置任务：56
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 建筑编号为 10
+def buildingID = 10;
+
+// 1. 军事学院15级
+if(context.getBuildingMaxLevel(buildingID) > 14)
+{
+	result = "军事学院15级<font color='#00ff00'>[已完成]</font>";
+	count++;
+}
+else
+{
+	result = "军事学院15级<a href='event:10'><font color='#ffff00'><b>[点击进入军事学院]</b></font></a><font color='#ff0000'>[未完成]</font>";
+}
+
+if(count == 1)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+// 奖励：木材95000，钢铁75000，石油53000，食物75000，金钱35000
+context.rewardResource(95000, 75000, 53000, 75000, 35000);
+}

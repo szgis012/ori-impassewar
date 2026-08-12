@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityMilitarySuccor">
+	<typeAlias alias="CityMilitarySuccor" type="com.war.domain.CityMilitarySuccor" />
+
+	<insert id="createCityMilitarySuccor" parameterClass="CityMilitarySuccor">
+		INSERT INTO T_CITY_MILITARY_SUCCOR(CITY_ID, TARGET_CITY_ID, CITY_MILITARY_ID, BATTLE_ORDER, ARRIVE_TIME) VALUES(#cityID#, #targetCityID#, #cityMilitaryID#, #battleOrder#, #arriveTime#)
+		<selectKey resultClass="Integer" keyProperty="cityMilitarySuccorID" >
+			SELECT @@IDENTITY AS ID 
+		</selectKey> 
+	</insert> 
+
+	<update id="updateCityMilitarySuccor" parameterClass="CityMilitarySuccor">
+		UPDATE T_CITY_MILITARY_SUCCOR SET CITY_ID=#cityID#, TARGET_CITY_ID=#targetCityID#, CITY_MILITARY_ID=#cityMilitaryID#, BATTLE_ORDER=#battleOrder#, ARRIVE_TIME=#arriveTime# WHERE CITY_MILITARY_SUCCOR_ID=#cityMilitarySuccorID#
+	</update>
+	
+	<update id="updateBattleOrderByCityMilitarySuccorID" parameterClass="java.util.Map">
+		UPDATE T_CITY_MILITARY_SUCCOR SET BATTLE_ORDER=#battle# WHERE CITY_MILITARY_SUCCOR_ID=#cityMilitarySuccorID#
+	</update>
+
+	<delete id="deleteCityMilitarySuccorByID" parameterClass="Integer">
+		DELETE FROM T_CITY_MILITARY_SUCCOR WHERE CITY_MILITARY_SUCCOR_ID=#cityMilitarySuccorID#
+	</delete>
+	
+	<select id="getCityMilitarySuccorByID" parameterClass="Integer" resultClass="CityMilitarySuccor">
+		SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR WHERE CITY_MILITARY_SUCCOR_ID=#cityMilitarySuccorID#
+	</select>
+
+	<select id="getCityMilitarySuccorListByTargetCityID" parameterClass="Integer" resultClass="CityMilitarySuccor">
+		SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR WHERE TARGET_CITY_ID=#targetCityID#
+	</select> 
+	
+	<select id="getCityMilitarySuccorList" resultClass="CityMilitarySuccor">
+		SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR
+	</select>
+	
+	<select id="getCityMilitarySuccorActiveListByTargetCityIDOrderByBattleOrder" parameterClass="java.lang.Integer" resultClass="CityMilitarySuccor">
+		<![CDATA[
+			SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR WHERE TARGET_CITY_ID=#targetCityID# and BATTLE_ORDER <> 0 ORDER BY BATTLE_ORDER 
+		]]>
+	</select>
+	
+	<select id="getCityMilitarySuccorActiveNumByTargetCityID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(*) FROM T_CITY_MILITARY_SUCCOR WHERE TARGET_CITY_ID=#targetCityID# and BATTLE_ORDER <> 0 
+		]]>
+	</select>
+	
+	<select id="getCityMilitarySuccorIDByCityMilitaryID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT CITY_MILITARY_SUCCOR_ID as cityMilitarySuccorID FROM T_CITY_MILITARY_SUCCOR WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</select>
+	
+	<select id="getCityMilitarySuccorNumByTargetCityID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_CITY_MILITARY_SUCCOR WHERE TARGET_CITY_ID=#targetCityID#
+	</select>
+	
+	<select id="getOverTimeCityMilitarySuccorList" resultClass="CityMilitarySuccor">
+		<![CDATA[
+			SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR WHERE ARRIVE_TIME <= DATE_SUB(SYSDATE(), INTERVAL 72 HOUR)
+		]]>
+	</select>
+	
+	<update id="refreshSuccorOrder" parameterClass="java.lang.Integer">
+        <![CDATA[ 
+        	UPDATE T_CITY_MILITARY_SUCCOR SET BATTLE_ORDER=BATTLE_ORDER-1 WHERE CITY_ID=#cityID# AND BATTLE_ORDER <> 0;
+        ]]>
+    </update>
+    
+    <select id="getCityMilitarySuccorByCityMilitaryID" parameterClass="Integer" resultClass="CityMilitarySuccor">
+		SELECT CITY_MILITARY_SUCCOR_ID AS cityMilitarySuccorID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, CITY_MILITARY_ID AS cityMilitaryID, BATTLE_ORDER AS battleOrder, ARRIVE_TIME AS arriveTime FROM T_CITY_MILITARY_SUCCOR WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</select>
+    
+</sqlMap>

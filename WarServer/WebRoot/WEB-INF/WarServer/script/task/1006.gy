@@ -1,0 +1,69 @@
+/**
+* 任务编号:1006
+*
+* 要求：将住宅升级至2级。
+* 奖励：木材800，钢铁600，石油500，食物600，金钱120。
+* 后置任务：1007
+*/
+
+
+//如果为领取奖励操作
+
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+//返回结果
+def result = '';
+
+//建筑编号为2
+def buildingID = 2;
+
+//将住宅升级至2级。
+
+if(context.getBuildingMaxLevel(buildingID) > 1)
+{
+	flag = 1;
+}
+
+//如果完成了建造住宅的任务
+
+if(flag == 1)
+{
+	result = "将住宅升级至2级<font color='#00ff00'>[已完成]</font>";
+}
+
+else
+
+{
+	//未完成建造住宅的任务
+	result = "将住宅升级至2级<a href='event:2'><font color='#ffff00'><b>[点击升级]</b></font></a><font color='#ff0000'>[未完成]</font>";
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+}
+
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+//奖励：木材800，钢铁600，石油500，食物600，金钱120。
+context.rewardResource(800,600,500,600,120);
+}

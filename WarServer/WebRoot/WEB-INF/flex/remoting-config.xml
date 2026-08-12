@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service id="remoting-service"
+	class="flex.messaging.services.RemotingService">
+
+	<adapters>
+		<adapter-definition id="java-object"
+			class="flex.messaging.services.remoting.adapters.JavaAdapter"
+			default="true" />
+	</adapters>
+
+	<default-channels>
+		<channel ref="my-amf" />
+	</default-channels>
+
+	<destination id="TimeService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>timeService</source>
+		</properties>
+	</destination>
+	
+	<destination id="PlayerService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>playerService</source>
+		</properties>
+	</destination>
+	
+	<destination id="CityService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>cityService</source>
+		</properties>
+	</destination>
+	
+	<destination id="ColonizationService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>colonizationService</source>
+		</properties>
+	</destination>
+
+	<destination id="BuildingService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>buildingService</source>
+		</properties>
+	</destination>
+	
+	<destination id="TechnologyService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>technologyService</source>
+		</properties>
+	</destination>
+	
+	<destination id="TreasureService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>treasureService</source>
+		</properties>
+	</destination>
+	
+	<destination id="MessageService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>messageService</source>
+		</properties>
+	</destination>
+	
+	<destination id="GuildService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>guildService</source>
+		</properties>
+	</destination>
+	
+	<destination id="TaskService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>taskService</source>
+		</properties>
+	</destination>
+	
+	<destination id="RankService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>rankService</source>
+		</properties>
+	</destination>
+
+	<destination id="ProcessQueueService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>processQueueService</source>
+		</properties>
+	</destination>
+	
+	<destination id="MarketService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>marketService</source>
+		</properties>
+	</destination>
+	
+	<destination id="ResourcesTuneService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>resourcesTuneService</source>
+		</properties>
+	</destination>
+	
+	<destination id="CityCenterService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>cityCenterService</source>
+		</properties>
+	</destination>
+	
+	<destination id="BarracksService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>barracksService</source>
+		</properties>
+	</destination>
+	
+	<destination id="ArmyService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>armyService</source>
+		</properties>
+	</destination>
+	
+	<destination id="OrdnanceService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>ordnanceService</source>
+		</properties>
+	</destination>
+	
+	<destination id="ArmoryService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>armoryService</source>
+		</properties>
+	</destination>
+	
+	<destination id="ProductionQueueService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>productionQueueService</source>
+		</properties>
+	</destination>
+	
+	<destination id="HeroService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>heroService</source>
+		</properties>
+	</destination>
+	
+	<destination id="MilitaryService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>militaryService</source>
+		</properties>
+	</destination>
+	
+	<destination id="HeavyFactoryService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>heavyFactoryService</source>
+		</properties>
+	</destination>
+	
+	<destination id="AirportService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>airportService</source>
+		</properties>
+	</destination>
+	
+	<destination id="MapService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>mapService</source>
+		</properties>
+	</destination>
+
+	<destination id="ReportService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>reportService</source>
+		</properties>
+	</destination>
+	
+	<destination id="BattleService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>battleService</source>
+		</properties>
+	</destination>
+	
+	<destination id="UserService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>userService</source>
+		</properties>
+	</destination>
+	
+	<destination id="DeclareWarService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>declareWarService</source>
+		</properties>
+	</destination>
+
+	<destination id="CityDefenseService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>cityDefenseService</source>
+		</properties>
+	</destination>
+	
+	<destination id="DepoyQueueService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>depoyQueueService</source>
+		</properties>
+	</destination>
+	
+	<destination id="TreasureQueueService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>treasureQueueService</source>
+		</properties>
+	</destination>
+	
+	<destination id="EquipmentService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>equipmentService</source>
+		</properties>
+	</destination>
+	
+	<destination id="GameCardService">
+		<properties>
+			<factory>springFactory</factory>
+			<source>gameCardService</source>
+		</properties>
+	</destination>
+	
+</service>

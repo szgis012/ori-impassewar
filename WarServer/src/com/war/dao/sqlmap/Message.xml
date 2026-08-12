@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Message">
+	<typeAlias alias="Message" type="com.war.domain.Message" />
+	
+	<insert id="createMessage" parameterClass="Message">
+		INSERT INTO T_MESSAGE(SENDER_ID, RECEIVER_ID, TITLE, CONTENT, READ_FLAG, DELETE_FLAG, SEND_TIME) VALUES(#senderID#, #receiverID#, #title#, #content#, #readFlag#, #deleteFlag#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="messageID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateMessageReadFlagByID" parameterClass="Map">
+		UPDATE T_MESSAGE SET READ_FLAG=#readFlag# WHERE MESSAGE_ID=#messageID#
+	</update>
+	
+	<update id="updateMessageDeleteFlagByID" parameterClass="Map">
+		UPDATE T_MESSAGE SET DELETE_FLAG=#deleteFlag# WHERE MESSAGE_ID=#messageID#
+	</update>
+	
+	<delete id="deleteMessageByID" parameterClass="Integer">
+		DELETE FROM T_MESSAGE WHERE MESSAGE_ID=#messageID#
+	</delete>
+	
+	<select id="getMessageNumByReadFlagAndReceiverID" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE WHERE READ_FLAG=#readFlag# AND RECEIVER_ID=#receiverID#
+	</select>
+	
+	<select id="getMessageReadFlagByID" parameterClass="Integer" resultClass="Integer">
+		SELECT READ_FLAG FROM T_MESSAGE WHERE MESSAGE_ID=#messageID#
+	</select>
+	
+	<select id="getMessageDeleteFlagByID" parameterClass="Integer" resultClass="Integer">
+		SELECT DELETE_FLAG FROM T_MESSAGE WHERE MESSAGE_ID=#messageID#
+	</select>
+	
+	<select id="getMessageByID" parameterClass="Integer" resultClass="Message">
+		SELECT MESSAGE_ID AS messageID, SENDER_ID AS senderID, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, DELETE_FLAG AS deleteFlag, SEND_TIME AS sendTime FROM T_MESSAGE WHERE MESSAGE_ID=#messageID#
+	</select>
+	
+	<select id="getMessageAmountByReceiverID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE WHERE SENDER_ID=#senderID# AND DELETE_FLAG!=3
+	</select>
+	
+	<select id="getMessageAmountBySenderID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_MESSAGE WHERE RECEIVER_ID=#receiverID# AND DELETE_FLAG!=2
+	</select>
+	
+	<select id="getMessagePagingListBySenderID" parameterClass="HashMap" resultClass="Message">
+		SELECT MESSAGE_ID AS messageID, SENDER_ID AS senderID, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, DELETE_FLAG AS deleteFlag, SEND_TIME AS sendTime FROM T_MESSAGE WHERE SENDER_ID=#senderID# AND DELETE_FLAG!=2 ORDER BY SEND_TIME DESC LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getMessageListBySenderID" parameterClass="Integer" resultClass="Message">
+		SELECT MESSAGE_ID AS messageID, SENDER_ID AS senderID, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, DELETE_FLAG AS deleteFlag, SEND_TIME AS sendTime FROM T_MESSAGE WHERE SENDER_ID=#senderID# ORDER BY SEND_TIME DESC
+	</select>
+	
+	<select id="getMessagePagingListByReceiverID" parameterClass="HashMap" resultClass="Message">
+		SELECT MESSAGE_ID AS messageID, SENDER_ID AS senderID, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, DELETE_FLAG AS deleteFlag, SEND_TIME AS sendTime FROM T_MESSAGE WHERE RECEIVER_ID=#receiverID# AND DELETE_FLAG!=3 ORDER BY SEND_TIME DESC LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getMessageListByReceiverID" parameterClass="Integer" resultClass="Message">
+		SELECT MESSAGE_ID AS messageID, SENDER_ID AS senderID, RECEIVER_ID AS receiverID, TITLE AS title, CONTENT AS content, READ_FLAG AS readFlag, DELETE_FLAG AS deleteFlag, SEND_TIME AS sendTime FROM T_MESSAGE WHERE RECEIVER_ID=#receiverID# ORDER BY SEND_TIME DESC
+	</select>
+
+	<insert id="sendGuildMessage" parameterClass="java.util.Map">
+		{call SEND_GUILD_MESSAGE(#guildID#, #playerID#, #title#, #content#) }
+	</insert>
+</sqlMap>

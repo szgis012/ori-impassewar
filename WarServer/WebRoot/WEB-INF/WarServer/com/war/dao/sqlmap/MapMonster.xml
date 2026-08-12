@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MapMonster">
+	<typeAlias alias="MapMonster" type="com.war.domain.MapMonster" />
+	<typeAlias alias="BattleMilitary" type="com.war.domain.BattleMilitary" />
+	
+	<insert id="createMapMonster" parameterClass="MapMonster">
+		INSERT INTO T_MAP_MONSTER(LEVEL, CMDER_NAME, CMDER_HEAD, CMDER_LEVEL, CMDER_COMMAND, CMDER_DEFENSE, ARMY1, ARMY2, ARMY3, ARMY4, ARMY5, ARMY6, ARMY7, ARMY8) VALUES(#level#, #cmderName#, #cmderHead#, #cmderLevel#, #cmderCommand#, #cmderDefense#, #army1#, #army2#, #army3#, #army4#, #army5#, #army6#, #army7#, #army8#)
+		<selectKey resultClass="Integer" keyProperty="mapMonsterID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateMapMonsterArmyByBattleMilitary" parameterClass="BattleMilitary">
+		UPDATE T_MAP_MONSTER SET ARMY1=#army1#, ARMY2=#army2#, ARMY3=#army3#, ARMY4=#army4#, ARMY5=#army5#, ARMY6=#army6#, ARMY7=#army7#, ARMY8=#army8# WHERE MAP_MONSTER_ID=#mapMonsterID#
+	</update>
+	
+	<update id="updateMapMonster" parameterClass="MapMonster">
+		UPDATE T_MAP_MONSTER SET LEVEL=#level#, CMDER_NAME=#cmderName#, CMDER_HEAD=#cmderHead#, CMDER_LEVEL=#cmderLevel#, CMDER_COMMAND=#cmderCommand#, CMDER_DEFENSE=#cmderDefense#, ARMY1=#army1#, ARMY2=#army2#, ARMY3=#army3#, ARMY4=#army4#, ARMY5=#army5#, ARMY6=#army6#, ARMY7=#army7#, ARMY8=#army8# WHERE MAP_MONSTER_ID=#mapMonsterID#
+	</update>
+	
+	<delete id="deleteMapMonsterByID" parameterClass="Integer">
+		DELETE FROM T_MAP_MONSTER WHERE MAP_MONSTER_ID=#mapMonsterID#
+	</delete>
+
+	<delete id="deleteMapMonsterNotInTargetMapMonsterID" parameterClass="String">
+		DELETE FROM T_MAP_MONSTER WHERE MAP_MONSTER_ID NOT IN (#targetMapMonsterIDs#)
+	</delete>
+	
+	<delete id="deleteNoDepoyQueueAndNotInBattleMapMonster">
+		DELETE FROM T_MAP_MONSTER WHERE MAP_MONSTER_ID NOT IN (SELECT TARGET_ID FROM T_MAP WHERE (MAP_ID IN (SELECT M.MAP_ID FROM T_MAP M, T_DEPOY_QUEUE DQ WHERE M.MAP_ID=DQ.MAP_ID) OR STATE=2) AND CATEGORY=4)
+	</delete>
+	
+	<select id="getMapMonsterAsBattleMilitaryByID" parameterClass="Integer" resultClass="BattleMilitary">
+		SELECT MAP_MONSTER_ID AS mapMonsterID, LEVEL AS level, CMDER_NAME AS cmderName, CMDER_HEAD AS cmderHead, CMDER_LEVEL AS cmderLevel, CMDER_COMMAND AS cmderCommand, CMDER_DEFENSE AS cmderDefense, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8, 1 AS type FROM T_MAP_MONSTER WHERE MAP_MONSTER_ID=#mapMonsterID#
+	</select>
+	
+	<select id="getMapMonsterByID" parameterClass="Integer" resultClass="MapMonster">
+		SELECT MAP_MONSTER_ID AS mapMonsterID, LEVEL AS level, CMDER_NAME AS cmderName, CMDER_HEAD AS cmderHead, CMDER_LEVEL AS cmderLevel, CMDER_COMMAND AS cmderCommand, CMDER_DEFENSE AS cmderDefense, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8 FROM T_MAP_MONSTER WHERE MAP_MONSTER_ID=#mapMonsterID#
+	</select>
+	
+	<select id="getMapMonsterList" resultClass="MapMonster">
+		SELECT MAP_MONSTER_ID AS mapMonsterID, LEVEL AS level, CMDER_NAME AS cmderName, CMDER_HEAD AS cmderHead, CMDER_LEVEL AS cmderLevel, CMDER_COMMAND AS cmderCommand, CMDER_DEFENSE AS cmderDefense, ARMY1 AS army1, ARMY2 AS army2, ARMY3 AS army3, ARMY4 AS army4, ARMY5 AS army5, ARMY6 AS army6, ARMY7 AS army7, ARMY8 AS army8 FROM T_MAP_MONSTER
+	</select>
+
+</sqlMap>

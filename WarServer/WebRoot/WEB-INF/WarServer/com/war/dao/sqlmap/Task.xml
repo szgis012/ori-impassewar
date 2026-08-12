@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Task">
+	<typeAlias alias="Task" type="com.war.domain.Task" />
+	
+	<insert id="createTask" parameterClass="Task">
+		INSERT INTO T_TASK(TASK_ID, NAME, DESCRIPTION, GUIDE, TARGET, TYPE,REWARD, TRIGGER_TASK_LIST) VALUES(#taskID#, #name#, #description#, #guide#, #target#, #type#, #reward#, #triggerTaskList#, )
+		<selectKey resultClass="Integer" keyProperty="taskID" >
+			SELECT #taskID# AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTask" parameterClass="Task">
+		UPDATE T_TASK SET NAME=#name#, DESCRIPTION=#description#, GUIDE=#guide#, TARGET=#target#, TYPE=#type#,REWARD=#reward#, TRIGGER_TASK_LIST=#triggerTaskList# WHERE Task_ID=#taskID#
+	</update>
+	
+	<delete id="deleteTaskByID" parameterClass="Integer">
+		DELETE FROM T_TASK WHERE Task_ID=#taskID#
+	</delete>
+	
+	<select id="getTaskByID" parameterClass="Integer" resultClass="Task">
+		SELECT TASK_ID AS taskID, NAME AS name, DESCRIPTION AS description, GUIDE AS guide, TARGET AS target, TYPE AS type,REWARD as reward, TRIGGER_TASK_LIST AS triggerTaskList FROM T_TASK WHERE Task_ID=#taskID#
+	</select>
+	
+	<select id="getTaskList" resultClass="Task">
+		SELECT TASK_ID AS taskID, NAME AS name, DESCRIPTION AS description, GUIDE AS guide, TARGET AS target, TYPE AS type,REWARD as reward, TRIGGER_TASK_LIST AS triggerTaskList FROM T_TASK
+	</select>
+	
+	<select id="getTaskListByType" resultClass="Task"  parameterClass="Integer">
+		SELECT TASK_ID AS taskID, NAME AS name, DESCRIPTION AS description, GUIDE AS guide, TARGET AS target, TYPE AS type, REWARD as reward, TRIGGER_TASK_LIST AS triggerTaskList FROM T_TASK WHERE TYPE=#type#
+	</select>
+	
+</sqlMap>

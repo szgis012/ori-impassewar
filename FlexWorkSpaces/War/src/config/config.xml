@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SERVER_IP>127.0.0.1</SERVER_IP>
+<SERVER_ENDPOINT>http://127.0.0.1:8080/War/messagebroker/amf</SERVER_ENDPOINT>
+<LOGIN_WEBSERVICE_WSDL>http://127.0.0.1:8080/War/webservice/PayWS?wsdl</LOGIN_WEBSERVICE_WSDL>
+
+<PAY_URL>http://127.0.0.1:8080/pay/yeepay.action</PAY_URL>
+
+<REG_URL>http://127.0.0.1:8080/register</REG_URL>
+<WEBSITE_URL>http://127.0.0.1:8080/</WEBSITE_URL>
+
+<HELP_URL>http://127.0.0.1:8080/</HELP_URL>
+<BBS_URL>http://127.0.0.1:8080/</BBS_URL>
+
+<LOGIN_NOTICE><![CDATA[<br />官方网站：<a href='http://jd.52wyyx.com' target='_blank'>http://127.0.0.1:8080/</a><br />官方论坛：<a href='http://127.0.0.1:8080/' target='_blank'>http://127.0.0.1:8080/</a>]]></LOGIN_NOTICE>

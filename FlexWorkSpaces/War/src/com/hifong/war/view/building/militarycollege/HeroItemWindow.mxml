@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="484" height="360" initialize="doInit()" xmlns:ns1="com.hifong.war.view.treasure.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.treasure.GetPlayerTreasureListByCategoryEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.hifong.war.view.treasure.TreasureItem;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.treasure.GetPlayerTreasureListByCategoryAndTypeEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.binding.utils.ChangeWatcher;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var itemListWatcher:ChangeWatcher;
+			
+			
+			
+			private function doInit():void{
+				
+				itemListWatcher = ChangeWatcher.watch(model,"itemList_hero", onItemListChanged);
+				
+				//CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerTreasureListByCategory(model.playerInfo.playerID,6,611));
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerTreasureListByCategoryEvent(model.playerInfo.playerID, 6));
+			}
+			
+			private function doClose():void{
+				itemListWatcher.unwatch();
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function onItemListChanged(event:Object):void{
+				
+				itemCanvas.removeAllChildren();
+				
+				for(var i:int;i<model.itemList_hero.length;i++){
+					var heroItem:HeroItemPanel = new HeroItemPanel();
+					
+					heroItem.treasureItem = model.itemList_hero.getItemAt(i);
+					
+					heroItem.x = (i-4*int(i/4))*100+10;
+					heroItem.y = int((i)/4)*120+10;
+					
+					itemCanvas.addChild(heroItem);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+		
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="指挥官道具" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="28" y="37" id="itemCanvas" width="425" height="295" verticalScrollPolicy="on" styleName="BugFixBorder">
+	</mx:Canvas>
+	
+</mx:TitleWindow>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="200" initialize="onInit()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.events.building.commandcenter.GetCityMilitaryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.tooltip.CityMilitaryToolTip;
+			import mx.events.ToolTipEvent;
+			import com.hifong.war.util.ConvertUtil;
+			import com.hifong.war.constant.CityMilitaryStateConstant;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			
+			private function onInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityMilitaryListEvent(model.cityInfo.cityID));
+			}
+			private function getCommanderName(cityMilitary:Object, column:DataGridColumn):String{
+				var cityHero:Object = model.cityHeroMap[cityMilitary.cityHeroID];
+				
+				return cityHero.name;
+			}
+			
+			
+			private function getMilitaryInfo(cityMilitary:Object, column:DataGridColumn):String{
+				return getMilitaryDetail(cityMilitary);
+			}
+			
+			public function getMilitaryDetail(cityMilitary:Object):String{
+				var str:String = "";
+				var tmp:String;
+				
+				//部队1
+				tmp = decodeMilitaryInfo(cityMilitary.army1);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队2
+				tmp = decodeMilitaryInfo(cityMilitary.army2);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队3
+				tmp = decodeMilitaryInfo(cityMilitary.army3);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队4
+				tmp = decodeMilitaryInfo(cityMilitary.army4);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队5
+				tmp = decodeMilitaryInfo(cityMilitary.army5);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队6
+				tmp = decodeMilitaryInfo(cityMilitary.army6);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队7
+				tmp = decodeMilitaryInfo(cityMilitary.army7);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				//部队8
+				tmp = decodeMilitaryInfo(cityMilitary.army8);
+				if(tmp){
+					str += tmp + ","
+				}
+				
+				return str.length>0?str.substr(0,str.length-1):"还未编制部队！";
+			}
+			
+			//解析部队信息
+			private function decodeMilitaryInfo(armyInfo:String):String{
+				if(!armyInfo)
+					return null;
+
+				var arr:Array = armyInfo.split(":");
+				
+				if(arr.length == 2){
+					var str:String = "";
+					str += getArmyName(arr[0]);
+					str += ":";
+					str += arr[1];
+					
+					return str;
+				}
+				
+				return null;
+				
+			}
+			
+			//获得兵种名称
+			private function getArmyName(armyID:int):String{
+				return ConvertUtil.getArmyName(armyID);
+			}
+			
+			//获得状态名称
+			private function getStateName(cityMilitary:Object, column:DataGridColumn):String{
+				switch(cityMilitary.state){
+					case CityMilitaryStateConstant.NORMAL:
+						return "空闲";
+					case CityMilitaryStateConstant.MARCH:
+						return "出征";
+					case CityMilitaryStateConstant.RESIDE:
+						return "驻扎";
+					case CityMilitaryStateConstant.STAY:
+						return "留守";
+					default:
+						return "未知";				
+				}
+			}
+			
+			//显示升级tooltip
+			public function showTooltip(event:ToolTipEvent,data:Object):void{
+				event.toolTip = new CityMilitaryToolTip(data);
+			}
+		]]>
+	</mx:Script>
+	<mx:DataGrid x="0" y="0" width="600" height="242" sortableColumns="false"  dataProvider="{model.cityMilitaryList}" id="dgMilitary" >
+		<mx:columns>
+			<mx:DataGridColumn headerText="军队名称" dataField="name" width="120" />
+			<mx:DataGridColumn headerText="指挥官"  width="120" labelFunction="getCommanderName"/>
+			<mx:DataGridColumn headerText="军队信息" >
+				<mx:itemRenderer>
+                      <mx:Component>
+                         <mx:Label text="{outerDocument.getMilitaryDetail(data)}"  toolTip=" " toolTipCreate="outerDocument.showTooltip(event,data)"/>
+                      </mx:Component>
+                  </mx:itemRenderer> 
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="状态" textAlign="center" dataField="state" width="80" labelFunction="getStateName" />
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:Canvas>

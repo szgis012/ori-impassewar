@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="250" show="doInit()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.events.building.market.GetCityTradeQueueListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var tradeType:Object = {1:"资源运输",2:"资源交易",11:"运输返回",12:"交易返回"};
+			
+			private function doInit():void {
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityTradeQueueListEvent(model.cityInfo.cityID));
+				
+				//tradeType.addItemAt("交易返回",12);
+			}
+			
+			/**
+			 * 交易加速
+			 */
+			public function doAccelerate(resTradeID:int):void{
+				//加载可以使用的宝物信息
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTreasureMapListByTypeEvent(TreasureCategoryConstant.ACCELERATE,TreasureTypeConstant.ACCELERATE_TRADE));
+				//传递给宝物的参数
+				var params:Object = {queueID:resTradeID};
+				var win:UseTreasureWindow = new UseTreasureWindow();
+				win.params = params;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 获得列类型(资源运输、资源交易)
+			 */
+			private function getColumnTradeType(item:Object, column:DataGridColumn):String{
+				return tradeType[item['type']];
+			}
+			
+			/**
+			 * 获得列物品类型
+			 */
+			private function getColumnItemType(item:Object, column:DataGridColumn):String{
+				return tradeType[item['type']];
+			}
+			
+			/**
+			 * 获得列数量
+			 */
+			private function getColumnNum(item:Object, column:DataGridColumn):String{
+				return tradeType[item['type']];
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:DataGrid x="10" y="10" width="558" height="228" sortableColumns="false" dataProvider="{model.cityTradeQueueList}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="出售方" dataField="sellerCityInfo.name" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn headerText="购买方" dataField="buyerCityInfo.name" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn headerText="类型" dataField="type" textAlign="center" labelFunction="getColumnTradeType"/>
+			<mx:DataGridColumn headerText="物品" dataField="tradeQueueID" textAlign="left" labelFunction="getColumnItemType"/>
+			<mx:DataGridColumn headerText="数量" dataField="tradeQueueID" textAlign="right" labelFunction="getColumnNum"/>
+			<mx:DataGridColumn headerText="商人" width="40" dataField="businessmanNum" textAlign="center"/>
+			<mx:DataGridColumn headerText="到达时间" width="110" dataField="arriveTime" textAlign="center" labelFunction="DateFormatUtil.formatColumnDate"/>
+			<mx:DataGridColumn headerText="操作" width="60" sortable="false">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:Button width="0" height="0" label="加速" click="parentDocument.doAccelerate(data.tradeQueueID);"/>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:Canvas>

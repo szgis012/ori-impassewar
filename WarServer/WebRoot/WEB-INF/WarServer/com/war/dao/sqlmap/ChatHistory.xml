@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ChatHistory">
+	<typeAlias alias="ChatHistory" type="com.war.domain.ChatHistory" />
+	
+	<insert id="createChatHistory" parameterClass="ChatHistory">
+		INSERT INTO T_CHAT_HISTORY(PLAYER_NAME, RECEIVER_NAME, CONTENT, CHAT_TYPE, SEND_TIME) VALUES(#playerName#, #receiverName#, #content#, #chatType#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="chatHistoryID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<delete id="deleteChatHistoryByID" parameterClass="Integer">
+		DELETE FROM T_CHAT_HISTORY WHERE CHAT_HISTORY_ID=#chatHistoryID#
+	</delete>
+	
+	<select id="getChatHistoryList" resultClass="ChatHistory">
+		SELECT CHAT_HISTORY_ID AS chatHistoryID, PLAYER_NAME AS playerName, RECEIVER_NAME AS receiverName, CONTENT AS content, CHAT_TYPE AS chatType, SEND_TIME AS sendTime FROM T_CHAT_HISTORY
+	</select>
+
+	<select id="getChatHistoryListByPlayerNameAndChatType" parameterClass="java.util.Map" resultClass="ChatHistory">
+		SELECT CHAT_HISTORY_ID AS chatHistoryID, PLAYER_NAME AS playerName, RECEIVER_NAME AS receiverName, CONTENT AS content, CHAT_TYPE AS chatType, SEND_TIME AS sendTime FROM T_CHAT_HISTORY WHERE PLAYER_NAME=#playerName# AND CHAT_TYPE=#chatType#
+	</select>
+	
+	<select id="getChatHistoryNumByPlayerNameAndChatType" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_CHAT_HISTORY WHERE PLAYER_NAME=#playerName# AND CHAT_TYPE=#chatType#
+	</select>
+
+</sqlMap>

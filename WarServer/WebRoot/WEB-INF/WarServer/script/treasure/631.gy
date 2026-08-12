@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:631
+ * 
+ * 名称：普通体力药剂
+ * 描述：恢复指挥官100体力值
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroStamina(params["cityHeroID"], 100);

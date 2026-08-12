@@ -1,0 +1,46 @@
+/**
+ * 宝物编号:441
+ * 
+ * 名称：陈旧的储物箱
+ * 描述：随机获得2000资源
+ * 类型：宝箱
+ */
+
+int woodNum = 0;
+int steelNum = 0;
+int oilNum = 0;
+int foodNum = 0;
+int moneyNum = 0;
+String dirName = "resource";
+String retstr = "";
+
+//rand{0,3}
+int rnd = Math.random() * 10 % 5;
+
+switch(rnd){
+	case 0:
+		retstr += "木材:${dirName}/1.png:2000:0:-1";
+		woodNum = 2000;
+		break;
+	case 1:
+		retstr += "钢铁:${dirName}/2.png:2000:0:-1";
+		steelNum = 2000;
+		break;
+	case 2:
+		retstr += "石油:${dirName}/3.png:2000:0:-1";
+		oilNum = 2000;
+		break;
+	case 3:
+		retstr += "食物:${dirName}/4.png:2000:0:-1";
+		foodNum = 2000;
+		break;
+	case 4:
+		retstr += "金钱:${dirName}/5.png:2000:0:-1";
+		moneyNum = 2000;
+		break;
+}
+
+//随机给2000资源
+context.rewardResource(woodNum,steelNum,oilNum,foodNum,moneyNum);
+
+return retstr;

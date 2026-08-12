@@ -1,0 +1,62 @@
+/**
+ * 任务编号:1003
+ *
+ * 要求：在聊天框中，选择世界频道，输入内容进行聊天。
+ * 奖励：大喇叭*10,礼金×50
+ * 后置任务：--
+ */
+ 
+// 如果为领取奖励操作
+if (context.getProcessType() == 1) 
+{
+	doReceiveReward();
+} 
+else	// 这里为检查任务完成情况的操作
+{	
+ 	return checkTask();
+}
+
+/*
+ * 检查任务完成情况
+ *
+ */
+def checkTask() 
+{
+
+ 	// flag为0表示没有完成任务，flag=1表示完成了任务。
+	def flag = 0;
+	
+	// 返回结果
+	def result = "";
+	
+	// 如果在世界频道中聊天，就算完成任务。
+	if(context.hasChatedInWorldScope())
+	{
+		flag = 1;
+	}
+	
+	//如果完成了在世界频道中聊天的任务
+	if(flag == 1)
+	{
+		result = "在世界频道中聊天<font color='#00ff00'>[已完成]</font>";
+	}
+	else	// 未完成在世界频道中聊天的任务
+	{
+		result = "在世界频道中聊天<font color='#ff0000'>[未完成]</font>";
+	}
+	
+	//返回格式:任务是否完成标志+任务完成情况字符串
+	return context.getEncodingText(flag+result);
+}
+ 
+/*
+ * 领取奖励
+ *
+ */
+def doReceiveReward() 
+{
+ 	// 奖励：大喇叭*10,礼金×50
+ 	context.rewardTreasure(116, 10);
+ 	context.rewardGiftCertificate(50);
+}
+

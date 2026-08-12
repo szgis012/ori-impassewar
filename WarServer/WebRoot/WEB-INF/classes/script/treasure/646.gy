@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:646
+ * 
+ * 名称：战争艺术
+ * 描述：国家综合统计数百位先驱者留下的战争心得而形成的战争教科书，极其稀有，指挥官学习后，直接增加指挥官经验50000，每天限购一本。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroExp(params["cityHeroID"], 50000);

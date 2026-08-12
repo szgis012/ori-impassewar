@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" showCloseButton="false" layout="absolute" width="640" height="420" xmlns:ns1="war.building.*" horizontalAlign="left" verticalAlign="middle" initialize="initData()">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.events.PropertyChangeEvent;
+			import com.hifong.war.util.WindowUtil;
+		
+			import mx.collections.ArrayCollection;
+			import mx.binding.utils.ChangeWatcher;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			import com.hifong.war.events.building.GetBuildableBuildingListEvent;
+			import com.hifong.war.model.ModelLocator;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//建造地点
+			private var _buildingGrid:BuildingGrid;
+			
+			//可建造建筑列表改变监视
+			private var buildableListWatcher:ChangeWatcher;
+			
+			public function set buildingGrid(b:BuildingGrid):void{
+				 _buildingGrid = b;
+			}
+			
+			public function get buildingGrid():BuildingGrid{
+				return _buildingGrid;
+			}
+			
+			private function initData():void{
+				//得到可建造列表
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetBuildableBuildingListEvent(model.cityInfo.cityID));
+				this.buildableListWatcher = ChangeWatcher.watch(model,"buildableBuildingList",doListChanged);
+			}
+			
+			//可建造列表改变时的处理函数
+			private function doListChanged(event:PropertyChangeEvent):void{
+				if(model.buildableBuildingList && model.buildableBuildingList.length>0)
+					updatePanel(model.buildableBuildingList);
+			}
+			
+			//更新面板信息
+			private function updatePanel(buildingList:ArrayCollection):void{
+				var cbi:CreateBuildingItemPanel;
+				var top:int = 10;
+				var left:int = 8;
+				
+				for(var i:int=0; i<buildingList.length; i++){
+					cbi = new CreateBuildingItemPanel();
+					cbi.buildingGrid = this.buildingGrid;
+					cbi.x = left;
+					cbi.y = top;
+					this.pnlBuilding.addChild(cbi);
+					cbi.building = new Building(buildingList[i]);
+					top += cbi.height+10;
+				}
+			}
+			
+			public function doClose():void{
+				buildableListWatcher.unwatch();
+				WindowUtil.closeWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="建造建筑" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="24" y="37" width="592" height="356" styleName="CanvasBorder">
+		<mx:Canvas  id="pnlBuilding" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="CanvasBorder">
+	</mx:Canvas>
+	
+	</mx:Canvas>
+	
+</mx:TitleWindow>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityHeroExt">
+	<typeAlias alias="CityHeroExt" type="com.war.domain.CityHeroExt" />
+
+	<insert id="createCityHeroExt" parameterClass="CityHeroExt">
+		INSERT INTO T_CITY_HERO_EXT(CITY_HERO_ID, COMMAND_EQUIPMENT_ADD, COMMAND_TREASURE_ADD, DEFENSE_EQUIPMENT_ADD, DEFENSE_TREASURE_ADD, MIND_EQUIPMENT_ADD, MIND_TREASURE_ADD, EXECUTIVEPOWER_EQUIPMENT_ADD, EXECUTIVEPOWER_TREASURE_ADD, REIN_GUILD_ADD, REIN_TREASURE_ADD, EXP_GUILD_ADD, EXP_TREASURE_ADD, MILITARY_ATTACK_ADD, MILITARY_DEFENSE_ADD, MILITARY_LIFE_ADD) VALUES(#cityHeroID#, #commandEquipmentAdd#, #commandTreasureAdd#, #defenseEquipmentAdd#, #defenseTreasureAdd#, #mindEquipmentAdd#, #mindTreasureAdd#, #executivepowerEquipmentAdd#, #executivepowerTreasureAdd#, #reinGuildAdd#, #reinTreasureAdd#, #expGuildAdd#, #expTreasureAdd#, #militaryAttackAdd#, #militaryDefenseAdd#, #militaryLifeAdd#)
+	</insert>
+
+	<update id="updateCityHeroExt" parameterClass="CityHeroExt">
+		UPDATE T_CITY_HERO_EXT SET COMMAND_EQUIPMENT_ADD=#commandEquipmentAdd#, COMMAND_TREASURE_ADD=#commandTreasureAdd#, DEFENSE_EQUIPMENT_ADD=#defenseEquipmentAdd#, DEFENSE_TREASURE_ADD=#defenseTreasureAdd#, MIND_EQUIPMENT_ADD=#mindEquipmentAdd#, MIND_TREASURE_ADD=#mindTreasureAdd#, EXECUTIVEPOWER_EQUIPMENT_ADD=#executivepowerEquipmentAdd#, EXECUTIVEPOWER_TREASURE_ADD=#executivepowerTreasureAdd#, REIN_GUILD_ADD=#reinGuildAdd#, REIN_TREASURE_ADD=#reinTreasureAdd#, EXP_GUILD_ADD=#expGuildAdd#, EXP_TREASURE_ADD=#expTreasureAdd#, MILITARY_ATTACK_ADD=#militaryAttackAdd#, MILITARY_DEFENSE_ADD=#militaryDefenseAdd#, MILITARY_LIFE_ADD=#militaryLifeAdd# WHERE City_Hero_ID=#cityHeroID#
+	</update>
+
+	<update id="updateCityHeroExtEquipmentAddByID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO_EXT SET COMMAND_EQUIPMENT_ADD=#commandEquipmentAdd#, DEFENSE_EQUIPMENT_ADD=#defenseEquipmentAdd#, MIND_EQUIPMENT_ADD=#mindEquipmentAdd#, EXECUTIVEPOWER_EQUIPMENT_ADD=#executivepowerEquipmentAdd# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+
+	<update id="updateCityHeroMilitaryAddByID" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO_EXT SET MILITARY_ATTACK_ADD=#militaryAttackAdd#, MILITARY_DEFENSE_ADD=#militaryDefenseAdd#, MILITARY_LIFE_ADD=#militaryLifeAdd# WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<update id="updateGuildAddByCityIDWithParams" parameterClass="java.util.Map">
+		UPDATE T_CITY_HERO_EXT CHE
+		<dynamic prepend="SET">
+			<isNotNull prepend="," property="reinGuildAdd">
+				CHE.REIN_GUILD_ADD=#reinGuildAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="expGuildAdd">
+				CHE.EXP_GUILD_ADD=#expGuildAdd#
+			</isNotNull>
+		</dynamic>
+		WHERE CHE.CITY_HERO_ID IN (SELECT CH.CITY_HERO_ID FROM T_CITY_HERO CH WHERE CH.CITY_ID=#cityID#)
+	</update>
+	
+	<update id="updateCityHeroExtParams" parameterClass="java.util.HashMap">
+		UPDATE T_CITY_HERO_EXT
+		<dynamic prepend="SET">
+			<isNotNull prepend="," property="commandEquipmentAdd">
+				COMMAND_EQUIPMENT_ADD=#commandEquipmentAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="commandTreasureAdd">
+				COMMAND_TREASURE_ADD=#commandTreasureAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="defenseEquipmentAdd">
+				DEFENSE_EQUIPMENT_ADD=#defenseEquipmentAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="defenseTreasureAdd">
+				DEFENSE_TREASURE_ADD=#defenseTreasureAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="mindEquipmentAdd">
+				MIND_EQUIPMENT_ADD=#mindEquipmentAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="mindTreasureAdd">
+				MIND_TREASURE_ADD=#mindTreasureAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="executivepowerEquipmentAdd">
+				EXECUTIVEPOWER_EQUIPMENT_ADD=#executivepowerEquipmentAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="executivepowerTreasureAdd">
+				EXECUTIVEPOWER_TREASURE_ADD=#executivepowerTreasureAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="reinGuildAdd">
+				REIN_GUILD_ADD=#reinGuildAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="reinTreasureAdd">
+				REIN_TREASURE_ADD=#"reinTreasureAdd"#
+			</isNotNull>
+			<isNotNull prepend="," property="expGuildAdd">
+				EXP_GUILD_ADD=#expGuildAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="expTreasureAdd">
+				EXP_TREASURE_ADD=#expTreasureAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="militaryAttackAdd">
+				MILITARY_ATTACK_ADD=#militaryAttackAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="militaryDefenseAdd">
+				MILITARY_DEFENSE_ADD=#militaryDefenseAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="militaryLifeAdd">
+				MILITARY_LIFE_ADD=#militaryLifeAdd#
+			</isNotNull>
+		</dynamic>
+		WHERE CITY_HERO_ID=#cityHeroID#
+	</update>
+	
+	<delete id="deleteCityHeroExtByID" parameterClass="Integer">
+		DELETE FROM T_CITY_HERO_EXT WHERE City_Hero_ID=#cityHeroID#
+	</delete>
+
+	<select id="getCityHeroExtByID" parameterClass="Integer" resultClass="CityHeroExt">
+		SELECT CITY_HERO_ID AS cityHeroID, COMMAND_EQUIPMENT_ADD AS commandEquipmentAdd, COMMAND_TREASURE_ADD AS commandTreasureAdd, DEFENSE_EQUIPMENT_ADD AS defenseEquipmentAdd, DEFENSE_TREASURE_ADD AS defenseTreasureAdd, MIND_EQUIPMENT_ADD AS mindEquipmentAdd, MIND_TREASURE_ADD AS mindTreasureAdd, EXECUTIVEPOWER_EQUIPMENT_ADD AS executivepowerEquipmentAdd, EXECUTIVEPOWER_TREASURE_ADD AS executivepowerTreasureAdd, REIN_GUILD_ADD AS reinGuildAdd, REIN_TREASURE_ADD AS reinTreasureAdd, EXP_GUILD_ADD AS expGuildAdd, EXP_TREASURE_ADD AS expTreasureAdd, MILITARY_ATTACK_ADD AS militaryAttackAdd, MILITARY_DEFENSE_ADD AS militaryDefenseAdd, MILITARY_LIFE_ADD AS militaryLifeAdd FROM T_CITY_HERO_EXT WHERE City_Hero_ID=#cityHeroID#
+	</select>
+
+	<select id="getCityHeroExtList" resultClass="CityHeroExt">
+		SELECT CITY_HERO_ID AS cityHeroID, COMMAND_EQUIPMENT_ADD AS commandEquipmentAdd, COMMAND_TREASURE_ADD AS commandTreasureAdd, DEFENSE_EQUIPMENT_ADD AS defenseEquipmentAdd, DEFENSE_TREASURE_ADD AS defenseTreasureAdd, MIND_EQUIPMENT_ADD AS mindEquipmentAdd, MIND_TREASURE_ADD AS mindTreasureAdd, EXECUTIVEPOWER_EQUIPMENT_ADD AS executivepowerEquipmentAdd, EXECUTIVEPOWER_TREASURE_ADD AS executivepowerTreasureAdd, REIN_GUILD_ADD AS reinGuildAdd, REIN_TREASURE_ADD AS reinTreasureAdd, EXP_GUILD_ADD AS expGuildAdd, EXP_TREASURE_ADD AS expTreasureAdd, MILITARY_ATTACK_ADD AS militaryAttackAdd, MILITARY_DEFENSE_ADD AS militaryDefenseAdd, MILITARY_LIFE_ADD AS militaryLifeAdd FROM T_CITY_HERO_EXT
+	</select>
+	
+	<select id="getCityHeroExtListBycityID" parameterClass="Integer" resultClass="CityHeroExt">
+		SELECT CHE.CITY_HERO_ID AS cityHeroID, CHE.COMMAND_EQUIPMENT_ADD AS commandEquipmentAdd, CHE.COMMAND_TREASURE_ADD AS commandTreasureAdd, CHE.DEFENSE_EQUIPMENT_ADD AS defenseEquipmentAdd, CHE.DEFENSE_TREASURE_ADD AS defenseTreasureAdd, CHE.MIND_EQUIPMENT_ADD AS mindEquipmentAdd, CHE.MIND_TREASURE_ADD AS mindTreasureAdd, CHE.EXECUTIVEPOWER_EQUIPMENT_ADD AS executivepowerEquipmentAdd, CHE.EXECUTIVEPOWER_TREASURE_ADD AS executivepowerTreasureAdd, CHE.REIN_GUILD_ADD AS reinGuildAdd, CHE.REIN_TREASURE_ADD AS reinTreasureAdd, CHE.EXP_GUILD_ADD AS expGuildAdd, CHE.EXP_TREASURE_ADD AS expTreasureAdd, CHE.MILITARY_ATTACK_ADD AS militaryAttackAdd, CHE.MILITARY_DEFENSE_ADD AS militaryDefenseAdd, CHE.MILITARY_LIFE_ADD AS militaryLifeAdd 
+		FROM T_CITY_HERO_EXT CHE 
+		INNER JOIN T_CITY_HERO CH ON CHE.CITY_HERO_ID = CH.CITY_HERO_ID 
+		WHERE CH.CITY_ID=#cityID# 
+	</select>
+	
+</sqlMap>

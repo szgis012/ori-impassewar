@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="false" close="doClose()"  layout="absolute" width="630" height="422" xmlns:ns1="com.hifong.war.view.building.*" xmlns:ns2="com.hifong.war.view.building.citycenter.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.constant.CityBuildingStateConstant;
+			import com.hifong.war.vo.CityBuildingVO;
+			import mx.utils.ObjectProxy;
+			import mx.events.CollectionEvent;
+			import mx.binding.utils.BindingUtils;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.util.WindowUtil;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				 this._buildingGrid = bg;
+				this.pnlBuilding.buildingGrid = bg;
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				pnlEnlistCitizen.onParentWindowClose();
+				pnlBuildProcess.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<ns1:BuildingItemPanel x="25" y="38" id="pnlBuilding">
+	</ns1:BuildingItemPanel>	
+	
+	<mx:TabNavigator x="25" y="126" width="580" height="271" >
+		<ns2:BuildingListPanel  id="pnlBuildProcess" x="3.5" y="5" label="建筑队列" width="100%" height="100%" styleName="ContentCanvas">
+		</ns2:BuildingListPanel>
+		<ns2:EnlistCitizenPanel id="pnlEnlistCitizen" label="征召市民" width="100%" height="100%" styleName="ContentCanvas">
+		</ns2:EnlistCitizenPanel>
+		<ns2:TaxAdjustmentPanel id="pnlTaxAdjustment" label="税率调整" width="100%" height="100%" styleName="ContentCanvas">
+		</ns2:TaxAdjustmentPanel>
+		<ns2:CityManagePanel  id="pnlCityManage" label="城市治理" width="100%" height="100%" styleName="ContentCanvas">
+		</ns2:CityManagePanel>
+		<ns2:ChangeCityNamePanel id="pnlChangeCityName" label="城市改名" width="100%" height="100%" styleName="ContentCanvas">
+		</ns2:ChangeCityNamePanel>
+	</mx:TabNavigator>
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="城镇中心" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+</mx:TitleWindow>

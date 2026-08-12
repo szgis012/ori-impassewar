@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" close="doClose()" width="630" height="500" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.*" xmlns:ns2="com.hifong.war.view.building.armory.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.common.OrdnanceInfo;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.vo.ProductionQueueVO;
+			import com.hifong.war.util.MsgBox;
+			import mx.binding.utils.BindingUtils;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.vo.OrdnanceVO;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.building.BuildingGrid;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var ordnanceInfo:OrdnanceInfo = model.ordnanceInfo;
+			
+			/** 监视军械建造队列的改变*/
+			private var ordnanceProcessListWatcher:ChangeWatcher;
+			
+			/** 计时器*/
+			private var processTimer:Timer;
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				this._buildingGrid = bg;
+				this.pnlBuilding.buildingGrid = bg;
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			private function init():void{
+				refreshOrdnancePanel(this.pnlFirearms,model.ordnanceInfo.firearmsList);				
+				tuneWindow();
+				ordnanceProcessListWatcher = ChangeWatcher.watch(model.ordnanceInfo,"ordnanceProcessList",onOrdnanceProcessListChange);
+			}
+			
+			//军械生产进程更改时的处理 
+			private function onOrdnanceProcessListChange(event:Object):void{
+				tuneWindow();
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				stopTimer();
+				this.ordnanceProcessListWatcher.unwatch();
+				this.stopTimer();
+				this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			private function onTabChange(event:IndexChangedEvent):void{
+				switch(event.newIndex){
+					case 0:
+						refreshOrdnancePanel(this.pnlFirearms,model.ordnanceInfo.firearmsList);
+						break;
+					case 1:
+						refreshOrdnancePanel(this.pnlVehicle,model.ordnanceInfo.truckbodyList);
+						break;
+					case 2:
+						refreshOrdnancePanel(this.pnlPlane,model.ordnanceInfo.airframeList);
+						break;
+					case 3:
+						refreshOrdnancePanel(this.pnlAmmo,model.ordnanceInfo.ammoList);
+						break;
+				}
+			}
+				
+			//刷新容器中的军械信息
+			private function refreshOrdnancePanel(container:Canvas,ordnanceList:ArrayCollection):void{
+				var ordnance:OrdnanceVO;
+				var cityOrdnance:CityOrdnanceVO;
+				var pi:OrdnanceItemPanel ;
+				
+				//缓存面板中的组件
+				var cacheItems:Object = {};
+				//缓存数据
+				for(var j:int=0; j<container.numChildren; j++){
+					pi = container.getChildAt(j) as OrdnanceItemPanel;
+					cacheItems[pi.ordnance.ordnanceID] = pi;
+				}
+				
+				//遍历列表构造军械项
+				for(var i:int=0; i<ordnanceList.length; i++){
+					ordnance = ordnanceList.getItemAt(i) as OrdnanceVO;
+					cityOrdnance = model.ordnanceInfo.cityOrdnanceMap[ordnance.ordnanceID] as CityOrdnanceVO;
+					
+					if(cityOrdnance == null){
+						cityOrdnance = new CityOrdnanceVO();
+						cityOrdnance.cityID = model.cityInfo.cityID;
+						cityOrdnance.ordnanceID = ordnance.ordnanceID;
+						cityOrdnance.num = 0;
+					}
+					
+					pi = cacheItems[ordnance.ordnanceID] as OrdnanceItemPanel;
+					//如果缓存没有对应的组件信息就创建它并且加到容器中
+					if(!pi){
+						pi = new OrdnanceItemPanel();
+						container.addChild(pi);
+					}
+					//计算坐标
+					pi.x = 10;
+					pi.y = i * (pi.height + 5) + 5;
+					pi.ordnance = ordnance;
+					pi.cityOrdnance = cityOrdnance;
+					
+				}
+			}
+			
+			//根据城市军械编号找到对应的军械信息
+			public function getOrdnance(cityOrdnanceID:int):OrdnanceVO{
+				return ordnanceInfo.ordnanceMap[ordnanceInfo.cityOrdnanceMap2[cityOrdnanceID].ordnanceID] as OrdnanceVO;
+			}
+			
+			//根据是否有建筑进程调整窗口的大小
+			private function tuneWindow():void{
+				var oplist:ArrayCollection = model.ordnanceInfo.ordnanceProcessList;
+				
+				//有建筑进程,显示进程进程面板
+				if(oplist && oplist.length>0){
+					var process:ProductionQueueVO = oplist.getItemAt(0) as ProductionQueueVO;
+					this.pnlProcess.currentOrdnance = getOrdnance(process.targetID);
+					this.pnlProcess.currentOrdnanceProcess = process;
+					//先计算，避免时间显示延迟1秒钟
+					updateOrdnanceProcess();
+					startTimer();
+					this.pnlNoTask.visible = false;
+					this.pnlProcess.visible = true;
+					
+					this.pnlTab.y =  246;
+					this.pnlTab.height = 230;
+					
+				}else{
+					stopTimer();
+					this.pnlProcess.visible = false;
+					this.pnlNoTask.visible = true;
+					
+					this.pnlTab.y =  200;
+					this.pnlTab.height = 276;
+				}
+			}
+			
+			//启动计时器
+			private function startTimer():void{
+				if(processTimer){
+					return;
+				}
+				
+				processTimer = new Timer(1000);
+				processTimer.addEventListener(TimerEvent.TIMER,onTime);
+				processTimer.start();
+			}
+			
+			//更新进程时间
+			private function onTime(event:TimerEvent):void{
+				var ordnanceProcessList:ArrayCollection = model.ordnanceInfo.ordnanceProcessList;
+				
+				if(ordnanceProcessList && ordnanceProcessList.length>0){
+					updateOrdnanceProcess();
+				}else{
+					//如果没有了进程就刷新界面显示
+					tuneWindow();
+				}
+			
+			}
+			
+			//更新进程信息
+			private function updateOrdnanceProcess():void{
+				var ordnanceProcessList:ArrayCollection = model.ordnanceInfo.ordnanceProcessList;
+				//获得正在建造的进程
+				var process:ProductionQueueVO = ordnanceProcessList.getItemAt(0) as ProductionQueueVO;
+				
+				var str:String = "需时：";
+				var leavingSeconds:Number = Math.max(0,Math.floor((process.finishTime.time - model.serverTime.time )/1000));
+				str += DateFormatUtil.convertSecondToTime(Math.floor(leavingSeconds));
+				//获得最后的进程,根据最后建造时间计算总剩余时间
+				process = ordnanceProcessList.getItemAt(ordnanceProcessList.length - 1) as ProductionQueueVO;
+				var totalSeconds:Number = Math.max(0,Math.floor((process.finishTime.time - model.serverTime.time )/1000));
+				
+				this.pnlProcess.lblTotalTime.text = DateFormatUtil.convertSecondToTime(totalSeconds);
+				this.pnlProcess.lblNeedTime.text = str;
+			}
+				
+			
+			//关闭计时器
+			private function stopTimer():void{
+				if(processTimer){
+					processTimer.removeEventListener(TimerEvent.TIMER,onTime);
+					processTimer.stop();
+					processTimer = null;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="{_buildingGrid.cityBuilding.building.name+ BuildingUtil.getLevelInfo(_buildingGrid.cityBuilding)}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<ns1:BuildingItemPanel x="25" y="37" id="pnlBuilding" width="580">
+	</ns1:BuildingItemPanel>
+	<ns2:ProductionProcessPanel x="25" y="168" id="pnlProcess" visible="false">
+	</ns2:ProductionProcessPanel>
+	<mx:TabNavigator x="25" y="169" width="580" height="303"  id="pnlTab" change="onTabChange(event)">
+		<mx:Canvas label="枪械" width="100%" height="100%" id="pnlFirearms" horizontalScrollPolicy="off" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="车身" width="100%" height="100%" id="pnlVehicle" horizontalScrollPolicy="off" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="机身" width="100%" height="100%" id="pnlPlane" horizontalScrollPolicy="off" styleName="BugFixBorder">
+		</mx:Canvas>
+		<mx:Canvas label="弹药" width="100%" height="100%" id="pnlAmmo" horizontalScrollPolicy="off" verticalScrollPolicy="on" styleName="BugFixBorder">
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Canvas x="25" y="132" width="580" height="24" styleName="CanvasBorder" id="pnlNoTask" visible="true">
+		<mx:Text x="10" y="3" text="目前没有任何建造任务！" width="560"/>
+	</mx:Canvas>
+	
+	
+</mx:TitleWindow>

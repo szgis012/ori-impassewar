@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="272" height="22">
+<!--<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="330" height="29">-->
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UITextField;
+			import mx.core.mx_internal;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.MsgBox;
+			import mx.managers.PopUpManager;
+			import com.adobe.serialization.json.JSON;
+			import com.hifong.war.model.ModelLocator;
+			import mx.messaging.events.MessageEvent;
+			import mx.controls.Alert;
+			import mx.messaging.messages.*;
+			import mx.utils.StringUtil;
+			
+			private static var model:ModelLocator = ModelLocator.getInstance();
+			//输入光标
+			private var _careIndex:int=0;
+			
+			/** 当前聊天类型(1.世界 2.军团 3.私聊) */
+			private static var currentChatType:int = 1;
+			/** 替换"正则表达式 */
+			private static var chatPattern:RegExp = /\"/g;
+			
+			/** 世界聊天间隔时间(单位：秒) */
+			private static var worldChatInterval:int = 10;
+			/** 世界聊天最后一条消息发送时间 */
+			private var worldLastSendTime:Number;
+			/** 其他聊天间隔时间(单位：秒) */
+			private static var otherChatInterval:int = 3;
+			/** 其他聊天最后一条消息发送时间 */
+			private var otherLastSendTime:Number;
+			
+			/** 接受玩家名称 */
+			public var receiverName:String;
+			
+			private var isPrivateChating:Boolean = false;
+			
+			//发送聊天信息
+			private function sendMessage():void
+			{
+				if(StringUtil.trim(textChatMessage.text).length==0)
+				{
+					textChatMessage.setFocus();
+					return;
+				}
+				
+				var intervalTime:int;
+					
+				var json:String;
+				
+				textChatMessage.text = textChatMessage.text.replace(chatPattern,"&quot;");
+				
+				if(textChatMessage.text.substring(0,1)=="/"){
+					//私聊
+					isPrivateChating = true;
+					receiverName = textChatMessage.text.substr(1,textChatMessage.text.indexOf(" ")-1);
+					if(receiverName==model.playerInfo.name){
+						MsgBox.showMessage("您不能与自己聊天。");
+						return;
+					}
+					intervalTime = int(otherChatInterval-(model.serverTime.time-otherLastSendTime)/1000);
+					if(intervalTime>0){
+						model.app.chatPanel.addSystemMessage("您在" + intervalTime + "秒后可再次发言。");
+						return;
+					}else{
+						otherLastSendTime = model.serverTime.time;
+					}
+					json = "{\"type\":" + "2" + ",\"chatType\":" + 3 + ",\"playerID\":" + model.playerInfo.playerID + ",\"name\":\"" + model.playerInfo.name + "\",\"receiverName\":\"" + textChatMessage.text.substr(1,textChatMessage.text.indexOf(" ")-1) + "\",\"chatMessage\":\"" + textChatMessage.text.substring(textChatMessage.text.indexOf(" ")+1,textChatMessage.text.length) + "\"}";
+				}else{
+					isPrivateChating = false;
+					if(currentChatType==1){
+						intervalTime = int(worldChatInterval-(model.serverTime.time-worldLastSendTime)/1000);
+						if(intervalTime>0){
+							model.app.chatPanel.addSystemMessage("您在" + intervalTime + "秒后可在世界频道再次发言。");
+							return;
+						}else{
+							worldLastSendTime = model.serverTime.time;
+						}
+						json = "{\"type\":" + "2" + ",\"chatType\":" + currentChatType + ",\"playerID\":" + model.playerInfo.playerID + ",\"name\":\"" + model.playerInfo.name + "\",\"chatMessage\":\"" + textChatMessage.text + "\"}";
+					}else if(currentChatType==2){
+						intervalTime = int(otherChatInterval-(model.serverTime.time-otherLastSendTime)/1000);
+						if(intervalTime>0){
+							model.app.chatPanel.addSystemMessage("您在" + intervalTime + "秒后可再次发言。");
+							return;
+						}else{
+							otherLastSendTime = model.serverTime.time;
+						}
+						json = "{\"type\":" + "2" + ",\"chatType\":" + currentChatType + ",\"playerID\":" + model.playerInfo.playerID + ",\"name\":\"" + model.playerInfo.name + "\",\"guildID\":" + model.playerInfo.guildID + "\,\"chatMessage\":\"" + textChatMessage.text + "\"}";
+					}
+				}
+				
+				var byte:ByteArray = new ByteArray();
+				byte.writeUTFBytes(json + "\n");
+				model.app.gameSocket.writeBytes(byte);
+				model.app.gameSocket.flush();
+				
+				if(isPrivateChating){
+					textChatMessage.text = "/" + receiverName + " ";
+				}else{
+					textChatMessage.text = "";
+				}
+				
+				textChatMessage.setFocus();
+			}
+			
+			
+			//接收聊天信息
+			public function receiveMessage(json:Object):void{
+				
+				var chatMessage:String;
+				
+				if(json.chatType==1){
+					//世界
+					chatMessage = "<font color=\"#E78216\"><b>[" + "<a href=\"event:" + json.name + "\">" + json.name + "</a>" + "]</b>：" + json.chatMessage + "</font>";
+					model.app.chatPanel.addChatMessage(chatMessage,1);
+				}else if(json.chatType==2){
+					//军团
+					chatMessage = "<font color=\"#00DDFF\"><b>[" + "<a href=\"event:" + json.name + "\">" + json.name + "</a>" + "]</b>：" + json.chatMessage + "</font>";
+					model.app.chatPanel.addChatMessage(chatMessage,2);
+					model.app.chatPanel.addChatMessage(chatMessage,1);
+				}else if(json.chatType==3){
+					//私聊
+					if(json.playerID==model.playerInfo.playerID){
+						//当前玩家给其他玩家发送消息
+						chatMessage = "<font color=\"#00EE00\"><b>您对[" + "<a href=\"event:" + json.receiverName + "\">" + json.receiverName + "</a>" + "]说</b>：" + json.chatMessage;
+						model.app.chatPanel.addChatMessage(chatMessage,3);
+						model.app.chatPanel.addChatMessage(chatMessage,1);
+					}
+					if(json.receiverID==model.playerInfo.playerID){
+						//当前玩家接收到其他玩家发送的消息
+						chatMessage = "<font color=\"#00EE00\"><b>[" + "<a href=\"event:" + json.name + "\">" + json.name + "</a>" + "]对您说</b>：" + json.chatMessage;
+						model.app.chatPanel.addChatMessage(chatMessage,3);
+						model.app.chatPanel.addChatMessage(chatMessage,1);
+					}
+					
+				}else if(json.chatType==11){
+					//玩家不存在
+					model.app.chatPanel.addSystemMessage("玩家 " + json.receiverName + " 不存在");
+				}else if(json.chatType==12){
+					//玩家不在线
+					model.app.chatPanel.addSystemMessage("玩家 " + json.receiverName + " 不在线");
+				}
+				
+			}
+			
+			/**
+			 * 显示/隐藏表情面板
+			 */
+			private function toggleFacePanel():void{
+				model.app.chatFacePanel.visible = !model.app.chatFacePanel.visible;
+			}
+			
+			/**
+			 * 显示/隐藏聊天面板
+			 */
+			private function toggleChatPanel():void
+			{
+				model.app.chatFacePanel.visible=false;
+				model.app.chatPanel.visible = !model.app.chatPanel.visible;
+			}
+			
+			/**
+			 * 显示/隐藏聊天类型列表
+			 */
+			private function toggleChatTypeList():void{
+				model.app.chatTypeList.visible = !model.app.chatTypeList.visible;
+			}
+		
+		
+		
+			/**
+			 * 更改聊天内容
+			 */
+			public function changeChatType(type:int,typeName:String):void{
+				
+				model.app.chatTypeList.visible = false;
+
+				if(type!=3){
+					//非私聊
+					labelChatType.label = typeName;
+					currentChatType = type;
+				}else{
+					//私聊
+					var chatReceiverWindow:ChatReceiverWindow = new ChatReceiverWindow();
+					WindowUtil.showWindow(chatReceiverWindow);
+				}
+				
+			}
+
+			
+			/////////////////////////////////////////////////////////////////////////////////
+			////new things start
+			/////////////////////////////////////////////
+			public function get careIndex():int
+			{
+				return _careIndex;
+			}
+			public function addText(startIndex:int,endIndex:int,s:String):void{
+				var tf:UITextField=textChatMessage.mx_internal::getTextField();
+				if(tf)
+					tf.replaceText(startIndex, endIndex, s);
+			}
+			protected function textChatMessage_focusOutHandler(event:FocusEvent):void
+			{
+				var tf:UITextField=textChatMessage.mx_internal::getTextField();
+				if(tf)
+					_careIndex=tf.caretIndex;
+			}
+			
+			public function setTextFocus():void{
+				textChatMessage.setFocus();
+				var tf:UITextField=textChatMessage.mx_internal::getTextField();
+				if(tf){
+					_careIndex=tf.caretIndex;
+					textChatMessage.setSelection(_careIndex,_careIndex);
+				}
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:HBox x="0" y="0"  horizontalGap="0" id="canvasChatToolbar" verticalAlign="middle">
+		<mx:Button    label="世界" id="labelChatType" styleName="ChatSelect"  click="toggleChatTypeList()" width="44" height="22"/>
+		<mx:TextInput id="textChatMessage"  width="160" height="22" maxChars="64" enter="sendMessage()" focusOut="textChatMessage_focusOutHandler(event)"  />
+		<mx:Button  id="buttonToggleFacePanel" width="23" height="22" click="toggleFacePanel()"  styleName="ChatFace"  />
+		<mx:Button  width="21" click="sendMessage()" height="22" styleName="ChatSend" />
+		<mx:Button  id="buttonToggleChatPanel" width="24" click="toggleChatPanel()" height="22" styleName="ChatConfig" />
+<!--		<mx:Button x="285" y="3" id="buttonToggleFacePanel" width="34" click="toggleFacePanel()" height="25" styleName="ChatFace" visible="false"/>
+		<mx:Button x="285" y="3" id="buttonToggleChatPanel" width="34" click="toggleChatPanel()" height="25" styleName="ChatConfig" />-->
+	</mx:HBox>
+	
+</mx:Canvas>

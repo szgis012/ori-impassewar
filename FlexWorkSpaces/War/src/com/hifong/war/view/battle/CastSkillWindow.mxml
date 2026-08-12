@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="222" initialize="doInit()" close="doClose()" xmlns:skill="com.hifong.war.view.battle.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.vo.CityHeroVO;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			public var cityHero:CityHeroVO;
+			
+			private function doInit():void{
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				
+				for(var i:int=0;i<cityHero.skillList.length;i++){
+					
+					var castSkillItemPanel:CastSkillItemPanel = new CastSkillItemPanel();
+					castSkillItemPanel.heroSkill = cityHero.skillList.getItemAt(i);
+					castSkillItemPanel.cityHero = cityHero;
+					castSkillItemPanel.x = i*80;
+					castSkillItemPanel.y = 0;
+					
+					canvasSkill.addChild(castSkillItemPanel);
+				}
+			}
+			
+			public function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="释放技能" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Label x="25" y="37" text="当前体力："/>
+	<mx:Label x="98" y="37" text="{cityHero.stamina}/{cityHero.staminaMax}" fontWeight="bold" width="277"/>
+	
+	<mx:Canvas x="25" y="65" width="350" height="130" id="canvasSkill">
+	</mx:Canvas>
+	
+</mx:TitleWindow>

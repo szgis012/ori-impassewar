@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ArmyDepend">
+	<typeAlias alias="ArmyDepend" type="com.war.domain.ArmyDepend" />
+	
+	<insert id="createArmyDepend" parameterClass="ArmyDepend">
+		INSERT INTO T_ARMY_DEPEND(ARMY_DEPEND_ID, ARMY_ID, ORDNANCE_ID, NUM) VALUES(#armyDependID#, #armyID#, #ordnanceID#, #num#)
+		<selectKey resultClass="Integer" keyProperty="armyDependID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateArmyDepend" parameterClass="ArmyDepend">
+		UPDATE T_ARMY_DEPEND SET ARMY_DEPEND_ID=#armyDependID#, ARMY_ID=#armyID#, ORDNANCE_ID=#ordnanceID#, NUM=#num# WHERE Army_Depend_ID=#armyDependID#
+	</update>
+	
+	<delete id="deleteArmyDependByID" parameterClass="Integer">
+		DELETE FROM T_ARMY_DEPEND WHERE Army_Depend_ID=#armyDependID#
+	</delete>
+	
+	<select id="getArmyDependByID" parameterClass="Integer" resultClass="ArmyDepend">
+		SELECT ARMY_DEPEND_ID AS armyDependID, ARMY_ID AS armyID, ORDNANCE_ID AS ordnanceID, NUM AS num FROM T_ARMY_DEPEND WHERE Army_Depend_ID=#armyDependID#
+	</select>
+	
+	<select id="getArmyDependList" resultClass="ArmyDepend">
+		SELECT ARMY_DEPEND_ID AS armyDependID, ARMY_ID AS armyID, ORDNANCE_ID AS ordnanceID, NUM AS num FROM T_ARMY_DEPEND
+	</select>
+	
+	<select id="getArmyDepend" parameterClass="Map" resultClass="ArmyDepend">
+		SELECT ARMY_DEPEND_ID AS armyDependID, ARMY_ID AS armyID, ORDNANCE_ID AS ordnanceID, NUM AS num FROM T_ARMY_DEPEND WHERE ARMY_ID = #armyID# AND ORDNANCE_ID = #ordnanceID#
+	</select>
+	
+	<select id="getArmyDependListByArmyID" parameterClass="Integer" resultClass="ArmyDepend">
+		SELECT ARMY_DEPEND_ID AS armyDependID, ARMY_ID AS armyID, ORDNANCE_ID AS ordnanceID, NUM AS num FROM T_ARMY_DEPEND WHERE ARMY_ID = #armyID#
+	</select>
+
+</sqlMap>

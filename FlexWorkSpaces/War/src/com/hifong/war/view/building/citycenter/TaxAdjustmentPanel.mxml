@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="240" styleName="\">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.citycenter.TaxAdjustmentEvent;
+			import mx.events.NumericStepperEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			[Bindable]
+			private var model:ModelLocator  = ModelLocator.getInstance();
+			
+			private function onClick():void{
+				
+				if(this.nsTax.value == model.cityInfo.tax)
+					return;
+				
+				if(model.cityInfo.security <= 40 && this.nsTax.value > model.cityInfo.tax){
+					MsgBox.showYesNo("您的城市治安值已经过低，再提高税率您的市民会背叛您逃离城市。确定要提高税率吗?", onAdjustTax);
+				}else if(this.nsTax.value > model.cityInfo.tax){
+					MsgBox.showYesNo("提高税率会使城市治安立刻下降，您确定要提高税率吗?", onAdjustTax);
+				}else{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new TaxAdjustmentEvent(this.nsTax.value));		
+				}
+				
+			}
+			
+			private function onAdjustTax(ans:Boolean):void{
+				if(ans){
+					CairngormEventDispatcher.getInstance().dispatchEvent(new TaxAdjustmentEvent(this.nsTax.value));		
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="66" width="560" height="46" styleName="CanvasBorder">
+		<mx:Text x="5" y="13" text="税率调整至："/>
+		<mx:NumericStepper x="77" y="10" id="nsTax" value="{model.cityInfo.tax}" maximum="100" minimum="0" stepSize="1" width="61" />
+		<mx:Button x="219" y="11" label="确认" click="onClick()" height="26" width="60"/>
+		<mx:Label x="146" y="14" text="（百分比）"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="10" width="560" height="48" styleName="CanvasBorder">
+		<mx:Text x="5" y="4" text="这里可以修改税率，提升税率可以增加城市金钱的收益，但会降低城市的治安值以及资源的生产效率，请您慎重调整。" width="546" height="36"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

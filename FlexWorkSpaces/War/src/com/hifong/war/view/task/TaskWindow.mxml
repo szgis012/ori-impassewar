@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="408" showCloseButton="false" close="doClose()" initialize="doInit()" >
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.building.BuildingGrid;
+			import mx.events.IndexChangedEvent;
+			import com.hifong.war.util.WindowUtil;
+			import mx.events.ListEvent;
+			import com.hifong.war.events.task.ReceiveRewardEvent;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.task.GetTaskListEvent;
+			import mx.managers.PopUpManager;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.binding.utils.ChangeWatcher;
+			
+			import com.hifong.war.model.ModelLocator;
+			
+			
+			//model
+			private var model:ModelLocator = ModelLocator.getInstance();
+			//任务列表watcher
+			private var taskListWatcher:ChangeWatcher;
+			private var taskTypes:Object = {1:"日常任务",2:"成长任务"}
+			private var curType:int = 1;//当前任务类型 
+			//玩家任务列表
+			[Bindable]
+			private var playerTaskList:ArrayCollection;
+			
+			private function doInit():void{
+				this.setFocus();
+//				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				getTaskList(curType);
+				taskListWatcher = ChangeWatcher.watch(model,"taskList",doListChanged);
+				
+				model.haveCompletedTask = false;
+			}
+			
+			//关闭窗口
+			private function doClose():void{
+				WindowUtil.closeWindow(this);
+				taskListWatcher.unwatch();
+			}
+			
+			//任务列表改变时进行处理
+			private function doListChanged(arg:Object):void{
+				playerTaskList = model.taskList;
+				
+				//如果有任务信息
+				if(playerTaskList && playerTaskList.length>0){
+					if(curType == 1){
+						this.taskList.dataProvider = refreshList();
+						this.taskList.selectedIndex = 0;
+					}else if(curType == 2){
+						this.taskList0.dataProvider = refreshList();
+						this.taskList0.selectedIndex = 0;
+					}
+					
+					this.showTask(0);
+					
+				}else{
+					clearContext();
+				}
+			}
+			
+			/*
+			 * 得到当前用户指定的任务列表
+			 * type 任务类型
+			 */
+			private function getTaskList(type:int):void{
+				curType = type;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetTaskListEvent(curType));
+			}
+			
+			//刷新列表信息
+			private function refreshList():Array{
+				var ary:Array  = [];
+				
+				if(playerTaskList && playerTaskList.length>0){
+					var task:* ;
+					
+					for(var i:int=0; i<playerTaskList.length; i++){
+						//Task
+						task = playerTaskList[i].task;
+						//如果任务已完成添加标志
+						if(isTaskComplete(playerTaskList[i].taskFlag))
+							ary.push(task.name+"(已完成)");
+						else
+							ary.push(task.name);
+					}
+					
+				}
+				
+				return ary;
+			}
+			
+			//清除任务信息
+			private function clearContext():void{
+				this.taskList.dataProvider = [];
+				this.txtName.text = "没有该任务或者已完成所有任务！";
+				this.txtDescription.text = "";
+				this.txtTarget.text = "";
+				this.txtReward.text = "";
+				this.btnReward.enabled = false;
+			}
+			
+			//显示任务详细系信息
+			private function showTask(index:int):void{
+				var task:* = playerTaskList[index].task;
+				
+				if(curType == 1){
+					this.txtName.htmlText = task.name;
+					this.txtDescription.htmlText = task.description;
+					this.txtTarget.htmlText = task.targetInfo;
+					this.txtReward.htmlText = task.reward;
+					this.btnReward.enabled = isTaskComplete(playerTaskList[index].taskFlag);
+				}else if(curType == 2){
+					this.txtName0.htmlText = task.name;
+					this.txtDescription0.htmlText = task.description;
+					this.txtTarget0.htmlText = task.targetInfo;
+					this.txtReward0.htmlText = task.reward;
+					this.btnReward0.enabled = isTaskComplete(playerTaskList[index].taskFlag);
+				}
+			}
+			
+			//判断任务目标是否完成。targetInfo的第一个字符为是否完成标志，1表示完成，0表示未完成。
+			private function isTaskComplete(taskFlag:int):Boolean{
+				return (1 == taskFlag);
+			}
+			
+			//改变列表选项时的处理
+			private function onSelectChanged(event:ListEvent):void{
+				showTask(event.rowIndex);
+			}
+			
+			private function onTabChange(event:IndexChangedEvent):void{
+				getTaskList(event.newIndex+1);
+			}
+			
+			private function onGetReward(event:MouseEvent):void{
+				var pt:Object;
+				
+				if(curType == 1){
+					pt = playerTaskList[this.taskList.selectedIndex];
+				}else if(curType == 2){
+					pt = playerTaskList[this.taskList0.selectedIndex];
+				}
+				
+				event.currentTarget.enabled = false;
+				//获得奖励
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ReceiveRewardEvent(pt.playerTaskID,curType));
+			}
+			
+			//连接到建筑
+			private function doLink(event:TextEvent):void{
+				var bg:BuildingGrid = BuildingUtil.getBuildingGridByBID(parseInt(event.text));
+				
+				//升级窗口
+				if(bg){
+					DialogManager.showUpgradeWindow(bg);
+					WindowUtil.closeWindow(this);
+				}else{
+					bg = BuildingUtil.findBlankBuildingGrid();
+					
+					//有空地
+					if(bg){
+						DialogManager.showBuildWindow(bg);
+						WindowUtil.closeWindow(this);
+					}else{
+						MsgBox.showMessage("已经没有可用建造的空地");
+					}
+				}
+			}
+
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="任 务" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:TabNavigator x="25" y="37" width="580" height="343" change="onTabChange(event)">
+		<mx:Canvas label="新手任务" width="100%" height="100%" styleName="ContentCanvas">
+			<mx:List x="10" y="10" height="294" width="164" id="taskList" backgroundColor="#282E22" change="onSelectChanged(event)"></mx:List>
+			<mx:Canvas x="182" y="10" width="386" height="294" styleName="InnerBorder">
+				<mx:Label x="10" y="5" text="任务名称："/>
+				<mx:Label x="83" y="5" text="没有该任务或者已完成所有任务！" width="295" id="txtName"/>
+				<mx:Label x="10" y="59" text="任务描述："/>
+				<mx:Label x="10" y="137" text="任务目标："/>
+				<mx:Label x="10" y="202" text="任务奖励："/>
+				<mx:TextArea x="83" y="30" width="293" height="98" editable="false" id="txtDescription">
+				</mx:TextArea>
+				<mx:TextArea x="83" y="136" width="293" height="57" text=" " editable="false" id="txtTarget" link="doLink(event)"/>
+				<mx:TextArea x="83" y="201" width="293" height="49" editable="false" id="txtReward"/>
+				<mx:Button x="83" y="258" label="领取奖励" id="btnReward" click="onGetReward(event)" enabled="{taskList.selectedIndex>=0 &amp;&amp; isTaskComplete(playerTaskList.getItemAt(taskList.selectedIndex).taskFlag)}" width="80" height="26"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas label="日常任务" width="100%" height="100%" styleName="ContentCanvas">
+			<mx:List x="10" y="10" height="294" width="164" id="taskList0" backgroundColor="#282E22" change="onSelectChanged(event)"></mx:List>
+			<mx:Canvas x="182" y="10" width="386" height="294" styleName="InnerBorder">
+				<mx:Label x="10" y="5" text="任务名称："/>
+				<mx:Label x="83" y="5" text="没有该任务或者已完成所有任务！" width="295" id="txtName0"/>
+				<mx:Label x="10" y="59" text="任务描述："/>
+				<mx:Label x="10" y="137" text="任务目标："/>
+				<mx:Label x="10" y="202" text="任务奖励："/>
+				<mx:TextArea x="83" y="30" width="293" height="98" editable="false" id="txtDescription0">
+				</mx:TextArea>
+				<mx:TextArea x="83" y="136" width="293" height="57" text=" " editable="false" id="txtTarget0"  link="doLink(event)"/>
+				<mx:TextArea x="83" y="201" width="293" height="49" editable="false" id="txtReward0"/>
+				<mx:Button x="83" y="258" label="领取奖励" id="btnReward0" click="onGetReward(event)" enabled="{taskList.selectedIndex>=0 &amp;&amp; isTaskComplete(playerTaskList.getItemAt(taskList.selectedIndex).taskFlag)}" width="80" height="26"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	
+</mx:TitleWindow>

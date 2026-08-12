@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="600" height="398" showCloseButton="false" close="doClose()" initialize="doInit()">
+	<!--发件箱-->
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.vo.MessageOutboxVO;
+			import com.hifong.war.vo.MessageInboxVO;
+			import com.hifong.war.events.message.ReadMessageEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.message.DeleteMessageEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.events.FlexEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.vo.MessageOutboxVO;
+			import mx.managers.PopUpManager;
+			
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			
+			public var parentWindow:MessageWindow;
+			
+			[Bindable]
+			public var message:MessageOutboxVO;
+
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private function doInit():void{
+				this.setFocus();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,WindowUtil.closeWindowPressEsc);
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ReadMessageEvent(message.messageOutboxID));
+				
+				//如果发件人与当前玩家一致，则当前是发件箱，不显示回复按钮
+//				if(message.senderID==ModelLocator.getInstance().playerInfo.playerID){
+//					buttonReply.visible = false;
+//				}else{
+//					if(message.readFlag==0){
+//						message.readFlag = 1;
+//						CairngormEventDispatcher.getInstance().dispatchEvent(new ReadMessageEvent(message.messageID));
+//					}
+//				}
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function replyMessage():void{
+				this.parentWindow.canvasSendMessage.addEventListener(FlexEvent.SHOW,inisialize_successful);		
+				this.parentWindow.tabNavigator.selectedIndex = 2;
+			}
+			private function inisialize_successful(event:FlexEvent):void{
+				doClose();
+				this.parentWindow.canvasSendMessage.removeEventListener(FlexEvent.INITIALIZE,inisialize_successful);
+				this.parentWindow.textReceiverName.text = this.textSenderName.text;
+				this.parentWindow.textTitle.text = "回复：" + this.textTitle.text;
+				this.parentWindow.textareaContent.text = "\n\n---------- " + this.textSenderName.text + " 写到----------\n" + this.textareaContent.text;
+			}
+
+			private function deleteMessage(messageID:int):void{
+				MsgBox.showConfirm("您确定要删除消息吗？",function ():void{
+					
+					doClose();
+					
+					if(parentWindow.tabNavigator.selectedIndex==0){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteMessageEvent(messageID,1));
+						parentWindow.showMessageInboxList(model.currentInboxPageNum);
+					}else if(parentWindow.tabNavigator.selectedIndex==1){
+						CairngormEventDispatcher.getInstance().dispatchEvent(new DeleteMessageEvent(messageID,2));
+						parentWindow.showMessageOutboxList(model.currentOutboxPageNum);
+					}
+				});
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="查看消息" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="29" y="37" width="542" height="333" styleName="CanvasBorder">
+		<mx:Label x="23" y="12" text="收件人："/>
+		<mx:TextInput id="textReceiverName" x="84" y="10" text="{message.receiverName}" editable="false" width="180"/>
+		<mx:Label x="279" y="12" text="发件人："/>
+		<mx:TextInput id="textSenderName" x="336" y="10" text="{model.playerInfo.name}" editable="false" width="180"/>
+		<mx:Label x="23" y="42" text="主   题："/>
+		<mx:TextInput id="textTitle" x="84" y="38" text="{message.title}" editable="false" width="180"/>
+		<mx:Label x="280" y="42" text="时   间："/> 
+		<mx:TextInput x="336" y="40" text="{DateFormatUtil.formatDate(message.sendTime)}" editable="false" width="180"/>
+		<mx:Label x="23" y="73" text="内   容："/>
+		<mx:TextArea id="textareaContent" x="84" y="72" width="432" height="213" text="{message.content}" editable="false"/>
+		<mx:Button x="436" y="293" label="删除" click="deleteMessage(message.messageOutboxID)" width="60" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ResTransportation">
+	<typeAlias alias="ResTransportation" type="com.war.domain.ResTransportation" />
+	
+	<insert id="createResTransportation" parameterClass="ResTransportation">
+		INSERT INTO T_RES_TRANSPORTATION(WOOD_AMOUNT, STEEL_AMOUNT, OIL_AMOUNT, FOOD_AMOUNT, MONEY_AMOUNT) VALUES(#woodAmount#, #steelAmount#, #oilAmount#, #foodAmount#, #moneyAmount#)
+		<selectKey resultClass="Integer" keyProperty="resTransportationID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<delete id="deleteResTransportationByID" parameterClass="Integer">
+		DELETE FROM T_RES_TRANSPORTATION WHERE RES_TRANSPORTATION_ID=#resTransportationID#
+	</delete>
+	
+	<select id="getResTransportationByID" parameterClass="Integer" resultClass="ResTransportation">
+		SELECT RES_TRANSPORTATION_ID AS resTransportationID, WOOD_AMOUNT AS woodAmount, STEEL_AMOUNT AS steelAmount, OIL_AMOUNT AS oilAmount, FOOD_AMOUNT AS foodAmount, MONEY_AMOUNT AS moneyAmount FROM T_RES_TRANSPORTATION WHERE RES_TRANSPORTATION_ID=#resTransportationID#
+	</select>
+	
+	<select id="getResTransportationList" resultClass="ResTransportation">
+		SELECT RES_TRANSPORTATION_ID AS resTransportationID, WOOD_AMOUNT AS woodAmount, STEEL_AMOUNT AS steelAmount, OIL_AMOUNT AS oilAmount, FOOD_AMOUNT AS foodAmount, MONEY_AMOUNT AS moneyAmount FROM T_RES_TRANSPORTATION
+	</select>
+
+</sqlMap>

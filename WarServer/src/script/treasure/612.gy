@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:612
+ * 
+ * 名称：防护实务
+ * 描述：指挥官学习防护实务学，对1个指挥官使用，使用后提升指挥官防护属性20点，时限3天。
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.setCityHeroDefenseAdd(params["cityHeroID"], 20, 3);

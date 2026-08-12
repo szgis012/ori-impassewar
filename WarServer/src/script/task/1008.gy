@@ -1,0 +1,66 @@
+/**
+ * 任务编号:1008
+ *
+ * 要求：升级或建造更多的住宅，使城市最大人口提升至100。
+ * 奖励：食物500, 礼金100。
+ * 后置任务：--
+ */
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+ * 检查任务完成情况
+ *
+ */
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+	
+// 1. 如果最大人口大于99
+if(context.getCityMaxPopulation() > 99) 
+{
+	result += "升级或建造更多的住宅，使城市最大人口提升至100<font color='#00ff00'>[已完成]</font><br/>";
+	count++;
+}
+else
+{
+	result += "升级或建造更多的住宅，使城市最大人口提升至100<font color='#ff0000'>[未完成]</font><br/>";
+}
+
+//如果完成了升级或建造更多的住宅，使城市最大人口提升至100的任务
+if (count == 1)
+{
+	flag = 1;
+}
+
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+ * 领取奖励
+ *
+ */
+def doReceiveReward()
+{
+//奖励：食物500, 礼金100。
+context.rewardResource(0,0,0,500,0);
+context.rewardGiftCertificate(100);
+}

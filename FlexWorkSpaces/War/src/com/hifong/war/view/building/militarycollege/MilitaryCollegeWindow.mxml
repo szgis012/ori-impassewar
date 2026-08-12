@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="630" height="440" showCloseButton="false" close="doClose()" xmlns:building="com.hifong.war.view.building.*" xmlns:militarycollege="com.hifong.war.view.building.militarycollege.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.building.militarycollege.TrainingCityHeroIncreaseLeadershipEvent;
+			import com.hifong.war.events.building.militarycollege.RefreshCityCandidacyHeroEvent;
+			import com.hifong.war.vo.TreasureItemVO;
+			import com.hifong.war.events.treasure.UseTreasureEvent;
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.ConvertUtil;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.events.building.militarycollege.CancelCityOfficerEvent;
+			import com.hifong.war.events.building.militarycollege.SetCityOfficerEvent;
+			import mx.collections.ArrayCollection;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.constant.CityHeroStateConstant;
+			import com.hifong.war.vo.CityHeroVO;
+			import com.hifong.war.util.MsgBox;
+			import mx.managers.PopUpManager;
+			import mx.events.ListEvent;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.events.building.militarycollege.RecruitHeroEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.view.building.BuildingGrid;
+			import com.hifong.war.events.building.militarycollege.GetCityCandidacyHeroListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+		
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityID:int = model.cityInfo.cityID;
+			//不设置执政官
+			private const CANCEL_CITY_OFFICER:String = "不设置城市执政官";
+			//监视城市指挥官列表的改变，任命城市执政官操作使用
+			private var cityHeroListWatcher:ChangeWatcher;
+			//可以任命的城市执政官列表
+			[Bindable]
+			private var appointOfficerList:ArrayCollection;
+			
+			[Bindable]
+			private var _buildingGrid:BuildingGrid;
+			
+			public function set buildingGrid(bg:BuildingGrid):void{
+				this._buildingGrid = bg;
+				 this.pnlBuilding.buildingGrid = bg;
+				 //注册citybuilding被移除时的事件
+				 bg.addEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+			}
+			
+			//当建筑被移除时关闭升级窗口
+			private function onCityBuildingRemoved(event:Event):void{
+				MsgBox.showMessage("该建筑已被拆除！");
+				doClose();
+			}
+			
+			private function doClose():void{
+				if(this.pnlBuilding.buildingGrid.hasEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED))
+					this.pnlBuilding.buildingGrid.removeEventListener(BuildingGrid.EVENT_CITYBUILDING_REMOVED,onCityBuildingRemoved);
+				pnlBuilding.onParentWindowClose();
+				WindowUtil.closeWindow(this);
+			}
+			
+			/**
+			 * 显示城市英雄信息
+			 */
+			public function showCityHeroInfo(cityHero:Object):void{
+				var win:CityHeroInfoWindow = new CityHeroInfoWindow();
+//				win.cityHeroID = cityHero.cityHeroID;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			
+			
+			/**
+			 * 将英雄状态值转换为对应的字符串形式
+			 */ 
+			private function translateState(item:Object, column:DataGridColumn):String{
+				return ConvertUtil.getCityHeroStateName(item['state']);
+			}
+			
+			/**
+			 * 任命行政官面板显示时调用
+			 */ 
+			private function onSetCityOfficerShow():void{
+				cityHeroListWatcher = ChangeWatcher.watch(model,"cityHeroList",refreshAppointOfficerList);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityHeroListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 任命行政官面板隐藏时调用
+			 */ 
+			private function onSetCityOfficerHide():void{
+				cityHeroListWatcher.unwatch();
+				cityHeroListWatcher = null;
+			}
+			
+			/**
+			 * 更新可以任命的执政官列表
+			 */ 
+			private function refreshAppointOfficerList(event:Object):void{
+				var list:ArrayCollection = new ArrayCollection();
+				var cityHero:CityHeroVO ;
+				//如果之前有执政官，该变量指示出其所在list中的索引
+				var selectedIndex:int = -1;
+				
+				if(model.cityHeroList){
+					for(var i:int=0; i<model.cityHeroList.length; i++){
+						cityHero = model.cityHeroList.getItemAt(i) as CityHeroVO;
+						//将执政（当前执政官）和空闲的指挥官添加到列表
+						switch(cityHero.state){
+							case CityHeroStateConstant.FREE:
+								list.addItem(cityHero);
+								break;
+							case CityHeroStateConstant.REIGN:
+								list.addItem(cityHero);
+								selectedIndex = list.length - 1;
+								break;	
+						}
+					}
+				}
+				
+				//如果已经指定了留守部队,就添加移除项
+				if(selectedIndex >= 0){
+					list.addItemAt(CANCEL_CITY_OFFICER,0);
+					selectedIndex += 1;
+				}
+				
+				this.appointOfficerList = list;
+				//如果已经有执政官就设置combox选中他
+				this.cboHeroList.selectedIndex = selectedIndex;
+			}
+			
+			
+			/**
+			 * 任命
+			 */ 
+			private function onAppoint():void{
+				if(cboHeroList.selectedIndex < 0){
+					MsgBox.showMessage("请选择要任命的指挥官");
+					return;
+				}
+				
+				//如果是取消设置留守军队
+				if(CANCEL_CITY_OFFICER == this.cboHeroList.selectedLabel){
+					onCancel();
+				}else{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new SetCityOfficerEvent(cboHeroList.selectedItem.cityHeroID));
+				}
+			}
+			
+			private function onCancel():void{
+				if(model.cityInfo.officer <= 0){
+					MsgBox.showMessage("您还未指定城市执政官");
+					return;
+				}
+				
+				MsgBox.showConfirm("取消会使执政官的加成效果消失，确定进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelCityOfficerEvent(model.cityInfo.officer));
+				});
+				
+			}
+			
+			private function getCityHeroStamina(item:Object, column:DataGridColumn):String{
+				return item['stamina'] + "/" + item['staminaMax'];
+			}
+			
+			/* to do  */
+			private function getCommanderName(cityMilitary:Object, column:DataGridColumn):String{
+				var cityHero:Object = model.cityHeroMap[cityMilitary.cityHeroID];
+				return cityHero.name;
+			}
+			public function armyTraining(data:Object):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TrainingCityHeroIncreaseLeadershipEvent(data.cityHeroID));
+			}
+			/* to do end */
+		]]>
+	</mx:Script>
+	
+	<building:BuildingItemPanel id="pnlBuilding" x="24.5" y="37">
+	</building:BuildingItemPanel>
+	<mx:TabNavigator x="24.5" y="133" width="581" height="280">
+		<militarycollege:HeroList label="指挥官招募" width="100%" height="100%" />
+		<mx:Canvas label="任命执政官" id="pnlSetCityOfficer" width="100%" height="100%" show="onSetCityOfficerShow()" hide="onSetCityOfficerHide()" styleName="ContentCanvas">
+			<mx:Canvas x="10" y="10" width="559" height="39" styleName="InnerBorder">
+				<mx:Text x="9" y="0" text="任命执政官可以对城市建设进行帮助，城市资源产量将获得相应的加成。您可以任命指挥官成为城市&#xa;执政官，1座城市仅可以任命1位执政官。" width="543" height="39"/>
+			</mx:Canvas>
+			<mx:Canvas x="10" y="57" width="559" height="45" styleName="InnerBorder">
+				<mx:Label x="10" y="12" text="当前执政官："/>
+				<mx:ComboBox x="83" y="10" prompt="未任命执政官" id="cboHeroList" dataProvider="{appointOfficerList}" labelField="name" width="160"/>
+				<mx:Button x="251" y="10" label="确 定" click="onAppoint()" width="60" height="26"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas label="训练营" width="100%" height="100%"  styleName="ContentCanvas" >
+			<mx:DataGrid width="100%" height="100%" dataProvider="{model.cityMilitaryList}">
+				<mx:columns>
+					<mx:DataGridColumn headerText="军队名称" sortable="false"  dataField="name"/>
+					<mx:DataGridColumn headerText="指挥官" sortable="false"  labelFunction="getCommanderName"/>
+					<mx:DataGridColumn headerText="领导" sortable="false" dataField="state" /> 
+					<mx:DataGridColumn headerText="状态" sortable="false" dataField="state" /> 
+					<mx:DataGridColumn headerText="训练时间" sortable="false" dataField="state" /> 
+					<mx:DataGridColumn headerText="花费金钱" sortable="false" dataField="state" /> 
+					<mx:DataGridColumn headerText="操作" sortable="false" width="80" >
+						<mx:itemRenderer>
+							<mx:Component>
+							<mx:HBox textAlign="center" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button label="训练"  width="60" click="outerDocument.armyTraining(data)"/>
+								<mx:Button label="取消" width="60" visible="false" />
+							</mx:HBox>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		
+	</mx:TabNavigator>
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="军事学院" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+</mx:TitleWindow>

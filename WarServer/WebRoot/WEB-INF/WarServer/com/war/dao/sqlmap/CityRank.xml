@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityRank">
+	<typeAlias alias="CityRank" type="com.war.domain.CityRank" />
+	
+	<select id="getCityRankByCityID" parameterClass="Integer" resultClass="CityRank">
+		SELECT CITY_ID AS cityID, NAME AS name, PLAYER_ID AS playerID, (SELECT NAME FROM T_PLAYER WHERE T_PLAYER.PLAYER_ID=T_CITY.PLAYER_ID) AS playerName, (SELECT GUILD_ID FROM T_PLAYER WHERE T_PLAYER.PLAYER_ID=T_CITY.PLAYER_ID) AS guildID, (SELECT NAME FROM T_GUILD WHERE T_GUILD.GUILD_ID=guildID) AS guildName, CONSTRUCTION_POINT AS constructionPoint, TECHNOLOGY_POINT AS technologyPoint, POPULATION_TOTAL AS populationTotal FROM T_CITY WHERE CITY_ID=#cityID#
+	</select>
+	
+	
+	
+	<select id="getCityConstructionPointRankByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT RANK FROM T_CITY_RANK WHERE TYPE=1 AND CITY_ID=#cityID#
+	</select>
+	
+	<procedure id="refreshCityConstructionPointRank">
+		{CALL REFRESH_CITY_CONSTRUCTIONPOINT_RANK}
+	</procedure>
+	
+	<select id="getCityConstructionPointRankPagingList" parameterClass="HashMap" resultClass="CityRank">
+		SELECT RANK AS rank, CITY_ID AS cityID FROM T_CITY_RANK WHERE TYPE=1 LIMIT #start#, #offset#
+	</select>
+	
+	
+	
+	<select id="getCityTechnologyPointRankByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT RANK FROM T_CITY_RANK WHERE TYPE=2 AND CITY_ID=#cityID#
+	</select>
+	
+	<procedure id="refreshCityTechnologyPointRank">
+		{CALL REFRESH_CITY_TECHNOLOGYPOINT_RANK}
+	</procedure>
+	
+	<select id="getCityTechnologyPointRankPagingList" parameterClass="HashMap" resultClass="CityRank">
+		SELECT RANK AS rank, CITY_ID AS cityID FROM T_CITY_RANK WHERE TYPE=2 LIMIT #start#, #offset#
+	</select>
+	
+	
+	
+	<select id="getCityPopulationRankByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT RANK FROM T_CITY_RANK WHERE TYPE=3 AND CITY_ID=#cityID#
+	</select>
+	
+	<procedure id="refreshCityPopulationRank">
+		{CALL REFRESH_CITY_POPULATION_RANK}
+	</procedure>
+	
+	<select id="getCityPopulationRankPagingList" parameterClass="HashMap" resultClass="CityRank">
+		SELECT RANK AS rank, CITY_ID AS cityID FROM T_CITY_RANK WHERE TYPE=3 LIMIT #start#, #offset#
+	</select>
+	
+</sqlMap>

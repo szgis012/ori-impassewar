@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:652
+ * 
+ * 名称：强效记忆胶囊
+ * 描述：增加指挥官2技能学习数量
+ * 类型：指挥官类
+ */
+
+def params = context.getParams();
+
+context.addCityHeroMaxSkillNum(params["cityHeroID"], 2);

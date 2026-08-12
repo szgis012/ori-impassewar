@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="140" height="60" backgroundColor="0" backgroundAlpha=".3">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UITextField;
+			import mx.core.mx_internal;
+			import org.gif.player.GIFPlayer;
+			import mx.events.EffectEvent;
+			import com.hifong.war.model.ModelLocator;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.controls.Image;
+
+			private static var IMAGE_WIDTH:int=24;
+
+			private static var IMAGE_HEIGHT:int=24;
+
+			private static var IMAGE_PREFIX:String="images/face/";
+
+			public static var FACE:String="face";
+			
+			public var faceLink:String="";
+
+			private var isLoadFace:Boolean=false;
+
+//			[Bindable]
+//			private var show:Boolean=false;
+
+			private function irisIn_effectEndHandler(event:EffectEvent):void
+			{
+				loadFace();
+			}
+
+			/* 加载表情 */
+			private function loadFace():void
+			{
+				if (!isLoadFace)
+				{
+					for (var i:int=0; i < 10; i++)
+					{
+//						trace("loadFace");
+						var img:Image=new Image();
+						var gifPlayer:GIFPlayer=new GIFPlayer();
+						gifPlayer.load(new URLRequest("images/face/" + i + ".gif"));
+						img.name=ChatConfig.CHAT_FACE_NAME[i];
+						img.toolTip=img.name;
+						img.addChild(gifPlayer);
+						img.x=(i % 5 >> 0) * 28;
+						img.y=(i / 5 >> 0) * 28;
+						img.graphics.lineStyle(.1, 0);
+						img.graphics.drawRect(-1, -1, 26, 26);
+						faceList.addChild(img);
+						img.addEventListener(MouseEvent.ROLL_OVER, onFaceRollOver);
+						img.addEventListener(MouseEvent.ROLL_OUT, onFaceRollOut);
+						img.addEventListener(MouseEvent.CLICK, onImgClick);
+					}
+					isLoadFace=true;
+				}
+			}
+
+			private function onFaceRollOver(e:MouseEvent):void
+			{
+				var target:Image=e.target as Image;
+				target.graphics.clear();
+				target.graphics.lineStyle(.1, 0xff0000);
+				target.graphics.drawRect(-1, -1, 26, 26);
+			}
+
+			private function onFaceRollOut(e:MouseEvent):void
+			{
+				var target:Image=e.target as Image;
+				target.graphics.clear();
+				target.graphics.lineStyle(.1, 0);
+				target.graphics.drawRect(-1, -1, 26, 26);
+			}
+
+			/* 添加表情 */
+			private function onImgClick(e:MouseEvent):void
+			{
+				var target:Image=e.target as Image;
+				this.visible=false;
+				faceLink=target.name;
+				var model:ModelLocator=ModelLocator.getInstance();
+			
+				var careIndex:int=model.app.chatToolbar.careIndex;
+				model.app.chatToolbar.addText(careIndex,careIndex,faceLink);
+				
+				model.app.chatToolbar.setTextFocus();
+//				addText(careIndex,careIndex,target.name);
+			}
+		]]>
+	</mx:Script>
+	<mx:Iris id="irisOut"
+			 duration="200"
+			 showTarget="true"/>
+	<mx:Iris id="irisIn"
+			 duration="200"
+			 showTarget="false"
+			 effectEnd="irisIn_effectEndHandler(event)"/>
+	<mx:Canvas id="faceList"
+			   visible="{this.visible}"
+			   width="140"
+			   height="56"
+			   backgroundColor="#ffffff"
+			   borderStyle="solid"
+			   backgroundAlpha="0.8"
+			   showEffect="{irisIn}"
+			   hideEffect="{irisOut}"/>
+</mx:Canvas>

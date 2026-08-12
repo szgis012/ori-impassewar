@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="150" initialize="doInit()">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.core.DragSource;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			private function doInit():void{
+				this.addEventListener(KeyboardEvent.KEY_DOWN,onKeyDown);
+				this.setFocus();
+			}
+
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+
+			private function onKeyDown(event:KeyboardEvent):void{
+				if(event.charCode==Keyboard.ESCAPE){
+					doClose();
+				}
+			}
+			
+			private function onMouseUp(event:MouseEvent):void{
+				this.alpha = 1;
+				this.stopDrag();
+			}
+
+			private function onMouseDown(event:MouseEvent):void{
+				this.alpha = 0.8;
+				this.startDrag(false,new Rectangle(0,0,600,450));
+			}
+			
+			/**
+			 * 显示工会列表
+			 */
+			private function showGuildListWindow():void{
+				doClose();
+				var win:GuildListWindow = new GuildListWindow();
+				WindowUtil.showWindow(win);
+			}
+			
+			/**
+			 * 显示创建工会窗口
+			 */
+			private function showCreateGuildWindow():void{
+				doClose();
+				var win:GuildManageWindow = new GuildManageWindow();
+				WindowUtil.showModelWindow(win);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Canvas x="0" y="0" width="400" height="150" id="mainCanvas" mouseDown="onMouseDown(event)" mouseUp="onMouseUp(event)">
+		<mx:backgroundImage>@Embed(source='images/msgbox_bg.png')</mx:backgroundImage>
+	</mx:Canvas>
+	
+	<mx:Image x="30" y="30" source="images/msgbox_alert.png"/>
+	<mx:Text x="115" y="30" id="labelContent"  htmlText="您尚未加入任何军团。" width="265" height="67" fontSize="14"/>
+	<mx:Button x="115" y="105" label="军团列表" click="showGuildListWindow()"/>
+	<mx:Button x="201" y="105" label="创建军团" click="showCreateGuildWindow()"/>
+	<mx:Button x="320" y="105" label="关 闭" height="25" width="60" click="doClose()"/>
+	
+</mx:Canvas>

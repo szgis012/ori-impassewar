@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildExt">
+	<typeAlias alias="GuildExt" type="com.war.domain.GuildExt" />
+
+	<insert id="createGuildExt" parameterClass="GuildExt">
+		INSERT INTO T_GUILD_EXT(GUILD_ID, MILITARY_ATTACK_ADD, MILITARY_SPEED_ADD, MILITARY_ATTACK_MINUS, ARMY_LIFE_ADD, ARMY_ATTACK_MINUS, ARMY_RANGE_MINUS, ARMY_SPEED_MINUS, TRUCK_LIFE_ADD, TRUCK_ATTACK_MINUS, TRUCK_RANGE_MINUS, TRUCK_SPEED_MINUS, AIRPLANE_LIFE_ADD, AIRPLANE_ATTACK_MINUS, AIRPLANE_RANGE_MINUS, AIRPLANE_SPEED_MINUS) VALUES(#guildID#, #militaryAttackAdd#, #militarySpeedAdd#, #militaryAttackMinus#, #armyLifeAdd#, #armyAttackMinus#, #armyRangeMinus#, #armySpeedMinus#, #truckLifeAdd#, #truckAttackMinus#, #truckRangeMinus#, #truckSpeedMinus#, #airplaneLifeAdd#, #airplaneAttackMinus#, #airplaneRangeMinus#, #airplaneSpeedMinus#)
+	</insert>
+
+	<update id="updateGuildExt" parameterClass="GuildExt">
+		UPDATE T_GUILD_EXT SET MILITARY_ATTACK_ADD=#militaryAttackAdd#, MILITARY_SPEED_ADD=#militarySpeedAdd#, MILITARY_ATTACK_MINUS=#militaryAttackMinus#, ARMY_LIFE_ADD=#armyLifeAdd#, ARMY_ATTACK_MINUS=#armyAttackMinus#, ARMY_RANGE_MINUS=#armyRangeMinus#, ARMY_SPEED_MINUS=#armySpeedMinus#, TRUCK_LIFE_ADD=#truckLifeAdd#, TRUCK_ATTACK_MINUS=#truckAttackMinus#, TRUCK_RANGE_MINUS=#truckRangeMinus#, TRUCK_SPEED_MINUS=#truckSpeedMinus#, AIRPLANE_LIFE_ADD=#airplaneLifeAdd#, AIRPLANE_ATTACK_MINUS=#airplaneAttackMinus#, AIRPLANE_RANGE_MINUS=#airplaneRangeMinus#, AIRPLANE_SPEED_MINUS=#airplaneSpeedMinus# WHERE Guild_ID=#guildID#
+	</update>
+
+	<update id="updateGuildExtParams" parameterClass="java.util.HashMap">
+		UPDATE T_GUILD_EXT
+		<dynamic prepend="SET">
+			<isNotNull prepend="," property="militaryAttackAdd">
+				MILITARY_ATTACK_ADD=#militaryAttackAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="militarySpeedAdd">
+				MILITARY_SPEED_ADD=#militarySpeedAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="militaryAttackMinus">
+				MILITARY_ATTACK_MINUS=#militaryAttackMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="armyLifeAdd">
+				ARMY_LIFE_ADD=#armyLifeAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="armyAttackMinus">
+				ARMY_ATTACK_MINUS=#armyAttackMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="armyRangeMinus">
+				ARMY_RANGE_MINUS=#armyRangeMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="armySpeedMinus">
+				ARMY_SPEED_MINUS=#armySpeedMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="truckLifeAdd">
+				TRUCK_LIFE_ADD=#truckLifeAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="truckAttackMinus">
+				TRUCK_ATTACK_MINUS=#truckAttackMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="truckRangeMinus">
+				TRUCK_RANGE_MINUS=#truckRangeMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="truckSpeedMinus">
+				TRUCK_SPEED_MINUS=#truckSpeedMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="airplaneLifeAdd">
+				AIRPLANE_LIFE_ADD=#airplaneLifeAdd#
+			</isNotNull>
+			<isNotNull prepend="," property="airplaneAttackMinus">
+				AIRPLANE_ATTACK_MINUS=#airplaneAttackMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="airplaneRangeMinus">
+				AIRPLANE_RANGE_MINUS=#airplaneRangeMinus#
+			</isNotNull>
+			<isNotNull prepend="," property="airplaneSpeedMinus">
+				AIRPLANE_SPEED_MINUS=#airplaneSpeedMinus#
+			</isNotNull>
+		</dynamic>
+		WHERE GUILD_ID=#guildID#
+	</update>
+
+	<delete id="deleteGuildExtByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_EXT WHERE Guild_ID=#guildID#
+	</delete>
+
+	<select id="getGuildExtByID" parameterClass="Integer" resultClass="GuildExt">
+		SELECT GUILD_ID AS guildID, MILITARY_ATTACK_ADD AS militaryAttackAdd, MILITARY_SPEED_ADD AS militarySpeedAdd, MILITARY_ATTACK_MINUS AS militaryAttackMinus, ARMY_LIFE_ADD AS armyLifeAdd, ARMY_ATTACK_MINUS AS armyAttackMinus, ARMY_RANGE_MINUS AS armyRangeMinus, ARMY_SPEED_MINUS AS armySpeedMinus, TRUCK_LIFE_ADD AS truckLifeAdd, TRUCK_ATTACK_MINUS AS truckAttackMinus, TRUCK_RANGE_MINUS AS truckRangeMinus, TRUCK_SPEED_MINUS AS truckSpeedMinus, AIRPLANE_LIFE_ADD AS airplaneLifeAdd, AIRPLANE_ATTACK_MINUS AS airplaneAttackMinus, AIRPLANE_RANGE_MINUS AS airplaneRangeMinus, AIRPLANE_SPEED_MINUS AS airplaneSpeedMinus FROM T_GUILD_EXT WHERE Guild_ID=#guildID#
+	</select>
+
+	<select id="getGuildExtList" resultClass="GuildExt">
+		SELECT GUILD_ID AS guildID, MILITARY_ATTACK_ADD AS militaryAttackAdd, MILITARY_SPEED_ADD AS militarySpeedAdd, MILITARY_ATTACK_MINUS AS militaryAttackMinus, ARMY_LIFE_ADD AS armyLifeAdd, ARMY_ATTACK_MINUS AS armyAttackMinus, ARMY_RANGE_MINUS AS armyRangeMinus, ARMY_SPEED_MINUS AS armySpeedMinus, TRUCK_LIFE_ADD AS truckLifeAdd, TRUCK_ATTACK_MINUS AS truckAttackMinus, TRUCK_RANGE_MINUS AS truckRangeMinus, TRUCK_SPEED_MINUS AS truckSpeedMinus, AIRPLANE_LIFE_ADD AS airplaneLifeAdd, AIRPLANE_ATTACK_MINUS AS airplaneAttackMinus, AIRPLANE_RANGE_MINUS AS airplaneRangeMinus, AIRPLANE_SPEED_MINUS AS airplaneSpeedMinus FROM T_GUILD_EXT
+	</select>
+
+</sqlMap>

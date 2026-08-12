@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="576" height="84" styleName="CanvasBorder" verticalScrollPolicy="off" horizontalScrollPolicy="off" >
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.BuildingUtil;
+			import com.hifong.war.util.tooltip.CommonTooltip;
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import mx.containers.TitleWindow;
+			import com.hifong.war.util.ImagePathUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.util.tooltip.ConstraintDependTooltip;
+			import com.hifong.war.constant.BuildingConstant;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.util.MsgBox;
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.events.building.BuildingStateConstant;
+			import com.hifong.war.events.building.BackoutBuildingEvent;
+			import com.hifong.war.events.building.CancelProcessEvent;
+			import com.hifong.war.events.building.UpgradeBuildiingEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.view.building.BuildingGrid;			
+			
+			import mx.controls.Alert;
+			import mx.events.ToolTipEvent;
+			import mx.core.IFlexDisplayObject;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			
+			//model
+			private var model:ModelLocator = ModelLocator.getInstance();
+			//dispatcher,Cairngorm事件分发器
+			private var dispatcher:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			//城市建筑状态改变监视器
+			private var stateWatcher:ChangeWatcher;
+			//建造地点
+			private var _buildingGrid:BuildingGrid;
+			//剩余时间计时器
+			private var buildingTimer:Timer ;
+			//是否满足创建条件
+			[Bindable]
+			private var canCreate:Boolean;
+			
+			
+			//刷新标志位
+			private function refreshCanCreate():void{
+				if(_buildingGrid.cityBuilding.building.nextConstraintDepend){
+					canCreate = BuildingUtil.meetAllConditions(_buildingGrid.cityBuilding.building.nextConstraintDepend);
+				}else{
+					canCreate = false;
+				}
+			}
+			
+			public function set buildingGrid(b:BuildingGrid):void{
+				 _buildingGrid = b;
+				 
+				 //这样做是为了避免显示时image控件调整图的大小而出现图形缩小的问题
+				 var obj:Object = model.countryRelatedAssets.getBuildingImageSource(b.cityBuilding.buildingID);
+				 obj.setActualSize(60,60);
+				 this.imgBuilding.source = obj;
+				 this.imgBuilding.toolTip = buildingGrid.cityBuilding.building.description;
+				 this.lblTime.text = "";
+				 this.txtDesc.text = buildingGrid.cityBuilding.building.description;
+				
+				 doStateChange(buildingGrid.cityBuilding.state);
+				 
+				 //watcher没有被移除
+				 this.stateWatcher = ChangeWatcher.watch(buildingGrid.cityBuilding,"state",onStateChange);
+			}
+			
+			public function get buildingGrid():BuildingGrid{
+				return _buildingGrid;
+			}
+			
+			//关闭父窗口时有父窗口调用，做些清理工作
+			public function onParentWindowClose():void{
+				//移除监视
+				if(this.stateWatcher){
+					this.stateWatcher.unwatch();
+					this.stateWatcher = null;
+				}
+				
+				//移除计时器
+				if(this.buildingTimer){
+					this.buildingTimer.stop();
+					this.buildingTimer = null;
+				}
+			}
+			
+			private function onUpgradeClick():void{
+				//正在升级或者拆建中
+				if(buildingGrid.cityBuilding.state != BuildingStateConstant.STATE_NORMAL){
+					//传递给宝物的参数
+					var params:Object = {queueID:buildingGrid.cityBuilding.processQueue.processQueueID,cityBuildingID:buildingGrid.cityBuilding.cityBuildingID};
+					var win:UseTreasureWindow = new UseTreasureWindow();
+					win.params = params;
+					win.treasureCategory = TreasureCategoryConstant.ACCELERATE;
+					win.treasureType = TreasureTypeConstant.ACCELERATE_BUILD;
+					WindowUtil.showModelWindow(win);
+				}else{
+					if(BuildingUtil.onBuildingMaxLevel(buildingGrid.cityBuilding)){
+						MsgBox.showMessage(buildingGrid.cityBuilding.building.name+"已经升到最高级了！");
+						return;
+					}
+					//升级
+					dispatcher.dispatchEvent(new UpgradeBuildiingEvent(buildingGrid.cityBuilding));
+				}
+			}
+			
+			private function onCancelClick():void{
+				//取消升级或者拆除
+				if(buildingGrid.cityBuilding.state != BuildingStateConstant.STATE_NORMAL){
+					//取消进程
+					MsgBox.showConfirm("您确认要进行该操作吗？",doCancelAction);
+					
+				}else{
+					if(_buildingGrid.cityBuilding.buildingID == BuildingConstant.CITY_CENTER && _buildingGrid.cityBuilding.level==1){
+						MsgBox.showMessage("1级城镇中心无法拆除");
+						return;
+					}
+					//拆除
+					MsgBox.showConfirm("拆除只会返回部分资源，您确认要进行该操作吗？",function():void{
+						dispatcher.dispatchEvent(new BackoutBuildingEvent(buildingGrid.cityBuilding.cityBuildingID));
+					});
+				}
+			}
+			
+			//取消建造，升级或拆除
+			private function doCancelAction():void{
+				dispatcher.dispatchEvent(new CancelProcessEvent(buildingGrid.cityBuilding.processQueue.processQueueID,buildingGrid.cityBuilding.cityBuildingID));
+				//TODO 取消返回结果再更新时间显示
+				lblTime.text = "";
+			}
+			
+			//图片的提示信息
+			private function showImgToolTip(event:ToolTipEvent):void{
+				event.toolTip.text = buildingGrid.cityBuilding.building.description+"\n等级:"+buildingGrid.cityBuilding.level;
+			
+			}
+			
+			private function onStateChange(event:PropertyChangeEvent):void{
+				doStateChange(int(event.newValue));
+			}
+			
+			//状态改变时的处理函数
+			private function doStateChange(state:int):void{
+				refreshCanCreate();
+				//根据建筑状态不同做相应的处理
+				switch(state){
+					case BuildingStateConstant.STATE_NORMAL:
+						this.lblTime.text = "";
+						this.btnUpgrade.label = "升级";
+						this.btnCancel.label = "拆除";
+						//如果之前已经启动计时器就停止它
+						stopTimer();
+						break;
+						
+					case BuildingStateConstant.STATE_UPDATING:
+					case BuildingStateConstant.STATE_DESTROYING:
+						this.btnUpgrade.label = "加速";
+						this.btnCancel.label = "取消";
+						//加速始终可以使用
+						this.canCreate = true;
+						//更新剩余时间信息
+						updateLeavingTime(_buildingGrid.cityBuilding.processQueue.finishTime);
+						//启动计时器
+						startTimer();
+						break;
+				}
+			}
+			
+			//计算剩余时间
+			private function onTime(event:TimerEvent):void{
+				//TODO buildingGrid.cityBuilding nullpointer
+				updateLeavingTime(_buildingGrid.cityBuilding.processQueue.finishTime);
+			}
+			
+			//更新显示的剩余时间信息
+			private function updateLeavingTime(finishTime:Date):void{
+				var str:String = "剩余时间：";
+				var leavingSeconds:Number = Math.max(0,(finishTime.time - model.serverTime.time )/1000)
+				str += DateFormatUtil.convertSecondToTime(int(leavingSeconds));
+				str += "  完成时间：";
+				str += DateFormatUtil.formatTime(finishTime);
+				
+				this.lblTime.text = str;
+			}
+			
+			//启动计时
+			private function startTimer():void{
+				if(!buildingTimer){
+					buildingTimer = new Timer(1000);
+					buildingTimer.addEventListener(TimerEvent.TIMER,onTime);
+					buildingTimer.start();
+				}
+			}
+			
+			//停止计时
+			private function stopTimer():void{
+				if(buildingTimer){
+					buildingTimer.stop();
+					buildingTimer.removeEventListener(TimerEvent.TIMER,onTime);
+					buildingTimer = null;
+				}
+			}
+			
+			//显示升级tooltip
+			private function showTooltip(event:ToolTipEvent):void{
+				if(this.btnUpgrade.label == "加速"){
+					event.toolTip = new CommonTooltip("<b>点击使用道具加速建筑建造</b>");
+				}else{
+					if(BuildingUtil.onBuildingMaxLevel(buildingGrid.cityBuilding)){
+						event.toolTip = new CommonTooltip("<b>"+buildingGrid.cityBuilding.building.name+"已经升到最高级了！</b>");
+					}else{
+						event.toolTip = new ConstraintDependTooltip("升级",buildingGrid.cityBuilding.building.name,buildingGrid.cityBuilding.building.nextConstraintDepend);
+					}
+				}
+			}
+			
+		]]>
+	</mx:Script> 
+	
+	<mx:Image x="10" y="20" width="60" height="60" source="images/building/buildFrame.png" />
+	<mx:Image x="10" y="10" width="60" height="60" id="imgBuilding" toolTip=" " toolTipShown="showImgToolTip(event)" />
+	<mx:Button x="80" y="10" label="升级" styleName="Nav" enabled="{canCreate}" id="btnUpgrade" click="onUpgradeClick()"  toolTip=" " toolTipCreate="showTooltip(event)" width="56" height="26" />
+	<mx:Button x="80" y="45" label="拆除"  styleName="Nav"  id="btnCancel" click="onCancelClick()" width="56" height="26" toolTip="{btnCancel.label+'会返回部分资源'}"/>
+	<mx:TextArea x="144" y="11" width="425" height="60" text="" editable="false" enabled="true" id="txtDesc" >
+	</mx:TextArea>
+	<mx:Label x="152" y="50" text="" id="lblTime"/>
+	
+</mx:Canvas>

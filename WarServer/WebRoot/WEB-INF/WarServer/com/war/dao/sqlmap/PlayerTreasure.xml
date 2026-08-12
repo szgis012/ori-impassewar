@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="PlayerTreasure">
+	<typeAlias alias="PlayerTreasure" type="com.war.domain.PlayerTreasure" />
+	
+	<insert id="createPlayerTreasure" parameterClass="PlayerTreasure">
+		INSERT INTO T_PLAYER_TREASURE(PLAYER_ID, TREASURE_ID, NUM) VALUES(#playerID#, #treasureID#, #num#)
+	</insert>
+	
+	<update id="updatePlayerTreasure" parameterClass="PlayerTreasure">
+		UPDATE T_PLAYER_TREASURE SET  NUM=#num# WHERE PLAYER_ID=#playerID# AND TREASURE_ID=#treasureID#
+	</update>
+	
+	<delete id="deletePlayerTreasure" parameterClass="Integer">
+		DELETE FROM T_PLAYER_TREASURE WHERE PLAYER_ID=#playerID# 
+	</delete>
+	
+	<delete id="deletePlayerTreasureByPlayerIDAndTreasureID" parameterClass="java.util.Map">
+		DELETE FROM T_PLAYER_TREASURE WHERE PLAYER_ID=#playerID# AND TREASURE_ID=#treasureID#
+	</delete>
+	
+	<select id="getPlayerTreasureByPlayerIDAndTreasureID" parameterClass="java.util.Map" resultClass="PlayerTreasure">
+		SELECT PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num FROM T_PLAYER_TREASURE WHERE PLAYER_ID=#playerID# AND TREASURE_ID=#treasureID#
+	</select>
+	
+	<select id="getPlayerTreasureList" resultClass="PlayerTreasure">
+		SELECT PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num FROM T_PLAYER_TREASURE
+	</select>
+	
+	<select id="getPlayerTreasureListByPlayerID" resultClass="PlayerTreasure">
+		SELECT PLAYER_ID AS playerID, TREASURE_ID AS treasureID, NUM AS num FROM T_PLAYER_TREASURE WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerTreasureListByCategory" parameterClass="java.util.Map" resultClass="PlayerTreasure">
+		SELECT PLAYER_ID AS playerID, A.TREASURE_ID AS treasureID, NUM AS num FROM T_PLAYER_TREASURE A INNER JOIN T_TREASURE B ON (A.TREASURE_ID=B.TREASURE_ID) WHERE PLAYER_ID=#playerID# AND CATEGORY=#category# ORDER BY A.TREASURE_ID
+	</select>
+
+	<select id="getPlayerTreasureListByType" parameterClass="java.util.Map" resultClass="PlayerTreasure">
+		SELECT PLAYER_ID AS playerID, A.TREASURE_ID AS treasureID, NUM AS num FROM T_PLAYER_TREASURE A INNER JOIN T_TREASURE B ON (A.TREASURE_ID=B.TREASURE_ID) WHERE PLAYER_ID=#playerID# AND CATEGORY=#category# AND TYPE=#type# ORDER BY A.TREASURE_ID
+	</select>
+	
+	<select id="getPlayerTreasureMapList" parameterClass="java.util.Map" resultClass="java.util.HashMap">
+		SELECT A.TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, IFNULL(NUM,0) AS num, CAN_BUY AS canBuy, DIRECT_USE_TOOLTIP AS directUseTooltip FROM T_PLAYER_TREASURE A INNER JOIN T_TREASURE B ON (A.TREASURE_ID=B.TREASURE_ID) WHERE PLAYER_ID=#playerID# AND CATEGORY=#category#  ORDER BY A.TREASURE_ID
+	</select>
+	
+	<select id="getTreasureMapListByType" parameterClass="java.util.Map" resultClass="java.util.HashMap">
+		SELECT A.TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, IFNULL(NUM,0) AS num, CAN_BUY AS canBuy, DIRECT_USE_TOOLTIP AS directUseTooltip FROM T_TREASURE A LEFT JOIN (SELECT TREASURE_ID,NUM FROM T_PLAYER_TREASURE WHERE PLAYER_ID=#playerID# ) B  ON (A.TREASURE_ID=B.TREASURE_ID) WHERE CATEGORY=#category# AND TYPE=#type# ORDER BY A.TREASURE_ID 
+	</select>
+	
+</sqlMap>

@@ -1,0 +1,66 @@
+/**
+* 任务编号: 1028
+*
+* 要求：将科技中心升级至3级。
+* 奖励：金钱500。
+* 后置任务：--
+*/
+
+
+//如果为领取奖励操作
+if(context.getProcessType() == 1){
+doReceiveReward();
+}else{
+//这里为检查任务完成情况的操作
+return checkTask();
+}
+
+
+/*
+* 检查任务完成情况
+*
+*/
+def checkTask()
+{
+//flag为0表示没有完成任务，flag=1表示完成了任务。
+def flag = 0;
+
+// 记录完成的条件 
+def count = 0;
+
+// 返回结果
+def result = '';
+
+// 建筑编号为9
+def buildingID = 9;
+
+// 1. 将科技中心升级至3级
+if(context.getBuildingMaxLevel(buildingID) > 2)
+{
+	result += "将科技中心升级至3级<font color='#00ff00'>[已完成]</font>";
+	count++;
+}
+else
+{
+	result += "将科技中心升级至3级<a href='event:9'><font color='#ffff00'><b>[点击升级]</b></font></a><font color='#ff0000'>[未完成]</font>";
+}
+
+if(count == 1)
+{
+	flag = 1;
+}
+
+//返回格式:任务是否完成标志+任务完成情况字符串
+return context.getEncodingText(flag+result);
+
+}
+
+/*
+* 领取奖励
+*
+*/
+def doReceiveReward()
+{
+//奖励：金钱500。
+context.rewardResource(0,0,0,0,500);
+}

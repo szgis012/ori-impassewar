@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProductionQueue">
+	<typeAlias alias="ProductionQueue" type="com.war.domain.ProductionQueue" />
+	
+	<insert id="createProductionQueue" parameterClass="ProductionQueue" >
+		INSERT INTO T_PRODUCTION_QUEUE(CITY_ID, TARGET_ID, TYPE, AMOUNT, START_TIME, FINISH_TIME) VALUES(#cityID#, #targetID#, #type#, #amount#, #startTime#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="productionQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateFinishTimeByID" parameterClass="java.util.Map">
+		UPDATE T_PRODUCTION_QUEUE SET FINISH_TIME=#finishTime# WHERE PRODUCTION_QUEUE_ID=#productionQueueID#
+	</update>
+	
+	<update id="updateFinishTimeByCityID" parameterClass="java.util.Map">
+		UPDATE T_PRODUCTION_QUEUE SET FINISH_TIME=DATE_SUB(FINISH_TIME,INTERVAL #reduceSecond# SECOND) WHERE CITY_ID=#cityID#
+	</update>
+	
+	<update id="updateProductionQueue" parameterClass="ProductionQueue">
+		UPDATE T_PRODUCTION_QUEUE SET CITY_ID=#cityID#, TARGET_ID=#targetID#, TYPE=#type#, AMOUNT=#amount#, START_TIME=#startTime#, FINISH_TIME=#finishTime# WHERE PRODUCTION_QUEUE_ID=#productionQueueID#
+	</update>
+	
+	<delete id="deleteProductionQueueByID" parameterClass="Integer">
+		DELETE FROM T_PRODUCTION_QUEUE WHERE PRODUCTION_QUEUE_ID=#productionQueueID#
+	</delete>
+	
+	<select id="getProductionQueueByID" parameterClass="Integer" resultClass="ProductionQueue">
+		SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE WHERE PRODUCTION_QUEUE_ID=#productionQueueID#
+	</select>
+	
+	<select id="getProductionQueueList" resultClass="ProductionQueue">
+		SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE
+	</select>
+	
+	<select id="getProductionQueueListByCityID" parameterClass="Integer" resultClass="ProductionQueue">
+		SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE WHERE CITY_ID = #cityID#
+	</select>
+	
+	<select id="getProductionQueueListByCityIDAndType" parameterClass="Map" resultClass="ProductionQueue">
+		SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE WHERE CITY_ID = #cityID# AND TYPE = #type# ORDER BY FINISH_TIME
+	</select>
+	
+	<select id="getProductionQueueByParams" parameterClass="Map" resultClass="ProductionQueue">
+		SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE WHERE CITY_ID = #cityID# AND TYPE = #type# AND TARGET_ID = #targetID# ORDER BY PRODUCTION_QUEUE_ID
+	</select>
+	
+	<select id="getFinishedProductionQueueList" resultClass="ProductionQueue">
+		<![CDATA[ SELECT PRODUCTION_QUEUE_ID AS productionQueueID, CITY_ID AS cityID, TARGET_ID AS targetID, TYPE AS type, AMOUNT AS amount, START_TIME AS startTime, FINISH_TIME AS finishTime FROM T_PRODUCTION_QUEUE WHERE FINISH_TIME<=SYSDATE() ]]>
+	</select>
+ 
+</sqlMap>

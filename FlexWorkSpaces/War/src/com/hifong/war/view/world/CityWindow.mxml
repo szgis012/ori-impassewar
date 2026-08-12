@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="430" height="246" initialize="doInit()" layout="absolute">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.world.CreateMapFavouriteEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.view.building.commandcenter.SpyWindow;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.view.message.MessageWindow;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.util.WorldUtil;
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import com.hifong.war.vo.DeclareWarVO;
+			import com.hifong.war.events.world.DeclareWarEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.managers.PopUpManager;
+			import com.hifong.war.view.building.commandcenter.MilitaryCommandWindow;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.common.WorldInfo;
+			import com.hifong.war.vo.MapVO;
+			import com.hifong.war.util.WindowUtil;
+			
+			private var model:ModelLocator =  ModelLocator.getInstance();
+			
+			private var worldInfo:WorldInfo = model.worldInfo;
+			
+			[Bindable]
+			private var _gridInfo:MapVO;
+			
+			private var dispatcher:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+			
+			private var declareWarSuccessWatcher:ChangeWatcher;
+			
+			private function doInit():void{
+			}	
+			
+			private function doClose():void{
+				worldInfo.hasDisplayedWindow = false;
+				this.visible = false;
+			}
+					
+			public function set gridInfo(map:MapVO):void{
+				this._gridInfo = map;
+				
+				titleBtn.label = map.name+"("+map.posX+","+map.posY+")";
+				this.img.source = new worldInfo.worldAssets.terrainImages[map.category+"_"+map.type]();
+				txtDesc.htmlText = WorldUtil.getCityDescription(map);
+				
+				//玩家自己的城市
+				if(model.cityInfo.posX == map.posX && model.cityInfo.posY == map.posY){
+					this.btnIntoCity.enabled = true;
+					this.btnAttack.enabled = false;
+					this.btnDeclare.enabled = false;
+					this.btnSpy.enabled = false;
+					this.btnSendMessage.enabled = false;
+					//TODO 这里关闭了宣战等操作
+				}else{
+					this.btnIntoCity.enabled = false;
+					this.btnAttack.enabled = true;
+					this.btnDeclare.enabled = true;
+					this.btnSpy.enabled = true;
+					this.btnSendMessage.enabled = true;
+				}/**else{
+					this.btnIntoCity.enabled = false;
+					
+					//宣战状态
+					var state:int = WorldUtil.getDeclareWarState(map.posX,map.posY);
+					
+					switch(state){
+						case 0:
+							this.btnAttack.enabled = false;
+							this.btnDeclare.enabled = true;
+							break
+						case 1:
+							this.btnAttack.enabled = false;
+							this.btnDeclare.enabled = false;
+							break
+						case 2:
+							this.btnAttack.enabled = true;
+							this.btnDeclare.enabled = false;
+							break		
+					}
+				}*/
+			}
+			
+			//进入
+			private function doEnter():void{
+				model.app.showCity(null);
+				this.visible = false;
+			}
+			
+			//宣战
+			private function doDeclare():void{
+				dispatcher.dispatchEvent(new DeclareWarEvent(model.playerInfo.playerID,_gridInfo.player.playerID));
+			}
+			
+			//侦察
+			private function doSpy():void{
+				var win:SpyWindow = new SpyWindow();
+				win.posX = _gridInfo.posX;
+				win.posY = _gridInfo.posY;
+				WindowUtil.showModelWindow(win);
+			}
+			
+			//攻击
+			private function doAttack():void{
+				var win:MilitaryCommandWindow = new MilitaryCommandWindow();
+				win.posX = _gridInfo.posX;
+				win.posY = _gridInfo.posY;
+				win.commandSelectedIndex = 0;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			//发送消息
+			private function doSendMessage():void{
+				var win:MessageWindow = new MessageWindow();
+				WindowUtil.showWindow(win);
+				win.tabNavigator.selectedIndex=2;
+				win.outLink = true;
+				win.outReceiverName = this._gridInfo.player.name;
+			}
+			/**
+			 * 收藏城市坐标
+			 */
+			 private function collectionMap():void{
+			 	CairngormEventDispatcher.getInstance().dispatchEvent(new CreateMapFavouriteEvent(model.playerInfo.playerID,_gridInfo.posX,_gridInfo.posY));
+			 }
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="城市" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas width="380" height="94" styleName="CanvasBorder" x="25" y="37">
+		<mx:Canvas x="10" y="10" width="100" height="75" id="pnlImg">
+			<mx:Image x="0" y="0" width="100" height="75" id="img" />
+		</mx:Canvas>
+		<mx:TextArea x="118" y="10" width="252" height="75" id="txtDesc" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas width="380" height="80" styleName="CanvasBorder" x="25" y="139">
+		<mx:Button x="10" y="44" label="进入" id="btnIntoCity" click="doEnter()" width="60" height="26"/>
+		<mx:Button x="10" y="10" label="侦察" id="btnSpy" click="doSpy()" width="60" height="26"/>
+		<mx:Button x="78" y="10" label="宣战" id="btnDeclare" click="doDeclare()" width="60" height="26"/>
+		<mx:Button x="146" y="10" label="攻击" id="btnAttack" click="doAttack()" width="60" height="26"/>
+		<mx:Button x="78" y="44" label="消息" width="60" height="26" click="doSendMessage()" id="btnSendMessage"/>
+		<mx:Button x="214" y="10" label="收藏" click="collectionMap()"/>
+		<mx:Button x="146" y="45" label="运输"/>
+		<mx:Button x="214" y="45" label="派遣"/>
+	</mx:Canvas>
+	 
+</mx:TitleWindow>

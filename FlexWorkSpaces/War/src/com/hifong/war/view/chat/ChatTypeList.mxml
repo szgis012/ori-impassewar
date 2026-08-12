@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="48" height="68" showEffect="wipeUp" hideEffect="WipeDown">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.guild.NoGuildWindow;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			
+			private function changeChatType(type:int,typeName:String):void{
+				
+				if(type==2 && ModelLocator.getInstance().playerInfo.guildID==0){
+					var noGuildWindow:NoGuildWindow = new NoGuildWindow();
+					WindowUtil.showModelWindow(noGuildWindow);
+					return;
+				}
+				
+				ModelLocator.getInstance().app.chatToolbar.changeChatType(type,typeName);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:WipeUp id="wipeUp" duration="500"/>
+	<mx:WipeDown id="WipeDown" duration="500"/>
+	
+	<mx:Canvas x="1" y="1" width="46" height="66" id="canvasChatType" showEffect="wipeUp" hideEffect="WipeDown" styleName="InnerBorder"  >
+		<mx:LinkButton x="0" y="0" width="46" height="22" label="世界" click="changeChatType(1,'世界')" styleName="LinkButton"/>
+		<mx:LinkButton x="0" y="22" width="46" height="22" label="军团" click="changeChatType(2,'军团')" styleName="LinkButton"/>
+		<mx:LinkButton x="0" y="44" width="46" height="22" label="私聊" click="changeChatType(3,'私聊')" styleName="LinkButton"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

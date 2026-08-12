@@ -1,0 +1,55 @@
+/**
+ * 宝物编号:444
+ * 
+ * 名称：大型集装箱
+ * 描述：有机会获得小量的资源(各种资源之和范围是4000-1000)
+ * 类型：宝箱
+ */
+
+//资源名称
+def resNameList = ["木材","钢铁","石油","食物"];
+
+StringBuffer retstr = new StringBuffer();
+
+//资源数量值(之和为500-4000)
+def resNumList = Arrays.asList(500,1000,2000,2500);
+//随机数量出现值
+Collections.shuffle(resNumList);
+//将顺序打乱的资源数量值
+def rndNumList = resNumList.toArray();
+
+String dirName = "resource";
+
+//出现资源的个数1-4
+int num = Math.random() * 10 % 4 + 1;
+//给每一种资源添加的数值，以便之和大于4000
+int baseNum = 4000 / num;
+
+for(int k=0; k<num; k++){
+	rndNumList[k] += baseNum;
+}
+
+// 将没有的资源填充为0
+Arrays.fill(rndNumList,num,rndNumList.length,0);
+resNumList = Arrays.asList(rndNumList);
+
+// 随机对应到的资源
+Collections.shuffle(resNumList)
+rndNumList = resNumList.toArray();
+
+for(int i=0; i<rndNumList.length; i++){
+	if(rndNumList[i] > 0){
+		if (resNameList[i] == "木材") 
+			retstr.append("${resNameList[i]}:${dirName}/1.png:${rndNumList[i]}|");
+		if (resNameList[i] == "钢铁") 
+			retstr.append("${resNameList[i]}:${dirName}/2.png:${rndNumList[i]}|");
+		if (resNameList[i] == "石油") 
+			retstr.append("${resNameList[i]}:${dirName}/3.png:${rndNumList[i]}|");
+		if (resNameList[i] == "食物") 
+			retstr.append("${resNameList[i]}:${dirName}/4.png:${rndNumList[i]}|");
+	}
+}
+
+context.rewardResource(rndNumList[0],rndNumList[1],rndNumList[2],rndNumList[3],0);
+
+return retstr.substring(0,retstr.length()-1);

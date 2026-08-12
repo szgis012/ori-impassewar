@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" initialize="doInit()" close="doClose()" layout="absolute" width="430" height="420" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.building.commandcenter.ChangeCityMilitaryOfficerEvent;
+			import com.hifong.war.events.building.commandcenter.DismissCityMilitaryEvent;
+			import com.hifong.war.events.building.commandcenter.GetFreeCityHeroListCommandEvent;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.events.building.commandcenter.GetCityMilitaryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//兵力列表
+			[Bindable]
+			private var militaryList:ArrayCollection;
+			
+			private var cityID:int = model.cityInfo.cityID;
+			
+			/** 选中军队编号 */
+			private var selectedMilitaryID:int;
+			/** 选中指挥官编号 */
+			private var selectedOfficerID:int;
+			
+			private function doInit():void{
+				
+//				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityMilitaryListEvent(cityID));
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetFreeCityHeroListCommandEvent(cityID));
+				
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 创建军队
+			 */
+			private function doCreateMilitary():void{
+				var win:CreateMilitary = new CreateMilitary();
+				WindowUtil.showModelWindow(win);
+			}
+			
+			/**
+			 * 军队更名
+			 */
+			private function renameCityMilitary():void{
+				
+				if(selectedMilitaryID==0){
+					MsgBox.showMessage("请选择军队");
+					return;
+				}
+				
+				var win:RenameMilitaryWindow = new RenameMilitaryWindow();
+				win.cityMilitaryID = selectedMilitaryID;
+				win.cityMilitaryName = comboMilitary.selectedItem.name;
+				
+				WindowUtil.showModelWindow(win);
+				
+			}
+			
+			/**
+			 * 解散军队
+			 */
+			private function dismissCityMilitary():void{
+				
+				if(selectedMilitaryID==0){
+					MsgBox.showMessage("请选择军队");
+					return;
+				}
+				
+				MsgBox.showConfirm("您确定要解散军队吗？",doDismissCityMilitary);
+			}
+			
+			private function doDismissCityMilitary():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new DismissCityMilitaryEvent(cityID,selectedMilitaryID));
+				
+				this.txtCurrentOfficer.text = "";
+				this.comboOfficer.selectedIndex = -1;
+				this.dgMilitaryList.dataProvider = null;
+			}
+			
+			private function changeMilitaryOfficer():void{
+				
+				if(selectedMilitaryID==0){
+					MsgBox.showMessage("请选择军队");
+					return;
+				}
+				
+				if(selectedOfficerID==0){
+					MsgBox.showMessage("请选择指挥官");
+					return;
+				}
+				
+				this.txtCurrentOfficer.text = "";
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ChangeCityMilitaryOfficerEvent(cityID,selectedMilitaryID,selectedOfficerID));
+			}
+			
+			private function militaryChanged():void{
+				selectedMilitaryID = comboMilitary.selectedItem.cityMilitaryID;
+				
+				changeSelectedHero(comboMilitary.selectedItem);
+				setMilitaryList(comboMilitary.selectedItem);
+				
+			}
+			
+			private function officerChanged():void{
+				selectedOfficerID = comboOfficer.selectedItem.cityHeroID;
+			}
+			
+			//改变选择的指挥官
+			private function changeSelectedHero(cityMilitary:Object):void{
+				if(cityMilitary.cityHeroID){
+					this.txtCurrentOfficer.text = model.cityHeroMap[cityMilitary.cityHeroID].name;
+				}else{
+					this.txtCurrentOfficer.text = "";
+				}
+			}
+			
+			//将军队的兵力信息解析成列表格式
+			private function setMilitaryList(cityMilitary:Object):void{
+				var list:ArrayCollection = new ArrayCollection();
+				var arr:Array;
+				
+				if(cityMilitary.army1){
+					arr = String(cityMilitary.army1).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army2){
+					arr = String(cityMilitary.army2).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army3){
+					arr = String(cityMilitary.army3).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army4){
+					arr = String(cityMilitary.army4).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army5){
+					arr = String(cityMilitary.army5).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army6){
+					arr = String(cityMilitary.army6).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army7){
+					arr = String(cityMilitary.army7).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				if(cityMilitary.army8){
+					arr = String(cityMilitary.army8).split(":");
+					list.addItem({name:getArmyName(arr[0]),num:arr[1]});
+				}
+				
+				this.militaryList = list;
+			}
+			
+			//根据兵种编号获得兵种名称
+			private function getArmyName(armyID:int):String{
+				return model.armyInfo.armyMap[armyID].name;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:DataGrid x="25" y="235" width="380" height="158" dataProvider="{militaryList}" id="dgMilitaryList">
+		<mx:columns>
+			<mx:DataGridColumn headerText="兵种" dataField="name" sortable="false"/>
+			<mx:DataGridColumn headerText="数量" dataField="num" sortable="false"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="25" y="123" width="380" height="103" styleName="CanvasBorder">
+		<mx:Button x="247" y="11" label="改名" click="renameCityMilitary()" width="60" height="26"/>
+		<mx:Button x="309" y="11" label="解散" click="dismissCityMilitary()" width="60" height="26"/>
+		<mx:Label x="10" y="13" text="军队名称："/>
+		<mx:ComboBox x="73" y="10" id="comboMilitary" prompt="请选择" dataProvider="{model.cityMilitaryList}" labelField="name" width="160" change="militaryChanged()"></mx:ComboBox>
+		<mx:Label x="10" y="76" text="任命为："/>
+		<mx:ComboBox x="73" y="73" id="comboOfficer" prompt="请选择" dataProvider="{model.freeCityHeroList}" labelField="name" width="160" change="officerChanged()"></mx:ComboBox>
+		<mx:Button x="247" y="73" label="任命" click="changeMilitaryOfficer()" width="60" height="26"/>
+		<mx:Label x="10" y="43" text="指挥官："/>
+		<mx:Text x="73" y="43" width="160" id="txtCurrentOfficer"/>
+	</mx:Canvas>
+	<mx:Button x="383" y="24" styleName="closeWindow" click="doClose()" width="22" height="22"/>
+	<mx:Label x="48" y="23" text="军队管理" width="334" styleName="windowTitle"/>
+	<mx:Image x="82.5" y="55" source="{WarAssets.titleLine}" width="265"/>
+	<mx:Button  label="创建军队" click="doCreateMilitary()" x="325" y="87" width="80" height="26"/>
+</mx:TitleWindow>

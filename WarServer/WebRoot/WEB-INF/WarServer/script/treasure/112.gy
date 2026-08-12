@@ -1,0 +1,9 @@
+/**
+ * 宝物编号:112
+ * 
+ * 名称：征召命令
+ * 描述：刷新一次指挥官征召列表
+ * 类型：宝物
+ */
+
+context.refreshCityCandidacyHeroList();

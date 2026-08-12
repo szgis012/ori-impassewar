@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" width="630" height="460" initialize="doInit()" showCloseButton="false" layout="absolute">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.guild.CancelApplyJoinGuildEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.commandcenter.ExitGuildEvent;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.events.building.commandcenter.RefuseGuildInvitationEvent;
+			import com.hifong.war.events.building.commandcenter.AcceptGuildInvitationEvent;
+			import com.hifong.war.util.DataGridUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.events.building.commandcenter.GetPlayerGuildAppInvListEvent;
+			import com.hifong.war.vo.GuildVO;
+			import com.hifong.war.events.building.commandcenter.CreateGuildEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var playerAppInvType:Object = {1:"申请加入",2:"邀请加入"};
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetPlayerGuildAppInvListEvent(model.playerInfo.playerID));
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			/**
+			 * 创建军团
+			 */
+			private function createGuild():void{
+				
+				var textGuildName:String = StringUtil.trim(textGuildName.text);
+				if(textGuildName.length==0){
+					MsgBox.showMessage("请输入军团名称");
+					return;
+				}
+				
+				var guild:GuildVO = new GuildVO();
+				guild.name = textGuildName;
+				guild.chairmanID = model.playerInfo.playerID;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CreateGuildEvent(guild));
+				
+				WindowUtil.closeModelWindow(this);
+			}
+
+			/**
+			 * 取消申请加入工会
+			 */
+			public function cancelApplyJoinGuild(guildID:int):void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CancelApplyJoinGuildEvent(guildID,model.playerInfo.playerID));
+			}
+
+			/**
+			 * 同意工会邀请
+			 */
+			public function acceptGuildInvitation(guildID:int):void{
+				
+				var playerID:int = model.playerInfo.playerID;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AcceptGuildInvitationEvent(playerID,guildID));
+				
+			}
+			
+			/**
+			 * 拒绝工会邀请
+			 */
+			public function refuseGuildInvitation(guildID:int):void{
+				
+				var playerID:int = model.playerInfo.playerID;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new RefuseGuildInvitationEvent(playerID,guildID));
+				
+			}
+			
+			/**
+			 * 退出军团
+			 */
+			private function exitGuild():void{
+				MsgBox.showConfirm("您确定要退出军团吗？",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new ExitGuildEvent(model.playerInfo.playerID));
+				});
+			}
+			
+			/**
+			 * 获得列申请邀请类型
+			 */
+			private function getColumnType(item:Object, column:DataGridColumn):String{
+				return playerAppInvType[item['type']].toString();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="军团管理" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas width="580" height="96" x="25" y="37" styleName="CanvasBorder">
+		<mx:Text x="10" y="10" text="指挥中心大于3级可以创建军团。创建军团需要3000金钱。&#xa;创建军团后您就可以邀请其他玩家加入军团、对军团进行管理。"/>
+		<mx:Label x="10" y="63" text="军团名称："/>
+		<mx:Canvas x="83" y="60" width="487" height="26" visible="{model.playerInfo.guildID==0}">
+			<mx:Button x="213.5" y="0" label="创建" click="createGuild()" width="60" height="26"/>
+			<mx:TextInput x="0" y="2" id="textGuildName" width="199" maxChars="8"/>
+		</mx:Canvas>
+		<mx:Canvas x="83" y="60" width="487" height="26" visible="{model.playerInfo.guildID!=0}">
+			<mx:Text x="0" y="3" text="{model.playerInfo.guildName}"/>
+			<mx:Button x="407" y="0" label="退出军团" click="exitGuild()" width="80" height="26"/>
+		</mx:Canvas>
+	</mx:Canvas>
+	
+	<mx:Label x="25" y="149" text="军团加入邀请："/>
+	<mx:DataGrid id="dataGrid" height="260" width="580" dataProvider="{model.playerGuildAppInvList}" x="25" y="173">
+		<mx:columns>
+			<mx:DataGridColumn headerText="军团" dataField="guild.name" sortable="false" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn width="70" headerText="声望" dataField="guild.renown" sortable="false" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn width="60" headerText="排名" dataField="guild.rank" sortable="false" labelFunction="DataGridUtil.getColumnProperty"/>
+			<mx:DataGridColumn width="60" headerText="类型" dataField="guildID" sortable="false" labelFunction="getColumnType"/>
+			<mx:DataGridColumn headerText="时间" dataField="createTime" width="100" sortable="false" labelFunction="DateFormatUtil.formatColumnDate"/>
+			<mx:DataGridColumn width="140" headerText="操作" dataField="guildID" sortable="false" textAlign="center">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:HBox horizontalAlign="center">
+							<mx:Button height="22" width="{data.type==1?90:0}" label="取消申请" click="outerDocument.cancelApplyJoinGuild(data.guildID)" />
+							<mx:Button height="22" width="{data.type==2?60:0}" label="同意" click="outerDocument.acceptGuildInvitation(data.guildID)" />
+							<mx:Button height="22" width="{data.type==2?60:0}" label="拒绝" click="outerDocument.refuseGuildInvitation(data.guildID)" />
+						</mx:HBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:TitleWindow>

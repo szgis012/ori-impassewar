@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="600" height="368" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.constant.PlayerStateConstant;
+			import com.hifong.war.events.player.ViewTargetPlayerInfoEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.model.ModelLocator;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var countryType:ArrayCollection = new ArrayCollection(new Array("","自由联邦","联合帝国"));
+			
+			public var playerID:int;
+			
+			private function doInit():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ViewTargetPlayerInfoEvent(playerID));
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			private function getPlayerState(index:int):String{
+				var s:String="";
+				switch(index){
+					case 0:
+					s="新手";
+					break;
+					case 1:
+					s="正常";
+					break;
+					case 2:
+					s="免战";
+					break;
+					case 3:
+					s="封停";
+					break;
+				}
+				return s;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="玩家信息" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="40.5" y="37" width="513.5" height="304" styleName="CanvasBorder">
+		<mx:Image  width="60" height="80" source="{model.targetPlayerInfo.headImg}"  x="23" y="18"/>
+		<mx:Label x="130.5" y="10" text="名称：{model.targetPlayerInfo.name}" width="110"/>
+		<mx:Label x="130.5" y="38" text="排名：{model.targetPlayerInfo.rank}" width="110"/>
+		<mx:Label x="131.5" y="66" text="头衔：{model.targetPlayerInfo.honorName}" width="110"/>
+		<mx:Label x="131.5" y="94" text="声望：{model.targetPlayerInfo.renown}" width="110"/>
+		<mx:Label x="130.5" y="165" text="联盟：{model.targetPlayerInfo.guildName}" width="110"/>
+		<mx:Label x="131.5" y="122" text="阵营：{countryType.getItemAt(model.targetPlayerInfo.country)}" width="110"/>
+		<mx:Label x="130.5" y="187" text="职位：{model.targetPlayerInfo.honorName}" width="110"/>
+		<mx:Label x="12.5" y="122" text="状态：{getPlayerState(model.targetPlayerInfo.state)}" width="110"/>		
+		<!---->		
+		<mx:Label x="12.5" y="187" text="人口总数：{model.targetPlayerInfo.city.populationTotal}" width="110"/>
+		<mx:Label x="12.5" y="165" text="城市坐标：{model.targetPlayerInfo.city.posX}:{model.targetPlayerInfo.city.posY}" width="110"/>
+		<!--to do-->
+		
+		<mx:Label x="130.5" y="215" text="指挥官总数：{model.targetPlayerInfo.officerNum}" width="110"/>
+		<mx:Label x="12.5" y="215" text="要塞总数：{model.targetPlayerInfo.strongholdNum}" width="110"/>
+		
+		<mx:Canvas x="274" y="10" width="230" height="225">
+			<mx:DataGrid width="100%" height="100%" verticalScrollPolicy="off" dataProvider="{model.targetPlayerInfo.cityBuilding}">
+				<mx:columns>
+					<mx:DataGridColumn headerText="城市建筑" dataField="city" />
+					<mx:DataGridColumn headerText="位置" dataField="position" textAlign="center" />
+					<mx:DataGridColumn headerText="类型" dataField="type" textAlign="center" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Button x="274" y="243" label="详细信息"/>
+		<mx:Button x="356.5" y="243" label="加为好友"/>
+		<mx:Button x="438.5" y="243" label="写邮件"/>
+	</mx:Canvas>
+</mx:TitleWindow>

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="250" initialize="doInit()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.treasure.GetTreasureMapListByTypeEvent;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.util.DataGridUtil;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.utils.ObjectProxy;
+			import mx.collections.ArrayCollection;
+			import com.hifong.war.events.building.market.CancelResourceSaleEvent;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.events.building.market.ShowCityResourceSalesListEvent;
+			import com.hifong.war.events.building.market.BuyResourceEvent;
+			import com.hifong.war.events.building.market.ShowResourceSalesListEvent;
+			import com.hifong.war.events.building.market.SellResourceEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.vo.ResTradeVO;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+		
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			private var cityID:int = model.cityInfo.cityID;
+		
+			[Bindable]
+			public var currentResourceSalesPageNum:int = 0;
+			
+			/** 当前资源销售列表类型 1.全部 2.过滤 */
+			public var currentResourceSalesType:int;
+			
+			private var pageSize:int = model.marketPageSize;
+			
+			[Bindable]
+			private var resourceType:ArrayCollection = new ArrayCollection(new Array("","木材","钢铁","石油","食物"));
+		
+			/** 资源价格区间范围 */
+			private var priceRange:Array = new Array({min:350,max:650},{min:350,max:650},{min:350,max:650},{min:100,max:200});
+		
+			[Bindable]
+			private var currentMinPrice:int;
+			[Bindable]
+			private var currentMaxPrice:int;
+		
+			private function doInit():void{
+				showBuyResource();
+			}
+			
+			/**
+			 * 隐藏所有面板
+			 */
+			private function hideAllCompoment():void{
+				buttonBuyResource.selected = false;
+				buttonSellResource.selected = false;
+				
+				canvasBuyResource.visible = false;
+				canvasSellResource.visible = false;
+			}
+			
+			/**
+			 * 显示购买资源
+			 */
+			private function showBuyResource():void{
+				hideAllCompoment();
+			
+				buttonBuyResource.selected = true;
+				canvasBuyResource.visible = true;
+				
+				showResourceSalesList(1);
+			}
+			
+			/**
+			 * 显示出售资源
+			 */
+			private function showSellResource():void{
+				hideAllCompoment();
+				
+				buttonSellResource.selected = true;
+				canvasSellResource.visible = true;
+				
+				showCityResourceSalesList();
+				changeSaleResourceType();
+			}
+			
+			/**
+			 * 显示资源销售列表
+			 */
+			private function showResourceSalesList(pageNum:int):void{
+				
+				currentResourceSalesType = 1;
+				
+				currentResourceSalesPageNum = pageNum;
+				
+				var start:int = (currentResourceSalesPageNum-1)*pageSize;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowResourceSalesListEvent(cityID,0,start,pageSize));
+			}
+			
+			/**
+			 * 显示过滤资源销售列表
+			 */
+			private function showResourceSalesListWithFilter(pageNum:int):void{
+				
+				currentResourceSalesType = 2;
+				
+				currentResourceSalesPageNum = pageNum;
+				
+				var start:int = (currentResourceSalesPageNum-1)*pageSize;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowResourceSalesListEvent(cityID,comboResourceTypeFilter.selectedItem.data,start,pageSize));
+			}
+			
+			/**
+			 * 显示资源销售列表上一页
+			 */
+			private function showResourceSalesPreviousPageList():void{
+				if(currentResourceSalesPageNum!=1){
+					currentResourceSalesPageNum--;
+					if(currentResourceSalesType==1){
+						showResourceSalesList(currentResourceSalesPageNum);
+					}else{
+						showResourceSalesListWithFilter(currentResourceSalesPageNum);
+					}
+				}
+			}
+			
+			/**
+			 * 显示资源销售列表下一页
+			 */
+			private function showResourceSalesNextPageList():void{
+				if(currentResourceSalesPageNum!=model.resourceSalesPage){
+					currentResourceSalesPageNum++;
+					if(currentResourceSalesType==1){
+						showResourceSalesList(currentResourceSalesPageNum);
+					}else{
+						showResourceSalesListWithFilter(currentResourceSalesPageNum);
+					}
+				}
+			}
+			
+			/**
+			 * 购买资源
+			 */
+			public function buyResource(resTradeID:int):void{
+				var start:int = (currentResourceSalesPageNum-1)*pageSize;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new BuyResourceEvent(resTradeID,cityID,comboResourceTypeFilter.selectedItem.data,start,pageSize));
+			}
+			
+			/**
+			 * 显示城市资源销售列表
+			 */
+			private function showCityResourceSalesList():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowCityResourceSalesListEvent(model.cityInfo.cityID));
+			}
+			
+			/**
+			 * 取消资源销售
+			 */
+			public function cancelResourceSale(resTradeID:int):void{
+				MsgBox.showConfirm("您确定要撤销当前资源挂单吗?",function ():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new CancelResourceSaleEvent(cityID,resTradeID));
+				});
+			}
+			
+			/**
+			 * 更改销售资源类型
+			 */
+			private function changeSaleResourceType():void{
+				currentMinPrice = priceRange[comboSaleResourceType.selectedItem.data-1].min;
+				currentMaxPrice = priceRange[comboSaleResourceType.selectedItem.data-1].max;
+			}
+			
+			/**
+			 * 计算出售总金额
+			 */
+			private function compueTotalSellPrice():void{
+				textTotalSellPrice.text = (int(textAmount.text)*int(textPrice.text)).toString();
+			}
+			
+			/**
+			 * 出售资源
+			 */
+			private function sellResouce():void{
+				
+				if(textAmount.text=="0"){
+					MsgBox.showMessage("请输入资源数量");
+					return;
+				}
+				if(textPrice.text=="0"){
+					MsgBox.showMessage("请输入价格");
+					return;
+				}
+				
+				var price:int = int(textPrice.text);
+				if(price<currentMinPrice || price>currentMaxPrice){
+					MsgBox.showMessage("单价需在价格区间范围内");
+					return;
+				}
+				
+				var resTrade:ResTradeVO = new ResTradeVO();
+				resTrade.cityID = cityID;
+				resTrade.cityPosX = model.cityInfo.posX;
+				resTrade.cityPosY = model.cityInfo.posY;
+				resTrade.resourceType = comboSaleResourceType.selectedItem.data;
+				resTrade.amount = int(textAmount.text);
+				resTrade.price = price;
+				resTrade.maxTime = 0;
+				resTrade.isAllyOnly = 0;
+				resTrade.state = 1;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new SellResourceEvent(cityID,resTrade));
+			}
+			
+			private function sellResourceClear():void{
+				comboSaleResourceType.selectedIndex = 0;
+				textAmount.text = "0";
+				textPrice.text = "0";
+				textTotalSellPrice.text = "0";
+			}
+			
+			/**
+			 * 计算花费时间
+			 */
+			private function computeCityCostTime(item:Object, column:DataGridColumn):String{
+				var distance:int = Math.sqrt(Math.pow((model.cityInfo.posX-item['cityInfo']['posX']),2)+Math.pow((model.cityInfo.posY-item['cityInfo']['posY']),2));
+				return DateFormatUtil.convertSecondToShortTime(distance*model.businessmanSpeed);
+			}
+
+			/**
+			 * 获得列资源类型
+			 */
+			private function getColumnResourceType(item:Object, column:DataGridColumn):String{
+				var propertyArray:Array = column.dataField.split(".");
+				if(propertyArray.length==1){
+					return resourceType[item[column.dataField]];
+				}else{
+					return resourceType[item[propertyArray[0]][propertyArray[1]]];
+				}
+			}
+			
+			/**
+			 * 获得列资源类型
+			 */
+			private function getColumnInBusinessTradeType(item:Object, column:DataGridColumn):String{
+				if(item['cityID']==model.cityInfo.cityID){
+					return "卖出";
+				}else if(item['targetCityID']==model.cityInfo.cityID){
+					return "买入";
+				}
+				return "未知";
+			}
+
+			/**
+			 * 获得列表资源数量
+			 */
+			private function getColumnInResourceAmount(item:Object, column:DataGridColumn):String{
+				return item['amount'] + "手";
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="70" height="230" styleName="InnerBorder">
+		<mx:Button x="6" y="10" styleName="Tab" label="买入" id="buttonBuyResource" width="60" click="showBuyResource()" height="26"/>
+		<mx:Button x="6" y="43" styleName="Tab" label="卖出" id="buttonSellResource" width="60" click="showSellResource()" height="26"/>
+	</mx:Canvas>
+	<mx:Canvas x="88" y="10" id="canvasBuyResource" width="482" height="230" visible="true" styleName="InnerBorder">
+		<mx:Canvas x="10" y="5" width="462" height="34" styleName="ThirdBorder">
+			<mx:Label x="6" y="7" text="过滤资源："/>
+			<mx:ComboBox x="73" y="4" id="comboResourceTypeFilter" width="150" dataProvider="{model.filterResourceType}" labelField="label" change="showResourceSalesListWithFilter(1)">
+			</mx:ComboBox>
+			<mx:Button x="316" y="4" label="上一页" click="showResourceSalesPreviousPageList()" width="65" height="26"/>
+			<mx:Button x="388" y="3" label="下一页" click="showResourceSalesNextPageList()" width="65" height="26"/>
+			<mx:Label x="233" y="7" text="{currentResourceSalesPageNum}/{model.resourceSalesPage}" width="77" textAlign="center"/>
+		</mx:Canvas>
+		<mx:DataGrid dataProvider="{model.resourceSalesList}" width="462" y="47" height="173" x="10" verticalScrollPolicy="on">
+			<mx:columns>
+				<mx:DataGridColumn headerText="资源" dataField="resourceType" textAlign="center" sortable="false" labelFunction="getColumnResourceType" />
+				<mx:DataGridColumn headerText="数量" dataField="amount" textAlign="right" sortable="false" labelFunction="getColumnInResourceAmount"/>
+				<mx:DataGridColumn headerText="价格" dataField="price" textAlign="right" sortable="false" />
+				<mx:DataGridColumn headerText="时间" dataField="resTradeID" sortable="false" labelFunction="computeCityCostTime" />
+				<mx:DataGridColumn headerText="城市" dataField="cityInfo.name" sortable="false" labelFunction="DataGridUtil.getColumnProperty" />
+				<mx:DataGridColumn headerText="操作" dataField="resTradeID" sortable="false" width="60">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Button width="0" height="0" label="买入" click="outerDocument.buyResource(data.resTradeID)"/>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+	<mx:Canvas x="88" y="10" id="canvasSellResource" width="487" height="230" visible="false" styleName="CanvasBorder">
+		<mx:Canvas x="9" y="6" styleName="InnerBorder" width="468" height="24">
+			<mx:Label x="8" y="2" text="市场中可以卖出或买入各种资源，买卖以“手”为单位（1手=1000资源）。"/>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="38" width="170" height="182" styleName="InnerBorder">
+			<mx:Button x="33" y="146" label="挂单" click="sellResouce()" height="26" width="60"/>
+			<mx:Button x="103" y="146" label="清空" height="26" width="60" click="sellResourceClear()"/>
+			<mx:ComboBox styleName="Small" width="97" dataProvider="{model.resourceType}" id="comboSaleResourceType" x="68" y="6" change="changeSaleResourceType()">
+			</mx:ComboBox>
+			<mx:Label text="资源类别：" x="7" y="8"/>
+			<mx:Label text="出售数量：" x="7" y="37"/>
+			<mx:TextInput width="73" id="textAmount" text="0" maxChars="4" restrict="0-9" keyUp="compueTotalSellPrice()" textAlign="right" x="68" y="36"/>
+			<mx:Label x="149" y="38" text="手" width="16"/>
+			<mx:Label text="每手单价：" x="7" y="66"/>
+			<mx:Label text="合计金额：" x="7" y="95"/>
+			<mx:TextInput id="textTotalSellPrice" width="97" editable="false" text="0" textAlign="right" x="68" y="95"/>
+			<mx:TextInput width="97.05" id="textPrice" text="0" maxChars="3" restrict="0-9" keyUp="compueTotalSellPrice()" textAlign="right" x="67.95" y="65"/>
+			<mx:Label x="7" y="121" text="价格区间："/>
+			<mx:Label x="69" y="120" text="{currentMinPrice}-{currentMaxPrice}" width="91"/>
+		</mx:Canvas>
+		<mx:Canvas x="188" y="38" width="289" height="182" styleName="InnerBorder">
+			<mx:Label x="12" y="6" text="已挂单交易" width="267" textAlign="center" fontStyle="normal" fontWeight="bold" height="21"/>
+			<mx:DataGrid x="6" y="30" dataProvider="{model.cityResourceSalesList}" height="145" width="280">
+				<mx:columns>
+					<mx:DataGridColumn headerText="资源" dataField="resourceType" sortable="false" labelFunction="getColumnResourceType" />
+					<mx:DataGridColumn headerText="数量" dataField="amount" sortable="false" labelFunction="getColumnInResourceAmount"/>
+					<mx:DataGridColumn headerText="单价" dataField="price" sortable="false" />
+					<mx:DataGridColumn headerText="操作" dataField="resTradeID" sortable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button label="取消" width="55" height="22" click="outerDocument.cancelResourceSale(data.resTradeID)"/>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

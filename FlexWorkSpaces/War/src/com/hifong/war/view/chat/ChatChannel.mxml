@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--聊天类别内容-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPosition="{maxPosition}" updateComplete="updateCompleteHandler(event)"  xmlns:local="*" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Image;
+			import mx.controls.scrollClasses.ScrollBar;
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			
+			import org.gif.player.GIFPlayer;
+
+			//表情正则 替代符
+			private var rex:RegExp=ChatConfig.CHAT_REG;
+			
+			
+			[Bindable]
+			private var maxPosition:Number;
+			private var index:int=0;
+			
+			private var txt:TextField;
+			//文本格式化❀ //11-4
+			private var txtFormat:TextFormat;
+			
+			private var textLinkHandler:Function;
+			private function init():void
+			{
+				
+				txt=new TextField();
+				txt.multiline=true;           //多行  // 11-4
+				txt.wordWrap=true;            //滚动  // 11-1
+				txt.condenseWhite=false;
+				txt.autoSize="left";
+				var w:Number=this.width>10?this.width:310;
+				txt.width=w-ScrollBar.THICKNESS;
+				txtFormat=new TextFormat();
+				txtFormat.size=12;
+				txt.setTextFormat(txtFormat);
+				txtContainer.addChild(txt);
+				txt.addEventListener(TextEvent.LINK,onTextLink);
+				
+			}
+			/**
+			 * 侦听链接文本
+			 */
+			private function onTextLink(event:TextEvent):void
+			{
+				textLinkHandler(event);
+			}
+			/**
+			 * 添加内容
+			 */
+			public function addText(msg:String):void{
+				txt.htmlText+=msg;
+				updateHeight(txt.height);
+				var indexArr:Array=[];
+				var strArr:Array=[];
+				var resultArr:Array=[];
+				while((resultArr=rex.exec(txt.text)) != null)
+				{
+					indexArr.push(resultArr['index']);
+					strArr.push(resultArr);
+				}
+//				trace("index:"+index+" length:"+strArr.length+":"+strArr);
+				if (strArr != null)
+				{
+					dillWithTxt(strArr, indexArr);
+				}
+			}
+			/**
+			 * 迭代文本链接函数
+			 */
+			public function set link(linkHandler:Function):void{
+				textLinkHandler=linkHandler;
+			}
+			/**
+			 * 处理表情排版
+			 */
+			private function dillWithTxt(strArr:Array, indexArr:Array):void
+			{
+				if (strArr.length <= 0)
+					return ;
+				for(var i:int=0; i < strArr.length; i++)
+				{
+					var format:TextFormat=new TextFormat();
+					format.size=24;
+					format.letterSpacing=ChatConfig.CHAT_FACE_LETTER_SPACE;
+					for(var j:int=0; j < ChatConfig.CHAT_FACE_NAME.length; j++)
+					{
+//						trace(strArr[i]+"=="+Config.CHAT_FACE_NAME[j]);
+						if (strArr[i] == ChatConfig.CHAT_FACE_NAME[j])
+						{
+							txt.replaceText(indexArr[i], indexArr[i] + 1, ChatConfig.CHAT_FACE_SPACE)
+							txt.setTextFormat(format, indexArr[i], indexArr[i] + 1);
+							updateHeight(txt.height);
+							var rec:Rectangle=txt.getCharBoundaries(indexArr[i]);
+							if(rec){
+								var gifPlayer:GIFPlayer=new GIFPlayer(); 
+								gifPlayer.load(new URLRequest("images/face/" + j + ".gif"));
+								var img:Image=new Image();
+								img.addChild(gifPlayer);
+								img.mouseChildren=false;
+								img.mouseEnabled=false;
+								img.x=rec.x;
+								img.y=rec.y;
+								this.addChild(img);
+							}
+							break;
+						}
+					}
+					updateHeight(txt.height);
+				}
+			}
+			public function resize(w:Number,h:Number):void{
+				this.width=w;
+				this.height=h;
+			}
+			
+			private function updateHeight(h:Number):void{
+				txtContainer.height=h;
+			}
+			/**
+			 * 显示最新
+			 */
+			protected function updateCompleteHandler(event:FlexEvent):void
+			{
+				maxPosition == maxVerticalScrollPosition ? null : maxPosition=maxVerticalScrollPosition;
+			}
+		]]>
+	</mx:Script>
+	<!--<local:SpecialText id="txt"  border="false" autoSize="left" width="{this.width-ScrollBar.THICKNESS}"/>-->
+	<mx:UIComponent id="txtContainer" />
+</mx:Canvas>

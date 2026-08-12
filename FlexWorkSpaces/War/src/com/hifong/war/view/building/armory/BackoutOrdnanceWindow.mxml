@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" layout="absolute" width="430" height="360" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.armory.BackoutOrdnanceEvent;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.events.building.barracks.DisarmSoldierEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.OrdnanceVO;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 当前军械信息*/
+			[Bindable]
+			public var ordnance:OrdnanceVO;
+			
+			/** 当前军械数量信息 */
+			[Bindable]
+			public var cityOrdnance:CityOrdnanceVO;
+		
+			/** 获得资源*/
+			[Bindable]
+			private var needResources:Array ;
+			
+			
+			
+			//解除武装
+			private function doBackupOrdnance():void{
+				var num:int = int(this.txtBackoutNum.text);
+				
+				if(num > cityOrdnance.num){
+					MsgBox.showMessage("超过最大可拆卸的数量！");
+					return;
+				}	
+				
+				MsgBox.showConfirm("拆卸只返回部分资源，您确定要进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new BackoutOrdnanceEvent(cityOrdnance.cityOrdnanceID,num));
+					doClose();
+				});
+				
+			}
+			
+			/** 初始化绑定的数据*/
+			public function initData():void{
+				//获得依赖对象
+				var depend:Object = ordnance.constraintDepend;
+				
+				//所需资源
+				needResources = [];
+				
+				if(depend.costWood > 0 ){
+					needResources.push({resourceName:'木材',receiveNum:int(depend.costWood/2),currentNum:model.cityInfo.cityResource.woodNum,costNum:depend.costWood});
+				}
+				
+				if(depend.costSteel > 0 ){
+					needResources.push({resourceName:'钢铁',receiveNum:int(depend.costSteel/2),currentNum:model.cityInfo.cityResource.steelNum,costNum:depend.costSteel});
+				}
+				
+				if(depend.costOil > 0 ){
+					needResources.push({resourceName:'石油',receiveNum:int(depend.costOil/2),currentNum:model.cityInfo.cityResource.oilNum,costNum:depend.costOil});
+				}
+				
+				if(depend.costFood > 0 ){
+					needResources.push({resourceName:'食物',receiveNum:int(depend.costFood/2),currentNum:model.cityInfo.cityResource.foodNum,costNum:depend.costFood});
+				}
+				
+				if(depend.costMoney > 0 ){
+					needResources.push({resourceName:'金钱',receiveNum:int(depend.costMoney/2),currentNum:model.cityInfo.cityResource.moneyNum,costNum:depend.costMoney});
+				}
+				
+			}
+			
+			private function doProduceNumChange():void{
+				var num:int = int(this.txtBackoutNum.text);
+				
+				if(num <= 0){
+					this.txtBackoutNum.text = "1";
+					num = 1;
+				}
+				
+				for each(var item:Object in needResources){
+					item.receiveNum = int (item.costNum * num / 2);
+				}
+				
+				this.grdConditions.dataProvider = needResources;
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="拆卸：{ordnance.name}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:DataGrid id="grdConditions" x="25" y="37" width="380" height="212" dataProvider="{needResources}" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="获得资源"  dataField="resourceName"/>
+			<mx:DataGridColumn headerText="获得数量" dataField="receiveNum"/>
+			<mx:DataGridColumn headerText="当前数量"  dataField="currentNum"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="25" y="257" width="380" height="74" styleName="CanvasBorder">
+		<mx:Label x="171.5" y="10" text="拆卸数量："/>
+		<mx:Label x="10" y="10" text="现有数量："/>
+		<mx:TextInput x="240" y="9" width="130" id="txtBackoutNum" text="1" restrict="0-9" change="doProduceNumChange()" enabled="{cityOrdnance.num>0}" textAlign="right"/>
+		<mx:Text x="72" y="10" text="{cityOrdnance.num}" width="74"/>
+		<mx:Button x="310" y="39" label="确定" click="doBackupOrdnance()" enabled="{cityOrdnance.num>0}"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

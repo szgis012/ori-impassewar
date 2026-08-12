@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildtechnologyCost">
+	<typeAlias alias="GuildtechnologyCost" type="com.war.domain.GuildtechnologyCost" />
+
+	<insert id="createGuildtechnologyCost" parameterClass="GuildtechnologyCost">
+		INSERT INTO T_GUILDTECHNOLOGY_COST(GUILDTECHNOLOGY_COST_ID, GUILDTECHNOLOGY_ID, LEVEL, DESCRIPTION, REQUIRED_GUILD_LEVEL, MONEY, ORIFLAMME_LOWER_NUM, ORIFLAMME_INTERMEDIATE_NUM, ORIFLAMME_ADVANCED_NUM, TIME) VALUES(#guildtechnologyCostID#, #guildtechnologyID#, #level#, #description#, #requiredGuildLevel#, #money#, #oriflammeLowerNum#, #oriflammeIntermediateNum#, #oriflammeAdvancedNum#, #time#)
+		<selectKey resultClass="Integer" keyProperty="guildtechnologyCostID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateGuildtechnologyCost" parameterClass="GuildtechnologyCost">
+		UPDATE T_GUILDTECHNOLOGY_COST SET GUILDTECHNOLOGY_ID=#guildtechnologyID#, LEVEL=#level#, DESCRIPTION=#description#, REQUIRED_GUILD_LEVEL=#requiredGuildLevel#, MONEY=#money#, ORIFLAMME_LOWER_NUM=#oriflammeLowerNum#, ORIFLAMME_INTERMEDIATE_NUM=#oriflammeIntermediateNum#, ORIFLAMME_ADVANCED_NUM=#oriflammeAdvancedNum#, TIME=#time# WHERE GUILDTECHNOLOGY_COST_ID=#guildtechnologyCostID#
+	</update>
+
+	<delete id="deleteGuildtechnologyCostByID" parameterClass="Integer">
+		DELETE FROM T_GUILDTECHNOLOGY_COST WHERE GUILDTECHNOLOGY_COST_ID=#guildtechnologyCostID#
+	</delete>
+
+	<select id="getGuildtechnologyCostByID" parameterClass="Integer" resultClass="GuildtechnologyCost">
+		SELECT GUILDTECHNOLOGY_COST_ID AS guildtechnologyCostID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, DESCRIPTION, REQUIRED_GUILD_LEVEL as requiredGuildLevel, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TIME AS time FROM T_GUILDTECHNOLOGY_COST WHERE GUILDTECHNOLOGY_COST_ID=#guildtechnologyCostID#
+	</select>
+
+	<select id="getGuildtechnologyCostList" resultClass="GuildtechnologyCost">
+		SELECT GUILDTECHNOLOGY_COST_ID AS guildtechnologyCostID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, DESCRIPTION, REQUIRED_GUILD_LEVEL as requiredGuildLevel, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TIME AS time FROM T_GUILDTECHNOLOGY_COST
+	</select>
+
+	<select id="getGuildtechnologyCostListByTechnologyIDAndLevel" parameterClass="HashMap" resultClass="GuildtechnologyCost">
+		SELECT GUILDTECHNOLOGY_COST_ID AS guildtechnologyCostID, GUILDTECHNOLOGY_ID AS guildtechnologyID, LEVEL AS level, DESCRIPTION, REQUIRED_GUILD_LEVEL as requiredGuildLevel, MONEY AS money, ORIFLAMME_LOWER_NUM AS oriflammeLowerNum, ORIFLAMME_INTERMEDIATE_NUM AS oriflammeIntermediateNum, ORIFLAMME_ADVANCED_NUM AS oriflammeAdvancedNum, TIME AS time FROM T_GUILDTECHNOLOGY_COST WHERE GUILDTECHNOLOGY_ID=#guildtechnologyID# AND LEVEL=#level#
+	</select>
+
+</sqlMap>

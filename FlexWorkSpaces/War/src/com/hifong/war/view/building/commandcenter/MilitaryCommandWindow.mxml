@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" close="doClose()" width="630" height="444" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.commandcenter.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.world.CollectionWindow;
+			import com.hifong.war.constant.MapCategoryConstant;
+			import com.hifong.war.events.building.commandcenter.HasMilitaryInBattleOrGoingToMapEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import mx.events.ListEvent;
+			import com.hifong.war.constant.ArmyConstant;
+			import com.hifong.war.util.WorldUtil;
+			import com.hifong.war.util.DateFormatUtil;
+			import com.hifong.war.events.building.commandcenter.DispatchEvent;
+			import com.hifong.war.events.building.commandcenter.AttackEvent;
+			import com.hifong.war.events.building.commandcenter.SpyEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.vo.ArmyVO;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//出兵花费倍数
+			private static const ARMY_COST_BASE:int = 1;
+			//命令列表
+			[Bindable]
+			private var commandList:Array = ["攻击","派遣"];
+			
+			//目标x坐标
+			[Bindable]
+			public var posX:int = model.cityInfo.posX;
+			// 目标y坐标
+			[Bindable]
+			public var posY:int = model.cityInfo.posY;
+			//默认选择的命令
+			[Bindable]
+			public var commandSelectedIndex:int = -1;
+			
+			//消耗金钱数量
+			[Bindable]
+			private var costMoney:int = 0;
+			//消耗食物数量
+			[Bindable]
+			private var costFood:int = 0;
+			//消耗石油数量
+			[Bindable]
+			private var costOil:int = 0;
+			
+			//如果是派遣，军队携带的资源信息
+			private var carryResource:CarryResource;
+			
+			//初始化
+			private function doInit():void{
+				
+			}
+			
+			//出征
+			private function doDepoy():void{
+				
+				if(this.cmbMilitary.selectedIndex<0){
+					MsgBox.showMessage("请选择军队!");
+					this.cmbMilitary.setFocus();
+					return;
+				}
+				
+				if(getMilitaryCount(this.cmbMilitary.selectedItem) == 0){
+					MsgBox.showMessage("该军队还未编制任何人!");
+					this.cmbMilitary.setFocus();
+					return;
+				}
+				
+				if(this.cmbCommand.selectedIndex<0){
+					MsgBox.showMessage("请选择出征命令!");
+					this.cmbCommand.setFocus();
+					return;
+				}
+				
+				if(this.posX == model.cityInfo.posX && this.posY == model.cityInfo.posY){
+					MsgBox.showMessage("出征的目标不能为本城！");
+					return;
+				}
+				
+				//如果选择了攻击
+				/*if(this.cmbCommand.selectedIndex == 1){
+					if(WorldUtil.getDeclareWarState(this.posX,this.posY) != 2){
+						MsgBox.showMessage("您还没有对目标宣战或者开战时间还没有到！");
+						return;
+					}
+				}*/
+				
+				var dispatcher:CairngormEventDispatcher = CairngormEventDispatcher.getInstance();
+				var cityMilitaryID:int = this.cmbMilitary.selectedItem.cityMilitaryID;
+				/** 携带食物数量*/
+				var carryFood:int = 0;
+				/** 携带木材数量*/
+				var carryWood:int = 0;
+				/** 携带石油数量*/
+				var carryOil:int = 0;
+				/** 携带钢铁数量*/
+				var carrySteel:int = 0;
+				/** 携带金钱数量*/
+				var carryMoney:int = 0;
+				
+				//如果设置了携带资源数量
+				if(this.carryResource){
+					carryFood = this.carryResource.carryFood;
+					carryWood = this.carryResource.carryWood;
+					carryOil = this.carryResource.carryOil;
+					carrySteel = this.carryResource.carrySteel;
+					carryMoney = this.carryResource.carryMoney;
+				}
+				
+				switch(this.cmbCommand.selectedIndex){
+					//攻击	
+					case 0:
+						if(checkAttackCondition()){
+							dispatcher.dispatchEvent(new HasMilitaryInBattleOrGoingToMapEvent(cityMilitaryID,posX,posY));
+						}
+						break;
+					//派遣	
+					case 1:
+						//if(checkDispatchCondtion()){
+						//	dispatcher.dispatchEvent(new DispatchEvent(cityMilitaryID,posX,posY,carryFood,carryWood,carryOil,carrySteel,carryMoney));
+						//}
+						break;	
+				}
+			}
+			
+			//获得出征所需的时间
+			private function setNeedTime():void{
+				if(this.cmbMilitary.selectedIndex<0){
+					this.txtNeedTime.text = "";
+					return;
+				}
+				
+				var speed:int = getMilitarySpeed(this.cmbMilitary.selectedItem);
+				
+				this.txtNeedTime.text = DateFormatUtil.convertSecondToTime(WorldUtil.getDistanceTime(model.cityInfo.posX,model.cityInfo.posY,this.posX,this.posY,speed));	
+			}
+			
+			//得到军队的速度，以最慢的兵种计算
+			private function getMilitarySpeed(cityMilitary:Object):int{
+				var speed:int = 99999999;//不会有这么快的速度，所以这里使用它作为比较的基础
+				var ts:int;
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army1));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}	
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army2));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army3));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army4));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army5));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army6));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army7));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				ts = getArmySpeed( getArmyID(cityMilitary.army8));
+				if(ts > 0){
+					speed = Math.min(ts,speed);
+				}
+				
+				return (speed == 99999999)? 0 : speed;
+				
+			}
+			
+			//解析出armyID,minfo格式为armyID:num
+			private function getArmyID(minfo:String):String{
+				var arr:Array;
+				
+				if(minfo){
+					arr = minfo.split(":");
+					
+					if(arr.length == 2){
+						return arr[0];
+					}
+				}
+				
+				return null;
+			}
+			
+			//解析出部队数量,minfo格式为armyID:num
+			private function getArmyNum(minfo:String):int{
+				var arr:Array;
+				
+				if(minfo){
+					arr = minfo.split(":");
+					
+					if(arr.length == 2){
+						return arr[1];
+					}
+				}
+				
+				return 0;
+			}
+			
+			//得到
+			private function getArmySpeed(armyID:String):int{
+				if(armyID){
+					return model.armyInfo.armyMap[armyID].speed;
+				}
+				
+				return 0;
+			}
+			
+			//获得已编制军队拥有的人数
+			private function getMilitaryCount(cityMilitary:Object):int{
+				var totalNum:int = 0;
+				
+				totalNum += getArmyNum(cityMilitary.army1);
+				totalNum += getArmyNum(cityMilitary.army2);
+				totalNum += getArmyNum(cityMilitary.army3);
+				totalNum += getArmyNum(cityMilitary.army4);
+				totalNum += getArmyNum(cityMilitary.army5);
+				totalNum += getArmyNum(cityMilitary.army6);
+				totalNum += getArmyNum(cityMilitary.army7);
+				totalNum += getArmyNum(cityMilitary.army8);
+				
+				return totalNum;
+			}
+			
+			//获得指定兵种的所有人数信息
+			private function getTotalArmyNum(cityMilitary:Object,armyID:int):int{
+				var totalNum:int = 0;
+				var aid:String;
+				var sid:String = String(armyID);
+				
+				aid = getArmyID(cityMilitary.army1);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army1);
+				
+				aid = getArmyID(cityMilitary.army2);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army2);
+				
+				aid = getArmyID(cityMilitary.army3);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army3);
+					
+				aid = getArmyID(cityMilitary.army4);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army4);
+							
+				aid = getArmyID(cityMilitary.army5);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army5);
+				
+				aid = getArmyID(cityMilitary.army6);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army6);
+				
+				aid = getArmyID(cityMilitary.army7);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army7);
+					
+				aid = getArmyID(cityMilitary.army8);
+				if(aid == sid)
+					totalNum += getArmyNum(cityMilitary.army8);
+					
+				return totalNum;
+			}
+			
+			//攻击
+			private function checkAttackCondition():Boolean{
+				return true;
+			}
+			
+			//派遣
+			private function checkDispatchCondtion():Boolean{
+				return true;
+			}
+			
+			//能否提供军队出征所需的资源
+			private function hasEnoughResources():Boolean{
+				var cityMilitary:Object = this.cmbMilitary.selectedItem;
+				
+				return true;
+			}
+			
+			private function posChanged():void{
+				this.posX = int(this.txtPosX.text);
+				this.posY = int(this.txtPosY.text);
+				
+				if(this.posX>model.worldInfo.MAX_RANGE_X){
+					this.posX = model.worldInfo.MAX_RANGE_X;
+				}
+					
+				if(this.posY>model.worldInfo.MAX_RANGE_Y)
+					this.posY = model.worldInfo.MAX_RANGE_Y;	
+					
+				this.setNeedTime();	
+				this.setCostResource();
+			}
+			
+			private function doMilitarySelectChanged(event:ListEvent):void{
+				this.setNeedTime();	
+				//清除之前设置的携带信息
+				this.carryResource = null;
+				this.setCostResource();
+			}
+			
+			//设置消耗的资源信息
+			private function setCostResource():void{
+				var costMoney:Number = 0;
+				var costFood:Number = 0;
+				var costOil:Number = 0;
+				
+				var cm:Object = cmbMilitary.selectedItem;
+				var costTime:Number = WorldUtil.getDistanceTime(model.cityInfo.posX,model.cityInfo.posY,this.posX,this.posY,getMilitarySpeed(cm));
+				var tmp:Array;
+				var avo:ArmyVO;
+				var armyNum:int;
+				
+				var army:String = cm.army1;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army2;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army3;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army4;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army5;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army6;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army7;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				army = cm.army8;
+				if(army && army.length > 0){
+					tmp = army.split(":");
+					armyNum = parseInt(tmp[1]);
+					avo = model.armyInfo.armyMap[tmp[0]] as ArmyVO;
+					
+					costMoney += computeArmyCost(avo.costMoney,armyNum,costTime);
+					costFood += computeArmyCost(avo.costFood,armyNum,costTime);
+					costOil += computeArmyCost(avo.costOil,armyNum,costTime);
+				}
+				
+				this.costFood = costFood;
+				this.costMoney = costMoney;
+				this.costOil = costOil;
+			}
+			
+			//获得指定数量士兵的出征时的消耗
+			private function computeArmyCost(perCost:int, num:int, seconds:int):Number{
+				return perCost * num * (seconds / 60 / 60) * 2 * ARMY_COST_BASE;
+			}
+			
+			//显示携带资源界面
+			private function showCarryResourceWindow():void{
+				if(this.cmbMilitary.selectedIndex<0){
+					MsgBox.showMessage("请选择军队!");
+					this.cmbMilitary.setFocus();
+					return;
+				}
+				
+				if(getMilitaryCount(this.cmbMilitary.selectedItem) == 0){
+					MsgBox.showMessage("该军队还未编制任何人!");
+					this.cmbMilitary.setFocus();
+					return;
+				}
+				
+				var win:CarryResourceWindow = new CarryResourceWindow();
+				this.carryResource = new CarryResource();
+				win.carryResource = this.carryResource;
+				win.cityMilitary = this.cmbMilitary.selectedItem;
+				
+				WindowUtil.showModelWindow(win);
+			}
+			
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			/**
+			 *打开地图收藏夹
+			 */
+			 private function callMapCollection():void{
+			 	var win:CollectionWindow=new CollectionWindow();
+			 	win.type=1;
+			 	win.controller=this;
+			 	WindowUtil.showModelWindow(win);
+			 }
+			 /**
+			 * 设置进发目的地
+			 */
+			 public function setPosition(posX:int,posY:int):void{
+			 	this.posX=posX;
+			 	this.posY=posY;
+			 }
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="军队指挥" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="245" width="580" height="179" styleName="CanvasBorder">
+		<mx:Label x="10" y="13" text="军队：" width="52"/>
+		<mx:ComboBox x="52" y="10"  prompt="请选择" id="cmbMilitary" labelField="name" width="186" dataProvider="{model.cityMilitaryList}" change="doMilitarySelectChanged(event)">
+		</mx:ComboBox>
+		<mx:Label x="285" y="12" text="目标位置："/>
+		<mx:TextInput x="361" y="10" width="49" text="{posX}" maxChars="3" restrict="0-9" id="txtPosX" change="posChanged()"/>
+		<mx:TextInput x="429" y="10" width="49" text="{posY}" maxChars="3" restrict="0-9" id="txtPosY" change="posChanged()"/>
+		<mx:Label x="10" y="53" text="命令："/>
+		<mx:ComboBox x="52" y="50" width="186" id="cmbCommand" dataProvider="{commandList}" prompt="请选择" selectedIndex="{commandSelectedIndex}">
+		</mx:ComboBox>
+		<mx:Label x="8" y="132" text="所需时间："/>
+		<mx:Label x="10" y="91" text="消耗："/>
+		<mx:Button x="285" y="129" label="出征" click="doDepoy()" id="btnDepoy" width="80" height="26"/>
+		<mx:Button x="285" y="50" label="携带资源" enabled="{cmbCommand.selectedIndex == 1}" id="btnCarry" click="showCarryResourceWindow()" width="80" height="26"/>
+		<mx:Image x="176" y="93" source="images/food.png" toolTip="食物"/>
+		<mx:Text x="194" y="93" text="{costFood}" id="txtCostFood" width="90" fontWeight="bold"/>
+		<mx:Image x="50" y="91" source="images/oil.png" toolTip="石油"/>
+		<mx:Text x="78" y="91" text="{costOil}" id="txtCostOil" width="90" fontWeight="bold"/>
+		<mx:Image x="292" y="93" source="images/money.png" toolTip="食物"/>
+		<mx:Text x="320" y="93" text="{costMoney}" id="txtCostMoney" width="90" fontWeight="bold" height="28"/>
+		<mx:Text x="81" y="132" width="157" id="txtNeedTime" fontWeight="bold"/>
+		<mx:Button x="486" y="8" label="收藏" click="callMapCollection()"/>
+	</mx:Canvas>
+	<ns1:CityMilitaryInfoPanel x="25" y="37">
+	</ns1:CityMilitaryInfoPanel>
+</mx:TitleWindow>

@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:221
+ * 
+ * 名称：超级计算机
+ * 描述：缩短科技研究时间4小时。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceTechResearchCostTime(params["queueID"], 4*60*60);

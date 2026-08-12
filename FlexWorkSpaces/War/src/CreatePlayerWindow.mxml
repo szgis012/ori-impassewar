@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="1000" height="600" initialize="txtPlayerName.setFocus();" backgroundColor="#000000" backgroundImage="images/login/cbg.jpg">
+
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.events.common.IsCityNameExistedEvent;
+			import com.hifong.war.events.common.IsPlayerNameExistedEvent;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.common.CreatePlayerEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.constant.ContryTypeConstant;
+			import com.hifong.war.util.MsgBox;
+			import mx.utils.StringUtil;
+			
+			/** 用户编号 */
+			public var userID:int;
+			
+			/** 玩家名是否存在 */
+			public var isPlayerNameExisted:Boolean;
+			/** 城市名是否存在 */
+			public var isCityNameExisted:Boolean;
+			
+			public var descList:Array = [
+				"      一个新兴的势力，国家充满了朝气，宣扬自由民主，他们认为自己是拯救者，将其他民族从联合帝国的魔爪中拯救出来。也许是宣扬民主的原因，这个国家不像联合帝国那样集权，人民自由度很高，存在散漫的问题。作为一个从商业发家的势力，他们的产品价格都很低廉。\n      正是由于产品价格的低廉，使自由联邦的军队更加易于维护，较低的武器成本可以让您大批量的生产武器，武装军队，而这支军队的日常消耗也会稍微小一些，让您的资源利用更加有效。\n      这样一支军队的战斗能力相对较弱，他们的武器不是最优秀的，他们的消耗数量很低，所以他们没有联合帝国的军队那么能征惯战。他们在数量上占有优势，但是如果碰上数量相当的情况，联合帝国将会展现出可怕的战斗能力。\n      加入这个势力，您的城市将基本不会有贫困的问题，但是，您也将不会拥有像联合帝国那样善战的军队，精良的装备。较低的价格让自由联邦可以随时拥有一支规模庞大的军队。",
+				"      老牌的强大帝国，一直以最优秀的民族自居，认为其他民族应当臣服于他们脚下。联合帝国拥有强大的军事力量，先进的武器，国家空前集权，效率很高。同时也空前僵化，所有人都将听命于最高内阁。\n      联合帝国拥有一支精干、强大、善战的部队。这支部队拥有最精良的武器，最一流的战术，而他们更是一直绝对服从的军队。这支军队可以粉碎一切敢于阻拦他们的绊脚石，只要指挥官一声令下，不论刀山火海，他们也可以一路冲锋。\n      维持这样一只强大的部队是一件很辛苦的工作。精良的装备保证了部队强悍的战斗力，同时也保证了对资源的大量消耗。联合帝国的军队消耗普遍高于自由联邦的军队。如果您想要拥有一支最强的军队，那么您就将为此付出更多的资源。\n      选择这一势力，就意味着可以指挥一支善于作战、装备精良、绝对服从的军队，但是为了组建这么一只军队，将会消耗大量的资源，所以联合帝国不可能拥有规模太过庞大的军队。"
+			];
+			
+			//势力说明信息
+			[Bindable]
+			private var contryDesc:String = descList[0];
+			
+			//玩家头像
+			[Bindable]
+			private var imgsrc:String  = "images/playerHead/m1.jpg";
+			//图片存储的目录
+			private var prefix:String = "images/playerHead/";
+			
+			private var MALE_IMAGE_NUM:int = 8;
+			private var FEMALE_IMAGE_NUM:int = 5;
+			
+			[Bindable]
+			//当前头像图片的索引(1-20之间)
+			private var curImgIndex:int = 1;
+			private var curGender:String = "m";
+			
+			private function onCreatePlayer():void{
+				var playerName:String = StringUtil.trim(txtPlayerName.text);
+				
+				if(playerName.length==0){
+					MsgBox.showMessage("请填写市长名称。");
+					txtPlayerName.setFocus();
+					return;
+				}
+				
+				var cityName:String = StringUtil.trim(txtCityName.text);
+				if(cityName.length==0){
+					MsgBox.showMessage("请填写城市名称。");
+					txtCityName.setFocus();
+					return;
+				}
+				
+				//联盟
+				var contryType:int = radFreeUnion.selected?ContryTypeConstant.FREE_UNION:ContryTypeConstant.UNION_EMPIRE;
+				
+				btnCreatePlayer.enabled = false;
+				
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CreatePlayerEvent(userID,playerName,cityName,contryType,imgsrc, 11));
+			}
+			
+			private function selectFreeUnion():void{
+				this.radFreeUnion.setFocus();
+				this.radFreeUnion.selected = true;
+				contryDesc=descList[0];
+			}
+			
+			private function selectUnionEmpire():void{
+				this.radUnionEmpire.setFocus();
+				this.radUnionEmpire.selected = true;
+				contryDesc=descList[1];
+			}
+			
+			private function changeGender(gender:int):void{
+				curImgIndex = 1;
+				if(gender==1){
+					curGender = "m";
+				}else if(gender==2){
+					curGender = "f";
+				}
+				imgsrc = prefix+curGender+curImgIndex+".jpg";
+			}
+			
+			//上一张
+			private function onUp():void{
+				curImgIndex--;
+				if(curGender=="m"){
+					if(curImgIndex<1){
+						curImgIndex = MALE_IMAGE_NUM;
+					}
+				}else if(curGender=="f"){
+					if(curImgIndex<1){
+						curImgIndex = FEMALE_IMAGE_NUM;
+					}
+				}
+				imgsrc = prefix+curGender+curImgIndex+".jpg";
+			}
+			
+			//下一张
+			private function onDown():void{
+				curImgIndex++;
+				if(curGender=="m"){
+					if(curImgIndex>MALE_IMAGE_NUM){
+						curImgIndex = 1;
+					}
+				}else if(curGender=="f"){
+					if(curImgIndex>FEMALE_IMAGE_NUM){
+						curImgIndex = 1;
+					}
+				}
+				imgsrc = prefix+curGender+curImgIndex+".jpg";
+			}
+			
+			/**
+			 * 检查玩家名是否已经存在
+			 */
+			private function checkIsPlayerNameExisted():void{
+				if(txtPlayerName.text.length==0){
+					playerNameToolTip.text = "请填写市长名称。";
+					return;
+				}
+				playerNameToolTip.text = "市长名称检测中，请稍候。。。";
+				CairngormEventDispatcher.getInstance().dispatchEvent(new IsPlayerNameExistedEvent(txtPlayerName.text));
+			}
+			
+			/**
+			 * 检查城市名是否已经存在
+			 */
+			private function checkIsCityNameExisted():void{
+				if(txtCityName.text.length==0){
+					cityNameToolTip.text = "请填写城市名称。";
+					return;
+				}
+				cityNameToolTip.text = "城市名称检测中，请稍候。。。";
+				CairngormEventDispatcher.getInstance().dispatchEvent(new IsCityNameExistedEvent(txtCityName.text));
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas x="235.75" y="10" width="558.5" height="580" styleName="CanvasBorder" backgroundImage="images/login/bgcp.jpg">
+		<mx:Label x="105.25" y="10" text="创建角色" width="348" styleName="windowTitle"/>
+		<mx:Image x="120.25" y="41" source="{WarAssets.titleLine}"/>
+		
+		<mx:Label x="16.25" y="76" text="市长名称："/>
+		<mx:TextInput x="89.25" y="74" width="152" id="txtPlayerName" maxChars="6" tabIndex="0" focusOut="checkIsPlayerNameExisted()"/>
+		<mx:Label x="89.25" y="97" id="playerNameToolTip"/>
+		
+		<mx:Label x="16.25" y="127" text="城市名称："/>
+		<mx:TextInput x="89.25" y="125" width="152" id="txtCityName" maxChars="8" tabIndex="1" focusOut="checkIsCityNameExisted()"/>
+		<mx:Label x="89.25" y="147" id="cityNameToolTip"/>
+		
+		<mx:Label x="277" y="75" text="选择头像："/>
+		<mx:Canvas x="350" y="76" width="192.25" height="112" styleName="InnerBorder">
+			<mx:Image x="10" y="17" width="60" height="80" id="imgHead" source="{imgsrc}"/>
+			<mx:Button x="96.25" y="42" label="上一张" id="btnUp" click="onUp()" width="70" height="26"/>
+			<mx:Button x="96.25" y="76" label="下一张" id="btnDown" click="onDown()" width="70" height="26"/>
+			<mx:RadioButtonGroup id="gener"/>
+			<mx:RadioButton x="89.6" y="10" label="男" groupName="gener" selected="true" click="changeGender(1)"/>
+			<mx:RadioButton x="140.25" y="10" label="女" groupName="gener" click="changeGender(2)"/>
+		</mx:Canvas>
+		
+		<mx:Label x="16.25" y="196" text="选择阵营："/>
+		<mx:Canvas x="89.25" y="196" width="453" height="320" styleName="InnerBorder">
+			<mx:RadioButtonGroup id="radiogroup1"/>
+			<mx:Image x="10" y="25" width="100" height="100" source="images/login/freeunion.jpg" useHandCursor="true" buttonMode="true" click="selectFreeUnion()"/>
+			<mx:RadioButton x="22" y="125" label="自由联邦" groupName="radiogroup1" id="radFreeUnion" selected="true" click="selectFreeUnion()" tabIndex="2"/>
+			<mx:Image x="10" y="171" width="100" height="100" source="images/login/unionempire.jpg" useHandCursor="true" buttonMode="true" click="selectUnionEmpire()"/>
+			<mx:RadioButton x="22" y="271" label="联合帝国" groupName="radiogroup1" id="radUnionEmpire" click="selectUnionEmpire()"/>
+			<mx:TextArea x="118" y="10" width="325" height="300" text="{contryDesc}" editable="false" id="txtCampDesc"/>
+		</mx:Canvas>
+		
+		<mx:Button id="btnCreatePlayer" x="442.25" y="531" label="开始游戏" click="onCreatePlayer()" tabIndex="3" fontSize="16" fontWeight="bold" height="36" width="100"/>
+		
+	</mx:Canvas>
+	
+</mx:Canvas>

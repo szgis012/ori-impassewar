@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" layout="absolute" width="430" height="270" showCloseButton="false" xmlns:ns1="com.hifong.war.view.building.commandcenter.*">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.util.WindowUtil;
+			
+			
+			/** 军队名称*/
+			[Bindable]
+			public var militaryName:String;
+			/** 未编制军队*/
+			[Bindable]
+			public var src:MilitaryInfo;
+			/** 目标军队*/
+			[Bindable]
+			public var dest:MilitaryInfo;
+			/** 未编制军队面板*/
+			public var srcItem:MilitaryItemPanel;
+			/** 目标军队面板*/
+			public var destItem:MilitaryItemPanel;
+			
+			public var moWin:MilitaryOrganization;
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function onSldChange():void{
+				var total:int = src.num + dest.num;
+				
+				src.num = total - this.sld.value;
+				dest.num = this.sld.value;
+				destNum.text = dest.num.toString();
+			}
+			
+			/**
+			 * 设置目标数量
+			 */
+			private function setDestNum(num:int):void{
+				var total:int = src.num + dest.num;
+				
+				src.num = total - num;
+				dest.num = num;
+				destNum.text = dest.num.toString();
+			}
+			
+			private function onDestNumChange():void{
+				var total:int = src.num + dest.num;
+				
+				sld.value = int(destNum.text);
+				dest.num = int(destNum.text);
+				src.num = total - int(destNum.text);
+			}
+			
+			/**
+			 * 保存调整
+			 */
+			private function doSaveChange():void{
+				//如果有更改
+				if(src.num != srcItem.militaryInfo.num){
+					//如果另一个兵力降为0就从新初始化
+					if(dest.num == 0){
+						dest = new MilitaryInfo();
+					}else if(src.num == 0){
+						src = new MilitaryInfo();
+					}
+					
+					srcItem.militaryInfo = src;
+					destItem.militaryInfo = dest;
+					
+					moWin.militaryChanged = true;
+				}
+				
+				doClose();
+			}
+		]]>
+	</mx:Script>
+
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+			<mx:Button id="titleBtn" styleName="Title" label="兵力合并" width="{titleBtn.label.length*20+120}" />
+		</mx:HBox>
+	<mx:Button styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:Canvas x="25" y="37" width="380" height="209" styleName="CanvasBorder">
+		<ns1:MilitaryItemPanel x="10" y="38" id="pnlSrc" militaryInfo="{src}">
+		</ns1:MilitaryItemPanel>
+		<ns1:MilitaryItemPanel x="270" y="38" id="pnlDest" militaryInfo="{dest}">
+		</ns1:MilitaryItemPanel>
+		<mx:HSlider x="118" y="154" id="sld" width="144" change="onSldChange()" sliderThumbClass="com.hifong.war.view.assets.skin.CustomSliderThumb" minimum="0" maximum="{src.num+dest.num}" value="{dest.num}" snapInterval="1" dataTipPrecision="0"/>
+		<mx:Label x="10" y="10" text="{militaryName}" fontWeight="bold" width="100" textAlign="center"/>
+		<mx:Label x="270" y="10" text="{militaryName}" fontWeight="bold" width="100" textAlign="center"/>
+		<mx:Button x="300" y="173" label="确定" click="doSaveChange()" height="26" width="70"/>
+		<mx:Label x="118" y="175" text="最小" useHandCursor="true" buttonMode="true" mouseChildren="false" click="setDestNum(0)"/>
+		<mx:Label x="233" y="175" text="最大" useHandCursor="true" buttonMode="true" mouseChildren="false" click="setDestNum(src.num+dest.num)"/>
+		<mx:TextInput x="155" y="174" width="70" textAlign="center" id="destNum" text="{dest.num}" keyUp="onDestNumChange()" />
+	</mx:Canvas>
+	
+</mx:TitleWindow>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildEvent">
+	<typeAlias alias="GuildEvent" type="com.war.domain.GuildEvent" />
+	
+	<insert id="createGuildEvent" parameterClass="GuildEvent">
+		INSERT INTO T_GUILD_EVENT(GUILD_ID, DESCRIPTION, CREATE_TIME) VALUES(#guildID#, #description#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="guildEventID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<delete id="deleteGuildEventByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_EVENT WHERE GUILD_EVENT_ID=#guildEventID#
+	</delete>
+	
+	<delete id="deleteGuildEventsByGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_EVENT WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<select id="getGuildEventByID" parameterClass="Integer" resultClass="GuildEvent">
+		SELECT GUILD_EVENT_ID AS guildEventID, GUILD_ID AS guildID, DESCRIPTION AS description, CREATE_TIME AS createTime FROM T_GUILD_EVENT WHERE GUILD_EVENT_ID=#guildEventID#
+	</select>
+	
+	<select id="getGuildEventAmountByGuildID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD_EVENT WHERE GUILD_ID=#guildID#
+	</select>
+	
+	<select id="getGuildEventPagingListByGuildID" parameterClass="HashMap" resultClass="GuildEvent">
+		SELECT GUILD_EVENT_ID AS guildEventID, GUILD_ID AS guildID, DESCRIPTION AS description, CREATE_TIME AS createTime FROM T_GUILD_EVENT WHERE GUILD_ID=#guildID# ORDER BY CREATETIME DESC LIMIT #start#, #offset#
+	</select>
+
+	<select id="getGuildEventListByGuildID" parameterClass="Integer" resultClass="GuildEvent">
+		SELECT GUILD_EVENT_ID AS guildEventID, GUILD_ID AS guildID, DESCRIPTION AS description, CREATE_TIME AS createTime FROM T_GUILD_EVENT WHERE GUILD_ID=#guildID#
+	</select>
+
+</sqlMap>

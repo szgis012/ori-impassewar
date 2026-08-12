@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Stronghold">
+	<typeAlias alias="Stronghold" type="com.war.domain.Stronghold" />
+	
+	<insert id="createStronghold" parameterClass="Stronghold">
+		INSERT INTO T_STRONGHOLD(STRONGHOLD_ID, PLAYER_ID, POSX, POSY, NAME, CREATETIME) VALUES(#strongholdID#, #playerID#, #posX#, #posY#, #name#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="strongholdID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateStronghold" parameterClass="Stronghold">
+		UPDATE T_STRONGHOLD SET PLAYER_ID=#playerID#, POSX=#posX#, POSY=#posY#, NAME=#name# WHERE Stronghold_ID=#strongholdID#
+	</update>
+	
+	<delete id="deleteStrongholdByID" parameterClass="Integer">
+		DELETE FROM T_STRONGHOLD WHERE Stronghold_ID=#strongholdID#
+	</delete>
+	
+	<select id="getStrongholdByID" parameterClass="Integer" resultClass="Stronghold">
+		SELECT STRONGHOLD_ID AS strongholdID, PLAYER_ID AS playerID, POSX AS posX, POSY AS posY, NAME AS name, CREATETIME AS createtime FROM T_STRONGHOLD WHERE Stronghold_ID=#strongholdID#
+	</select>
+	
+	<select id="getStrongholdList" resultClass="Stronghold">
+		SELECT STRONGHOLD_ID AS strongholdID, PLAYER_ID AS playerID, POSX AS posX, POSY AS posY, NAME AS name, CREATETIME AS createtime FROM T_STRONGHOLD
+	</select>
+
+</sqlMap>

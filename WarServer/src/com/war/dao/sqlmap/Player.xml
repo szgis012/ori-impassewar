@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Player">
+	<typeAlias alias="Player" type="com.war.domain.Player" />
+	
+	<insert id="createPlayer" parameterClass="Player">
+		INSERT INTO T_PLAYER(USER_NAME, NAME, HEAD_IMG, HONOR_ID, GUILD_ID, COUNTRY, RENOWN, ATTACK_POINT, DEFENSE_POINT, RANK, MONEY, GIFT_CERTIFICATE, HAVE_RECEIVE_DAILYREWARD, STATE, LOGIN_NUM, ONLINE_TIME, LAST_LOGIN_TIME, CREATE_TIME) VALUES(#userName#, #name#, #headImg#, #honorID#, #guildID#, #country#, #renown#, #attackPoint#, #defensePoint#, #rank#, #money#, #giftCertificate#, #haveReceiveDailyreward#, #state#, #loginNum#, #onlineTime#, SYSDATE(), SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="playerID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="addPlayerRenown" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET RENOWN=RENOWN+#renown# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="addPlayerOnlineTime" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET ONLINE_TIME=ONLINE_TIME+#onlineTime# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updateMoney" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET MONEY=#money# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updateHonorIDByID" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET HONOR_ID=#honorID# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updateRenown" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET RENOWN=#renown# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updatePlayer" parameterClass="Player">
+		UPDATE T_PLAYER SET USER_NAME=#userName#, NAME=#name#, HONOR_ID=#honorID#, GUILD_ID=#guildID#, COUNTRY=#country#, RENOWN=#renown#, ATTACK_POINT=#attackPoint#, DEFENSE_POINT=#defensePoint#, RANK=#rank#, MONEY=#money#, HEAD_IMG=#headImg#, CREATE_TIME=#createTime#, LAST_LOGIN_TIME=#lastLoginTime#, LOGIN_NUM=#loginNum#, ONLINE_TIME=#onlineTime#, STATE=#state# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<delete id="deletePlayerByID" parameterClass="Integer">
+		DELETE FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</delete>
+	
+	<select id="getHonorIDByPlayerID" parameterClass="Integer" resultClass="Integer">
+		SELECT HONOR_ID AS honorID FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerIDByPlayerName" parameterClass="String" resultClass="Integer">
+		SELECT PLAYER_ID FROM T_PLAYER WHERE NAME=#name#
+	</select>
+	
+	<select id="getPlayerNameByPlayerID" parameterClass="Integer" resultClass="String">
+		SELECT NAME FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+
+	<select id="getLastLoginTimeByPlayerID" parameterClass="Integer" resultClass="java.util.Date">
+		SELECT LAST_LOGIN_TIME FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerByID" parameterClass="Integer" resultClass="Player">
+		SELECT PLAYER_ID AS playerID, USER_NAME AS userName, NAME AS name, HEAD_IMG AS headImg, HONOR_ID AS honorID, GUILD_ID AS guildID, COUNTRY AS country, RENOWN AS renown, ATTACK_POINT AS attackPoint, DEFENSE_POINT AS defensePoint, RANK AS rank, MONEY AS money, GIFT_CERTIFICATE AS giftCertificate, HAVE_RECEIVE_DAILYREWARD AS haveReceiveDailyreward, STATE AS state, LOGIN_NUM AS loginNum, ONLINE_TIME AS onlineTime, LAST_LOGIN_TIME AS lastLoginTime, CREATE_TIME AS createTime FROM T_PLAYER WHERE Player_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerList" resultClass="Player">
+		SELECT PLAYER_ID AS playerID, USER_NAME AS userName, NAME AS name, HEAD_IMG AS headImg, HONOR_ID AS honorID, GUILD_ID AS guildID, COUNTRY AS country, RENOWN AS renown, ATTACK_POINT AS attackPoint, DEFENSE_POINT AS defensePoint, RANK AS rank, MONEY AS money, GIFT_CERTIFICATE AS giftCertificate, HAVE_RECEIVE_DAILYREWARD AS haveReceiveDailyreward, STATE AS state, LOGIN_NUM AS loginNum, ONLINE_TIME AS onlineTime, LAST_LOGIN_TIME AS lastLoginTime, CREATE_TIME AS createTime FROM T_PLAYER
+	</select>
+	
+	<select id="getPlayerByUserName" parameterClass="String" resultClass="Player">
+		SELECT PLAYER_ID AS playerID, USER_NAME AS userName, NAME AS name, HEAD_IMG AS headImg, HONOR_ID AS honorID, GUILD_ID AS guildID, COUNTRY AS country, RENOWN AS renown, ATTACK_POINT AS attackPoint, DEFENSE_POINT AS defensePoint, RANK AS rank, MONEY AS money, GIFT_CERTIFICATE AS giftCertificate, HAVE_RECEIVE_DAILYREWARD AS haveReceiveDailyreward, STATE AS state, LOGIN_NUM AS loginNum, ONLINE_TIME AS onlineTime, LAST_LOGIN_TIME AS lastLoginTime, CREATE_TIME AS createTime FROM T_PLAYER WHERE USER_NAME=#userName#
+	</select>
+	
+	<select id="getPlayerCount" resultClass="Integer">
+		SELECT count(*) FROM T_PLAYER 
+	</select>
+	
+	<update id="updateLastLoginInfo" parameterClass="Integer">
+		UPDATE T_PLAYER SET LAST_LOGIN_TIME=SYSDATE(), LOGIN_NUM=LOGIN_NUM+1 WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updatePlayerState" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET STATE=#state# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updateGiftCertificate" parameterClass="java.util.Map">
+		UPDATE T_PLAYER SET GIFT_CERTIFICATE=#giftCertificate# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<update id="updateHaveReceiveDailyRewardToNotReceive">
+		UPDATE T_PLAYER SET HAVE_RECEIVE_DAILYREWARD=0 WHERE HAVE_RECEIVE_DAILYREWARD=1
+	</update>
+	
+	<update id="updateHaveReceiveDailyReward">
+		UPDATE T_PLAYER SET HAVE_RECEIVE_DAILYREWARD=#haveReceiveDailyreward# WHERE PLAYER_ID=#playerID#
+	</update>
+	
+	<select id="getPlayerNumByCountry" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) AS COUNT FROM T_PLAYER WHERE COUNTRY=#country#
+	</select>
+	
+	<select id="getFinshedFreshmanProtectList" parameterClass="Integer" resultClass="Player">
+		<![CDATA[SELECT PLAYER_ID AS playerID, USER_NAME AS userName, NAME AS name, HEAD_IMG AS headImg, HONOR_ID AS honorID, GUILD_ID AS guildID, COUNTRY AS country, RENOWN AS renown, ATTACK_POINT AS attackPoint, DEFENSE_POINT AS defensePoint, RANK AS rank, MONEY AS money, GIFT_CERTIFICATE AS giftCertificate, HAVE_RECEIVE_DAILYREWARD AS haveReceiveDailyreward, STATE AS state, LOGIN_NUM AS loginNum, ONLINE_TIME AS onlineTime, LAST_LOGIN_TIME AS lastLoginTime, CREATE_TIME AS createTime FROM T_PLAYER WHERE STATE=0 AND SYSDATE()>ADDDATE(CREATE_TIME, INTERVAL #day# DAY)]]>
+	</select>
+	
+	<select id="getRenownByPlayerID" parameterClass="Integer" resultClass="Integer">
+		SELECT RENOWN FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getPlayerCreateTime" parameterClass="Integer" resultClass="java.util.Date">
+		SELECT CREATETIME FROM T_PLAYER WHERE PLAYER_ID=#playerID#
+	</select>
+	
+</sqlMap>

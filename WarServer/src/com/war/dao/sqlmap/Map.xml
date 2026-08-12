@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Map">
+	<typeAlias alias="MapInfo" type="com.war.domain.Map" />
+	
+	<insert id="createMap" parameterClass="MapInfo">
+		INSERT INTO T_MAP(MAP_ID, POSX, POSY, AREA, TYPE, STATE, TARGET_ID, CATEGORY) VALUES(#mapID#, #posX#, #posY#, #area#, #type#, #state#, #targetID#, #category#)
+		<selectKey resultClass="Integer" keyProperty="mapID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateMapCategoryByID" parameterClass="java.util.Map">
+		UPDATE T_MAP SET CATEGORY=#category# WHERE MAP_ID=#mapID#
+	</update>
+	
+	<update id="updateTargetIDAndCategoryByID" parameterClass="java.util.Map">
+		UPDATE T_MAP SET TARGET_ID=#targetID#, CATEGORY=#category# WHERE MAP_ID=#mapID#
+	</update>
+	
+	<update id="updateMapTargetIDAndCategoryBatch" parameterClass="MapInfo">
+		UPDATE T_MAP SET TARGET_ID=#targetID#, CATEGORY=#category# WHERE MAP_ID=#mapID#
+	</update>
+	
+	<update id="updateMap" parameterClass="MapInfo">
+		UPDATE T_MAP SET MAP_ID=#mapID#, POSX=#posX#, POSY=#posY#, AREA=#area#, TYPE=#type#, STATE=#state#, TARGET_ID=#targetID#, CATEGORY=#category# WHERE MAP_ID=#mapID#
+	</update>
+	
+	<delete id="deleteMapByID" parameterClass="Integer">
+		DELETE FROM T_MAP WHERE MAP_ID=#mapID#
+	</delete>
+	
+	<select id="getMapNumByCategoryAndArea" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) AS NUM FROM T_MAP WHERE CATEGORY=#category# AND AREA=#area#
+	</select>
+	
+	<select id="getMapNumByAreaAndCategoryAndMapMonsterLevel" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) AS NUM FROM T_MAP TM, T_MAP_MONSTER TMM WHERE TM.TARGET_ID=TMM.MAP_MONSTER_ID AND TM.CATEGORY=#category# AND TM.AREA=#area# AND TMM.LEVEL=#mapMonsterLevel#
+	</select>
+	
+	<select id="getNoDepoyQueueAndNotInBattleMapList" resultClass="MapInfo">
+		SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE MAP_ID NOT IN (SELECT M.MAP_ID FROM T_MAP M, T_DEPOY_QUEUE DQ WHERE M.MAP_ID=DQ.MAP_ID) AND STATE=1 AND CATEGORY=4
+	</select>
+	
+	<select id="getMapByTargetIDAndCategory" parameterClass="java.util.Map" resultClass="MapInfo">
+		SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE TARGET_ID=#targetID# AND CATEGORY=#category#
+	</select>
+	
+	<select id="getMapByID" parameterClass="Integer" resultClass="MapInfo">
+		SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE MAP_ID=#mapID#
+	</select>
+	
+	<select id="getBlankFieldAndMonsterFieldMapNumByArea" parameterClass="java.util.Map" resultClass="Integer">
+		<![CDATA[SELECT COUNT(*) AS NUM FROM T_MAP WHERE (CATEGORY=#blankFieldCategory# OR CATEGORY=#monsterCategory#) AND AREA=#area#]]>
+	</select>
+	
+	<select id="getMapAmountByCategory" parameterClass="Integer" resultClass="Integer">
+		<![CDATA[SELECT COUNT(*) FROM T_MAP WHERE TYPE>=10 AND TYPE<20 AND CATEGORY=#category#]]>
+	</select>
+	
+	<select id="getBlankFieldIDList" resultClass="Integer">
+		<![CDATA[SELECT MAP_ID FROM T_MAP WHERE TYPE>=10 AND TYPE<20 AND CATEGORY=3]]>
+	</select>
+	
+	<select id="getMapList"  resultClass="MapInfo">
+		SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP
+	</select>
+	
+	<select id="getMapListBySQL" parameterClass="String" resultClass="MapInfo">
+		<![CDATA[$sql$]]>
+	</select>
+
+	<select id="getRandomMapByAreaAndCategory" parameterClass="java.util.Map" resultClass="MapInfo">
+		SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE area=#area# AND CATEGORY=#category# ORDER BY RAND() LIMIT 0, 1
+	</select>
+
+	<select id="getRandomMapByStartPosXYAndEndPosXYAndCategory" parameterClass="java.util.Map" resultClass="MapInfo">
+		<![CDATA[SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE POSX>=#startX# AND POSX<=#endX# AND POSY>=#startY# AND POSY<=#endY# AND CATEGORY=#category# ORDER BY RAND() LIMIT 0, 1]]>
+	</select>
+
+	<select id="getMapListByStartPosXYAndEndPosXY" parameterClass="java.util.Map" resultClass="MapInfo">
+		<![CDATA[SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE POSX>=#startX# AND POSX<=#endX# AND POSY>=#startY# AND POSY<=#endY#]]>
+	</select>
+	
+	<select id="getMapByPosXAndPoxY" parameterClass="java.util.Map" resultClass="MapInfo">
+		<![CDATA[SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE POSX=#posX# AND POSY=#posY# ]]>
+	</select>
+	
+	<select id="getRandomMapIDListByCategoryAndAreaAndNum" parameterClass="java.util.Map"  resultClass="Integer">
+		SELECT MAP_ID AS mapID FROM T_MAP WHERE CATEGORY=#category# AND AREA=#area# ORDER BY RAND() LIMIT 0, #num#
+	</select>
+	
+	<select id="getBlankFieldList" parameterClass="java.util.Map"  resultClass="MapInfo">
+		<![CDATA[SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE TYPE>=10 AND TYPE<20 AND CATEGORY=3]]>
+	</select>
+	
+	<select id="getMapListByDistance" parameterClass="java.util.Map"  resultClass="MapInfo">
+		<![CDATA[SELECT MAP_ID AS mapID, POSX AS posX, POSY AS posY, AREA AS area, TYPE AS type, STATE AS state, TARGET_ID AS targetID, CATEGORY AS category FROM T_MAP WHERE (POSX*POSX+POSY*POSY)>#radius#*#radius# AND (POSX*POSX+POSY*POSY)<(#radius#+#range#)*(#radius#+#range#)]]>
+	</select>
+	
+</sqlMap>

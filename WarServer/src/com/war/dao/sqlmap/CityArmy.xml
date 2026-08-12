@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityArmy">
+	<typeAlias alias="CityArmy" type="com.war.domain.CityArmy" />
+	
+	<insert id="createCityArmy" parameterClass="CityArmy">
+		INSERT INTO T_CITY_ARMY(CITY_ARMY_ID, CITY_ID, ARMY_ID, NUM) VALUES(#cityArmyID#, #cityID#, #armyID#, #num#)
+		<selectKey resultClass="Integer" keyProperty="cityArmyID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityArmy" parameterClass="CityArmy">
+		UPDATE T_CITY_ARMY SET CITY_ID=#cityID#, ARMY_ID=#armyID#, NUM=#num# WHERE CITY_ARMY_ID=#cityArmyID#
+	</update>
+	
+	<delete id="deleteCityArmyByID" parameterClass="Integer">
+		DELETE FROM T_CITY_ARMY WHERE CITY_ARMY_ID=#cityArmyID#
+	</delete>
+	
+	<delete id="deleteCityArmyByCityIDAndArmyID" parameterClass="Integer">
+		DELETE FROM T_CITY_ARMY WHERE CITY_ID = #cityID# AND ARMY_ID = #armyID#
+	</delete>
+	
+	<select id="getCityArmyByID" parameterClass="Integer" resultClass="CityArmy">
+		SELECT CITY_ARMY_ID AS cityArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num FROM T_CITY_ARMY WHERE CITY_ARMY_ID=#cityArmyID#
+	</select>
+	
+	<select id="getCityArmyList" resultClass="CityArmy">
+		SELECT CITY_ARMY_ID AS cityArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num FROM T_CITY_ARMY
+	</select>
+	
+	<select id="getCityArmyListByCityID" parameterClass="Integer" resultClass="CityArmy">
+		SELECT CITY_ARMY_ID AS cityArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num FROM T_CITY_ARMY WHERE CITY_ID = #cityID#
+	</select>
+	
+	<select id="getCityArmyListByCityIDAndArmyID" parameterClass="java.util.Map" resultClass="CityArmy">
+		SELECT CITY_ARMY_ID AS cityArmyID, CITY_ID AS cityID, ARMY_ID AS armyID, NUM AS num FROM T_CITY_ARMY WHERE CITY_ID = #cityID# AND ARMY_ID = #armyID#
+	</select>
+
+	<update id="batchUpdateCityArmyNumByCityIDAndArmyIDs" parameterClass="java.util.Map">
+		UPDATE T_CITY_ARMY SET NUM=#num# WHERE CITY_ID=#cityID# AND ARMY_ID=#armyID#
+	</update>
+
+	<update id="batchUpdateCityArmyNum" parameterClass="java.util.Map">
+		UPDATE T_CITY_ARMY SET NUM=#num# WHERE CITY_ARMY_ID=#cityArmyID#
+	</update>
+
+</sqlMap>

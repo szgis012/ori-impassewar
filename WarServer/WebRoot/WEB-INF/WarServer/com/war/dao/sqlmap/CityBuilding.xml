@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CityBuilding">
+	<typeAlias alias="CityBuilding" type="com.war.domain.CityBuilding" />
+	
+	<insert id="createCityBuilding" parameterClass="CityBuilding">
+		INSERT INTO T_CITY_BUILDING(CITY_ID, BUILDING_ID, POSITION, LEVEL, STATE) VALUES(#cityID#, #buildingID#, #position#, #level#, #state#)
+		<selectKey resultClass="Integer" keyProperty="cityBuildingID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateCityBuilding" parameterClass="CityBuilding">
+		UPDATE T_CITY_BUILDING SET CITY_ID=#cityID#, BUILDING_ID=#buildingID#, POSITION=#position#, LEVEL=#level#, STATE=#state# WHERE CITY_BUILDING_ID=#cityBuildingID#
+	</update>
+	
+	<delete id="deleteCityBuilding" parameterClass="Integer">
+		DELETE FROM T_CITY_BUILDING WHERE CITY_BUILDING_ID=#cityBuildingID#
+	</delete>
+	
+	<select id="getCityBuildingLevelByCityIDAndBuildingID" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT LEVEL FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID=#buildingID#
+	</select>
+	
+	<select id="getCityBuildingByCityIDAndBuildingIDAndPosition" parameterClass="java.util.Map" resultClass="CityBuilding">
+		SELECT CITY_BUILDING_ID AS cityBuildingID, CITY_ID AS cityID, BUILDING_ID AS buildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID=#buildingID# AND POSITION=#position#
+	</select>
+	
+	<select id="getCityBuildingByCityIDAndBuildingID" parameterClass="java.util.Map" resultClass="CityBuilding">
+		SELECT CITY_BUILDING_ID AS cityBuildingID, CITY_ID AS cityID, BUILDING_ID AS buildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE CITY_ID=#cityID# AND BUILDING_ID=#buildingID#
+	</select>
+	
+	<select id="getCityBuildingByID" parameterClass="Integer" resultClass="CityBuilding">
+		SELECT CITY_BUILDING_ID AS cityBuildingID, CITY_ID AS cityID, BUILDING_ID AS buildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE CITY_BUILDING_ID=#cityBuildingID#
+	</select>
+	
+	<select id="getCityBuildingListByCityID" parameterClass="Integer" resultClass="CityBuilding">
+		SELECT CITY_BUILDING_ID AS cityBuildingID, CITY_ID AS cityID, BUILDING_ID AS buildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE CITY_ID=#cityID#
+	</select>
+
+	<select id="getCityBuildingByPosition" parameterClass="java.util.Map" resultClass="CityBuilding">
+		SELECT CITY_BUILDING_ID AS cityBuildingID, CITY_ID AS cityID, BUILDING_ID AS buildingID, POSITION AS position, LEVEL AS level, STATE AS state FROM T_CITY_BUILDING WHERE CITY_ID=#cityID#  AND POSITION=#position#
+	</select>
+</sqlMap>

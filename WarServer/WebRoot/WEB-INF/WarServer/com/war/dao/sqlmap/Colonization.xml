@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Colonization">
+	<typeAlias alias="Colonization" type="com.war.domain.Colonization" />
+	
+	<insert id="createColonization" parameterClass="Colonization">
+		INSERT INTO T_COLONIZATION(CITY_ID, TARGET_CITY_ID, START_TIME, END_TIME, HAVE_IMPOSED) VALUES(#cityID#, #targetCityID#, #startTime#, #endTime#, #haveImposed#)
+		<selectKey resultClass="Integer" keyProperty="colonizationID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateHaveImposed" parameterClass="Integer">
+		UPDATE T_COLONIZATION SET HAVE_IMPOSED=#haveImposed#
+	</update>
+	
+	<update id="updateHaveImposedByColonizationID" parameterClass="java.util.Map">
+		UPDATE T_COLONIZATION SET HAVE_IMPOSED=#haveImposed# WHERE COLONIZATION_ID=#colonizationID#
+	</update>
+	
+	<update id="updateColonization" parameterClass="Colonization">
+		UPDATE T_COLONIZATION SET CITY_ID=#cityID#, TARGET_CITY_ID=#targetCityID#, START_TIME=#startTime#, END_TIME=#endTime#, HAVE_IMPOSED=#haveImposed# WHERE COLONIZATION_ID=#colonizationID#
+	</update>
+	
+	<delete id="deleteColonizationByID" parameterClass="Integer">
+		DELETE FROM T_COLONIZATION WHERE COLONIZATION_ID=#colonizationID#
+	</delete>
+	
+	<select id="getColonizationNumByCityID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_COLONIZATION WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getColonizationByID" parameterClass="Integer" resultClass="Colonization">
+		SELECT COLONIZATION_ID AS colonizationID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, START_TIME AS startTime, END_TIME AS endTime, HAVE_IMPOSED AS haveImposed FROM T_COLONIZATION WHERE COLONIZATION_ID=#colonizationID#
+	</select>
+	
+	<select id="getColonizationByCityIDAndTargetCityID" parameterClass="java.util.Map" resultClass="Colonization">
+		SELECT COLONIZATION_ID AS colonizationID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, START_TIME AS startTime, END_TIME AS endTime, HAVE_IMPOSED AS haveImposed FROM T_COLONIZATION WHERE CITY_ID=#cityID# AND TARGET_CITY_ID=#targetCityID#
+	</select>
+	
+	<select id="getColonizationListByCityID" resultClass="Colonization">
+		SELECT COLONIZATION_ID AS colonizationID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, START_TIME AS startTime, END_TIME AS endTime, HAVE_IMPOSED AS haveImposed FROM T_COLONIZATION WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getColonizationList" resultClass="Colonization">
+		SELECT COLONIZATION_ID AS colonizationID, CITY_ID AS cityID, TARGET_CITY_ID AS targetCityID, START_TIME AS startTime, END_TIME AS endTime, HAVE_IMPOSED AS haveImposed FROM T_COLONIZATION
+	</select>
+
+</sqlMap>

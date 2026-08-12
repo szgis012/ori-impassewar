@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DepoyQueue">
+	<typeAlias alias="DepoyQueue" type="com.war.domain.DepoyQueue" />
+	
+	<insert id="createDepoyQueue" parameterClass="DepoyQueue">
+		INSERT INTO T_DEPOY_QUEUE(CITY_ID, CITY_MILITARY_ID, MAP_ID, TYPE, REMARK, FINISH_TIME) VALUES(#cityID#, #cityMilitaryID#, #mapID#, #type#, #remark#, #finishTime#)
+		<selectKey resultClass="Integer" keyProperty="depoyQueueID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateDepoyQueue" parameterClass="DepoyQueue">
+		UPDATE T_DEPOY_QUEUE SET CITY_ID=#cityID#, CITY_MILITARY_ID=#cityMilitaryID#, MAP_ID=#mapID#, TYPE=#type#, REMARK=#remark#, FINISH_TIME=#finishTime# WHERE Depoy_Queue_ID=#depoyQueueID#
+	</update>
+	
+	<delete id="deleteDepoyQueueByID" parameterClass="Integer">
+		DELETE FROM T_DEPOY_QUEUE WHERE DEPOY_QUEUE_ID=#depoyQueueID#
+	</delete>
+	
+	<select id="getDepoyQueueNumByPosXAndPosY" parameterClass="java.util.Map" resultClass="Integer">
+		SELECT COUNT(*) FROM T_DEPOY_QUEUE WHERE MAP_ID=(SELECT MAP_ID FROM T_MAP WHERE POSX=#posX# AND POSY=#posY#)
+	</select>
+	
+   	<select id="getDepoyQueueByID" parameterClass="Integer" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE Depoy_Queue_ID=#depoyQueueID#
+	</select>
+	
+	<select id="getDepoyQueueListByCityID" parameterClass="Integer" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE CITY_ID=#cityID#
+	</select>
+	
+	<select id="getDepoyQueueListWithMapIDByCityID" parameterClass="Integer" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE MAP_ID=(SELECT T_MAP.MAP_ID FROM T_MAP, T_CITY WHERE T_MAP.POSX=T_CITY.POSX AND T_MAP.POSY=T_CITY.POSY AND T_CITY.CITY_ID=#cityID#)
+	</select>
+	
+	<select id="getDepoyQueueListByCityIDAndType" parameterClass="java.util.Map" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE TYPE=#type# AND CITY_ID=#cityID# 
+	</select>
+	
+	<select id="getDepoyQueueListWithMapIDByCityIDAndType" parameterClass="java.util.Map" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE TYPE=#type# AND MAP_ID=(SELECT T_MAP.MAP_ID FROM T_MAP, T_CITY WHERE T_MAP.POSX=T_CITY.POSX AND T_MAP.POSY=T_CITY.POSY AND T_CITY.CITY_ID=#cityID#)
+	</select>
+	
+	<select id="getDepoyQueueNumByCityIDAndType" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_DEPOY_QUEUE WHERE TYPE=#type# AND CITY_ID=#cityID#
+	</select>
+	
+	<select id="getDepoyQueueNumWithMapIDByCityIDAndType" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_DEPOY_QUEUE WHERE TYPE=#type# AND MAP_ID=(SELECT T_MAP.MAP_ID FROM T_MAP, T_CITY WHERE T_MAP.POSX=T_CITY.POSX AND T_MAP.POSY=T_CITY.POSY AND T_CITY.CITY_ID=#cityID#)
+	</select>
+	
+	<select id="getDepoyQueueList" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE
+	</select>
+
+	<select id="getFinishDepoyQueueList" resultClass="DepoyQueue">
+		<![CDATA[ SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE FINISH_TIME<=SYSDATE()]]>
+	</select>
+	
+	<select id="getDepoyQueueByCityMilitaryID" parameterClass="Integer" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE CITY_MILITARY_ID=#cityMilitaryID#
+	</select>
+	
+	<!-- 获得别的城市对传入参数（cityID）所代表的城市进行（depoy）的信息 -->
+	<select id="getBeDepoyedQueueListByCityID" parameterClass="Integer" resultClass="DepoyQueue">
+		SELECT DEPOY_QUEUE_ID AS depoyQueueID, CITY_ID AS cityID, CITY_MILITARY_ID AS cityMilitaryID, MAP_ID AS mapID, TYPE AS type, REMARK AS remark, FINISH_TIME AS finishTime FROM T_DEPOY_QUEUE WHERE MAP_ID=(SELECT MAP_ID FROM T_MAP WHERE CATEGORY=1 AND TARGET_ID=#cityID#)
+	</select>
+	
+</sqlMap>

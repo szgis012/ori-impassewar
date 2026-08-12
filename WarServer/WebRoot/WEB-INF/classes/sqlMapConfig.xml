@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMapConfig	  
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"	  
+	"http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+	<settings lazyLoadingEnabled="false" useStatementNamespaces="true" />
+ 
+	<sqlMap resource="com/war/dao/sqlmap/Player.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Honor.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/City.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityExt.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Colonization.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Building.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityBuilding.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Technology.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityTechnology.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/ConstraintDepend.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/ProcessQueue.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/MessageInbox.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/MessageOutbox.xml" />
+
+	<sqlMap resource="com/war/dao/sqlmap/Guild.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildPlayer.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildRewardReceiveLog.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildPlaAppInv.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildEvent.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildExt.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildAttack.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildtechnologyCost.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildTechnologyGuild.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildTechnology.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildIncExpHistory.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GuildRelationship.xml" />
+
+	<sqlMap resource="com/war/dao/sqlmap/Treasure.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/TreasureHistory.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/PlayerTreasure.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Task.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/PlayerTask.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Rank.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityRank.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/ResTransportation.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/ResTrade.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/TradeQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/ProductionQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Army.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityArmy.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/ArmyDepend.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Ordnance.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityOrdnance.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/CityCandidacyHero.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityHero.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityHeroExt.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityHeroLevelupLog.xml"/>
+	<sqlMap resource="com/war/dao/sqlmap/CityMilitary.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/CityMilitarySuccor.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Name.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Map.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/MapFavourite.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/MapMonster.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/DepoyQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Report.xml" />
+
+	<sqlMap resource="com/war/dao/sqlmap/Battle.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/BattleLog.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/BattleDetail.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/BattleArmy.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/BattleWait.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/BattleQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/User.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/DeclareWar.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Defense.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/ChatHistory.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/CityDefense.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/GameScript.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/TreasureQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Equipment.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/PlayerEquipment.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Skill.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/HeroSkill.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/SpyQueue.xml" />
+	
+	<sqlMap resource="com/war/dao/sqlmap/Military.xml" />
+	 
+	<sqlMap resource="com/war/dao/sqlmap/PayHistory.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/DataHistory.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/GameCard.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/PlayerCard.xml" />
+	 
+	<sqlMap resource="com/war/dao/sqlmap/Stronghold.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/Shbuilding.xml" />
+	<sqlMap resource="com/war/dao/sqlmap/StrongholdShbuilding.xml" />
+	 
+	<sqlMap resource="com/war/dao/sqlmap/CityWoundedArmy.xml"/>
+	<sqlMap resource="com/war/dao/sqlmap/CityResource.xml"/>
+	
+	<sqlMap resource="com/war/dao/sqlmap/SystemNotice.xml"/>
+	
+	<sqlMap resource="com/war/dao/sqlmap/Friend.xml"/>
+	<sqlMap resource="com/war/dao/sqlmap/OperationLog.xml"/>
+	
+	
+	<sqlMap resource="com/war/dao/sqlmap/ReferenceAccount.xml"/>
+	
+	
+</sqlMapConfig>

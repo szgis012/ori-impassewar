@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" close="doClose()" layout="absolute" width="430" height="340" showCloseButton="false">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.building.heavyfactory.DisassembleVehicleEvent;
+			import com.hifong.war.vo.CityOrdnanceVO;
+			import com.hifong.war.events.building.barracks.DisarmSoldierEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.vo.OrdnanceVO;
+			import com.hifong.war.vo.CityArmyVO;
+			import com.hifong.war.vo.ArmyVO;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.WindowUtil;
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			/** 当前兵种信息*/
+			[Bindable]
+			public var army:ArmyVO;
+			
+			/** 当前兵种的数量信息*/
+			[Bindable]
+			public var cityArmy:CityArmyVO;
+			
+			//得到当前可用的武器数量
+			private function getCurrentNum(item:Object, column:DataGridColumn):String{
+				//得到城市该军械的数量信息
+				var cityOrdnance:CityOrdnanceVO = model.ordnanceInfo.cityOrdnanceMap[item.ordnanceID] as CityOrdnanceVO;
+				
+				if(cityOrdnance){
+					return String(cityOrdnance.num);
+				}else{
+					return "0";
+				}
+			}
+			
+			//得到当前可用的武器数量
+			private function getOrdnanceName(item:Object, column:DataGridColumn):String{
+				//得到城市该军械的数量信息
+				var ordnance:OrdnanceVO = model.ordnanceInfo.ordnanceMap[item.ordnanceID] as OrdnanceVO;
+				
+				if(ordnance){
+					return ordnance.name;
+				}else{
+					return "无效军械";
+				}
+			}
+			
+			//解除武装
+			private function doDisassemble():void{
+				var num:int = int(this.txtProduceNum.text);
+				
+				if(num == 0){
+					MsgBox.showMessage("请输入要拆卸的数量。");
+					this.txtProduceNum.setFocus();
+					return
+				}
+					
+				if(num>cityArmy.num){
+					MsgBox.showMessage("超过最大可拆卸的个数。");
+					return;
+				}
+				
+				
+				MsgBox.showConfirm("拆卸车辆不返还军械，您确定要进行该操作吗？",function():void{
+					CairngormEventDispatcher.getInstance().dispatchEvent(new DisassembleVehicleEvent(army,cityArmy,num));
+					doClose();
+				});
+				
+			}
+			
+			private function doClose():void{
+				WindowUtil.closeModelWindow(this);
+			}
+			
+			private function doProduceNumChange():void{
+				var num:int = int(this.txtProduceNum.text);
+				
+				if(num <= 0){
+					this.txtProduceNum.text = "1";
+					num = 1;
+				}
+				
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" top="2" horizontalAlign="center" mouseChildren="false" mouseEnabled="false">
+		<mx:Button id="titleBtn" styleName="Title" label="拆卸：{army.name}" visible="{titleBtn.label.length}" width="{titleBtn.label.length*20+120}" />
+	</mx:HBox>
+	<mx:Button x="583" y="25" styleName="closeWindow" click="doClose()" right="10" top="6"/>
+	
+	<mx:DataGrid x="25" y="37" width="380" height="188" dataProvider="{army.armyDependList}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="获得资源"  labelFunction="getOrdnanceName"/>
+			<mx:DataGridColumn headerText="获得数量" dataField="num"/>
+			<mx:DataGridColumn headerText="当前数量"  labelFunction="getCurrentNum"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="25" y="233" width="380" height="81" styleName="CanvasBorder">
+		<mx:Label x="162" y="12" text="拆卸数量："/>
+		<mx:Label x="10" y="12" text="现有数量："/>
+		<mx:TextInput x="235" y="11" width="135" id="txtProduceNum" restrict="0-9" text="1" change="doProduceNumChange()" textAlign="right"/>
+		<mx:Text x="74" y="12" text="{cityArmy.num}" width="60"/>
+		<mx:Button x="300" y="45" label="确定" click="doDisassemble()" width="70" height="26"/>
+	</mx:Canvas>
+	
+</mx:TitleWindow>

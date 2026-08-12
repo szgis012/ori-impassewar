@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Skill">
+	<typeAlias alias="Skill" type="com.war.domain.Skill" />
+	
+	<insert id="createSkill" parameterClass="Skill">
+		INSERT INTO T_SKILL(SKILL_ID, NAME, LEVEL, MAX_LEVEL, IMAGE, DESCRIPTION, LIFE, ATTACK, DEFENSE, SPEED, `RANGE`, LAST_ROUND, COST_STAMINA, STUDY_LEVEL, STUDY_MONEY, STUDY_PROFICIENCY) VALUES(#skillID#, #name#, #level#, #maxLevel#, #image#, #description#, #life#, #attack#, #defense#, #speed#, #range#, #lastRound#, #costStamina#, #studyLevel#, #studyMoney#, #studyProficiency#)
+	</insert>
+	
+	<update id="updateSkill" parameterClass="Skill">
+		UPDATE T_SKILL SET SKILL_ID=#skillID#, NAME=#name#, LEVEL=#level#, MAX_LEVEL=#maxLevel#, IMAGE=#image#, DESCRIPTION=#description#, LIFE=#life#, ATTACK=#attack#, DEFENSE=#defense#, SPEED=#speed#, `RANGE`=#range#, LAST_ROUND=#lastRound#, COST_STAMINA=#costStamina#, STUDY_LEVEL=#studyLevel#, STUDY_MONEY=#studyMoney#, STUDY_PROFICIENCY=#studyProficiency# WHERE SKILL_ID=#skillID# AND LEVEL=#level#
+	</update>
+	
+	<delete id="deleteSkillByIDAndLevel" parameterClass="java.util.Map">
+		DELETE FROM T_SKILL WHERE SKILL_ID=#skillID# AND LEVEL=#level#
+	</delete>
+	
+	<select id="getSkillByIDAndLevel" parameterClass="java.util.Map" resultClass="Skill">
+		SELECT SKILL_ID AS skillID, NAME AS name, LEVEL AS level, MAX_LEVEL AS maxLevel, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, SPEED AS speed, `RANGE` AS `range`, LAST_ROUND AS lastRound, COST_STAMINA AS costStamina, STUDY_LEVEL AS studyLevel, STUDY_MONEY AS studyMoney, STUDY_PROFICIENCY AS studyProficiency FROM T_SKILL WHERE SKILL_ID=#skillID# AND LEVEL=#level#
+	</select>
+	
+	<select id="getLevel1SkillList" resultClass="Skill">
+		SELECT SKILL_ID AS skillID, NAME AS name, LEVEL AS level, MAX_LEVEL AS maxLevel, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, SPEED AS speed, `RANGE` AS `range`, LAST_ROUND AS lastRound, COST_STAMINA AS costStamina, STUDY_LEVEL AS studyLevel, STUDY_MONEY AS studyMoney, STUDY_PROFICIENCY AS studyProficiency FROM T_SKILL WHERE LEVEL=1
+	</select>
+	
+	<select id="getSkillListBySkillID" parameterClass="Integer" resultClass="Skill">
+		SELECT SKILL_ID AS skillID, NAME AS name, LEVEL AS level, MAX_LEVEL AS maxLevel, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, SPEED AS speed, `RANGE` AS `range`, LAST_ROUND AS lastRound, COST_STAMINA AS costStamina, STUDY_LEVEL AS studyLevel, STUDY_MONEY AS studyMoney, STUDY_PROFICIENCY AS studyProficiency FROM T_SKILL WHERE SKILL_ID=#skillID#
+	</select>
+	
+	<select id="getSkillList" resultClass="Skill">
+		SELECT SKILL_ID AS skillID, NAME AS name, LEVEL AS level, MAX_LEVEL AS maxLevel, IMAGE AS image, DESCRIPTION AS description, LIFE AS life, ATTACK AS attack, DEFENSE AS defense, SPEED AS speed, `RANGE` AS `range`, LAST_ROUND AS lastRound, COST_STAMINA AS costStamina, STUDY_LEVEL AS studyLevel, STUDY_MONEY AS studyMoney, STUDY_PROFICIENCY AS studyProficiency FROM T_SKILL
+	</select>
+	
+	<select id="getSkillIDList" resultClass="Integer">
+		SELECT DISTINCT SKILL_ID FROM T_SKILL
+	</select>
+
+</sqlMap>

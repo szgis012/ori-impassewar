@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="170" height="25" verticalAlign="middle" horizontalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.util.WindowUtil;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.events.building.CancelProcessEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.util.MsgBox;
+			/**
+			 * 加速
+			 */
+			private function speedUp(event:MouseEvent):void{
+				trace("speedUp:"+data.type);
+				switch(data.type){
+					case 0:
+					//建筑
+					//传递给宝物的参数
+					var params:Object = {queueID:data.queueID,cityBuildingID:data.cityBuildingID};
+					var win:UseTreasureWindow = new UseTreasureWindow();
+					win.params = params;
+					win.treasureCategory = TreasureCategoryConstant.ACCELERATE;
+					win.treasureType = TreasureTypeConstant.ACCELERATE_BUILD;
+					WindowUtil.showModelWindow(win);
+					break;
+					case 1:
+					//生产
+					//传递给宝物的参数
+					var params:Object = {queueID:data.queueID};
+					var win:UseTreasureWindow = new UseTreasureWindow();
+					win.params = params;
+					win.treasureCategory = TreasureCategoryConstant.ACCELERATE;
+					win.treasureType = TreasureTypeConstant.ACCELERATE_ORDNANCE;
+					WindowUtil.showModelWindow(win);
+					break;
+					case 2:
+					//军事
+					break;
+				}
+			}
+			/**
+			 * 取消
+			 */
+			private function cancel(event:MouseEvent):void{
+				switch(data.type){
+					case 0:
+					//建筑
+					MsgBox.showConfirm("您确认要进行该操作吗？",doCancelAction);
+					break;
+					case 1:
+					MsgBox.showConfirm("您确认要进行该操作吗？",doCancelAction);
+					//生产
+					break;
+					case 2:
+					MsgBox.showConfirm("您确认要进行该操作吗？",doCancelAction);
+					//军事
+					break;
+				}
+			}
+			private function doCancelAction():void{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new CancelProcessEvent(data.queueID,data.cityBuildingID));
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="{data.label}" width="100%" />
+	<mx:Button  styleName="Up" click="speedUp(event)" />
+	<mx:Button styleName="closeWindow" click="cancel(event)">
+	</mx:Button>
+</mx:HBox>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GuildAttack">
+	<typeAlias alias="GuildAttack" type="com.war.domain.GuildAttack" />
+	
+	<insert id="createGuildAttack" parameterClass="GuildAttack">
+		INSERT INTO T_GUILD_ATTACK(GUILD_ID, TYPE, DESCRIPTION, TARGET_GUILD_ID, CREATE_TIME) VALUES(#guildID#, #type#, #description#, #targetGuildID#, SYSDATE())
+		<selectKey resultClass="Integer" keyProperty="guildAttackID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<delete id="deleteGuildAttackByID" parameterClass="Integer">
+		DELETE FROM T_GUILD_ATTACK WHERE GUILD_ATTACK_ID=#guildAttackID#
+	</delete>
+	
+	<delete id="deleteGuildAttacksByGuildID" parameterClass="Integer">
+		DELETE FROM T_GUILD_ATTACK WHERE GUILD_ID=#guildID#
+	</delete>
+	
+	<select id="getGuildAttackByID" parameterClass="Integer" resultClass="GuildAttack">
+		SELECT GUILD_ATTACK_ID AS guildAttackID, GUILD_ID AS guildID, TYPE AS type, DESCRIPTION AS description, TARGET_GUILD_ID AS targetGuildID, CREATE_TIME AS createTime FROM T_GUILD_ATTACK WHERE GUILD_ATTACK_ID=#guildAttackID#
+	</select>
+
+	<select id="getGuildAttackAmountByGuildID" parameterClass="Integer" resultClass="Integer">
+		SELECT COUNT(*) FROM T_GUILD_ATTACK WHERE GUILD_ID=#guildID#
+	</select>
+
+	<select id="getGuildAttackPagingListByGuildID" parameterClass="HashMap" resultClass="GuildAttack">
+		SELECT GUILD_ATTACK_ID AS guildAttackID, GUILD_ID AS guildID, TYPE AS type, DESCRIPTION AS description, TARGET_GUILD_ID AS targetGuildID, CREATE_TIME AS createTime FROM T_GUILD_ATTACK WHERE GUILD_ID=#guildID# ORDER BY CREATE_TIME DESC LIMIT #start#, #offset#
+	</select>
+
+	<select id="getGuildAttackListByGuildID" resultClass="GuildAttack">
+		SELECT GUILD_ATTACK_ID AS guildAttackID, GUILD_ID AS guildID, TYPE AS type, DESCRIPTION AS description, TARGET_GUILD_ID AS targetGuildID, CREATE_TIME AS createTime FROM T_GUILD_ATTACK WHERE GUILD_ID=#guildID#
+	</select>
+
+</sqlMap>

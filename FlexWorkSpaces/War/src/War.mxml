@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" horizontalScrollPolicy="off" verticalScrollPolicy="off" layout="absolute" usePreloader="true"  preloader="com.hifong.war.view.loading.Preloader" width="1000" height="600" creationComplete="initApp()" xmlns:task="war.task.*" xmlns:stronghold="*" xmlns:city="*" backgroundColor="#000000" xmlns:world="*" xmlns:chat="com.hifong.war.view.chat.*" xmlns:scrollcanvas="com.hifong.war.view.common.*">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.PopUpButton;
+			import mx.controls.Alert;
+			import com.hifong.war.view.building.militarycollege.NoHeroWindow;
+			import com.hifong.war.constant.TreasureTypeConstant;
+			import com.hifong.war.constant.TreasureCategoryConstant;
+			import com.hifong.war.view.treasure.UseTreasureWindow;
+			import com.hifong.war.view.friend.FriendWindow;
+			import com.hifong.war.constant.DailyRewardConstant;
+			import com.greensock.easing.Circ;
+			import com.greensock.plugins.TransformMatrixPlugin;
+			import com.greensock.plugins.TweenPlugin;
+			import com.greensock.TweenMax;
+			import com.greensock.data.TweenLiteVars;
+			import com.greensock.TweenLite;
+			import com.hifong.war.events.building.militarycollege.GetCityHeroListEvent;
+			import com.hifong.war.view.building.militarycollege.CityHeroInfoWindow;
+			import com.hifong.war.view.assets.WarAssets;
+			import com.hifong.war.events.common.ReceiveDailyRewardEvent;
+			import com.hifong.war.view.colonization.ColonizationManageWindow;
+			import com.hifong.war.util.ConfigUtil;
+			import com.hifong.war.view.treasure.TreasureShopWindow;
+			import com.hifong.war.view.guild.NoGuildWindow;
+			import com.hifong.war.events.stronghold.GetStrongholdBuildingListByStrongholdIDEvent;
+			import com.hifong.war.util.tooltip.CommonTooltip;
+			import com.hifong.war.util.WindowUtil;
+			import mx.managers.CursorManager;
+			import com.hifong.war.view.stat.ResourceProductionStatWindow;
+			import com.hifong.war.view.treasure.TreasureStateWindow;
+			import com.hifong.war.common.DialogManager;
+			import com.hifong.war.view.military.MilitaryWindow;
+			import mx.events.ToolTipEvent;
+			import mx.managers.ToolTipManager;
+			import com.hifong.war.util.BusyCursor;
+			import mx.binding.utils.BindingUtils;
+			import com.hifong.war.common.GlobalTimer;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.hifong.war.business.Services;
+			import com.hifong.war.control.WarController;
+			import com.hifong.war.events.common.GetServerTimeEvent;
+			import com.hifong.war.model.ModelLocator;
+			import com.hifong.war.util.MsgBox;
+			import com.hifong.war.view.guild.GuildWindow;
+			import com.hifong.war.view.message.MessageWindow;
+			import com.hifong.war.view.rank.RankWindow;
+			import com.hifong.war.view.report.ReportWindow;
+			import com.hifong.war.view.message.MessageWindow;
+			import com.hifong.war.view.rank.RankWindow;
+			import com.hifong.war.view.task.TaskWindow;
+			import com.hifong.war.view.treasure.TreasureWindow;
+			
+			import flash.events.MouseEvent;
+			
+			//控制器  接收Events并且映射到commands
+			private var controller:WarController = new WarController();
+			
+			//RemoteObject  
+			private var services:Services = new Services(); 
+			
+			[Bindable]
+			private var model:ModelLocator = ModelLocator.getInstance();
+			
+			//地图是否已经加载
+			private var mapLoad:Boolean = false;
+			/** 当前选择场景容器 */
+			private var currentScene:Canvas;
+			/** 旗号控制 */
+			private var _showFlag:Boolean=false;
+			
+			//游戏初始化方法 
+			private function initApp():void
+			{
+				//Alert.show(ConfigUtil.getProperty("WEBSITE_URL"));
+				//右键菜单  //
+				var contextMenu:ContextMenu = new ContextMenu;
+				contextMenu.hideBuiltInItems();
+				var contextMenuItem:ContextMenuItem;
+				
+				contextMenuItem = new ContextMenuItem("官方网站");
+				contextMenu.customItems.push(contextMenuItem);
+				contextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,function ():void{
+					ExternalInterface.call('window.open',ConfigUtil.getProperty("WEBSITE_URL"),'_blank');
+				});
+				contextMenuItem = new ContextMenuItem("游戏论坛");
+				contextMenu.customItems.push(contextMenuItem);
+				contextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,function ():void{
+					ExternalInterface.call('window.open',ConfigUtil.getProperty("BBS_URL"),'_blank');
+				});
+				
+				this.contextMenu = contextMenu; 
+				
+				model.app = this;
+				
+				//数据加载完显示登录窗口         
+				this.addEventListener(FlexEvent.APPLICATION_COMPLETE,showLoginWindow);
+			
+											
+				buttonCity.addEventListener(MouseEvent.CLICK,showCity);
+				buttonMap.addEventListener(MouseEvent.CLICK,showMap);
+				buttonGuild.addEventListener(MouseEvent.CLICK,showGuild);
+				buttonHero.addEventListener(MouseEvent.CLICK,showCityHeroList);
+				buttonTask.addEventListener(MouseEvent.CLICK,showTask);
+				buttonReport.addEventListener(MouseEvent.CLICK,showReport);
+		
+				//设置ToolTip显示延迟为0
+				ToolTipManager.showDelay = 0;
+				//设置ToolTip不自动隐藏
+				ToolTipManager.hideDelay = Infinity;
+				//默认为城市面板
+				currentScene=cityCanvas;
+			}
+			
+			public function pay():void{
+				ExternalInterface.call('window.open',ConfigUtil.getProperty("PAY_URL"),'_blank');
+			}
+			
+			public function showLoginWindow(event:Object):void{
+				
+				var count:int = 0;
+				var handle:Number = setInterval(function ():void{
+					//配置文件是否加载完成
+					if(ConfigUtil.haveInited){
+						
+						model.SERVER_IP = ConfigUtil.getProperty("SERVER_IP");
+						model.SERVER_ENDPOINT = ConfigUtil.getProperty("SERVER_ENDPOINT");
+						model.LOGIN_WEBSERVICE_WSDL = ConfigUtil.getProperty("LOGIN_WEBSERVICE_WSDL");
+						
+						var win:LoginWindow = new LoginWindow();
+						model.loginWindow = win;
+						PopUpManager.addPopUp(win,model.app,false);
+						PopUpManager.centerPopUp(win);
+							
+						clearInterval(handle);
+	
+					}
+					count++;
+					if(count>50){
+						clearInterval(handle); 
+						MsgBox.showMessage("加载配置文件失败，请刷新浏览器重试。");
+					}
+				}, 100);
+				
+			}
+			
+			public function showCity(event:MouseEvent):void{
+				if(currentScene==cityCanvas) return;
+				sceneTweenEffect(currentScene,cityCanvas);
+				currentScene=cityCanvas;
+//				cityCanvas.visible = true;
+//				worldPanel.visible = false;
+//				strongholdPanel.visible = false;
+			}
+			
+			/**
+			 * 场景过渡效果
+			 */
+			private function sceneTweenEffect(oldScene:Canvas,newScene:Canvas):void{
+				TweenMax.killAll(true);
+				
+				newScene.alpha=0.1;
+				newScene.visible=true;
+				oldScene.visible=true;
+				TweenPlugin.activate([TransformMatrixPlugin]);
+				TweenMax.to(oldScene,0.4,{ease:Circ.easeIn,alpha:0.1, transformMatrix:{tx:-1000,ty:-600,scaleX:3, scaleY:3},onComplete:onOldSceneComplete,onCompleteParams:[oldScene,newScene]});
+				TweenMax.to(newScene,1,{alpha:1}); 
+			}
+			private function onOldSceneComplete(oldScene:Canvas,newScene:Canvas):void{
+				oldScene.visible=false;
+				TweenMax.to(oldScene,0.1,{ transformMatrix:{tx:0,ty:0,scaleX:1, scaleY:1} });
+				bigContainer.setChildIndex(newScene,bigContainer.getChildIndex(oldScene));				
+			} 
+			
+			//显示世界地图
+			private function showMap(event:MouseEvent):void{
+				if(currentScene==worldPanel)	return;
+				sceneTweenEffect(currentScene,worldPanel);
+				currentScene=worldPanel;
+				//如果地图数据没有加载
+				if(!mapLoad){
+					trace("startTime:");
+					trace(new Date().time);
+//					model.worldInfo.loadMapData(model.cityInfo.posX,model.cityInfo.posY);
+					worldPanel.callMapDataByCenterPoint(new Point(model.cityInfo.posX,model.cityInfo.posY),true);
+					mapLoad = true;
+				}
+				
+//				cityCanvas.visible = false;
+//				strongholdPanel.visible = false;
+//				worldPanel.visible = true;
+			} 
+			
+			private function showGuild(event:MouseEvent):void{
+				if(ModelLocator.getInstance().playerInfo.guildID!=0){
+					var guildWindow:GuildWindow = new GuildWindow();
+					WindowUtil.showWindow(guildWindow);
+				}else{
+					var noGuildWindow:NoGuildWindow = new NoGuildWindow();
+					WindowUtil.showModelWindow(noGuildWindow);
+				}
+			}
+			/**
+			 * 显示城市英雄列表
+			 */
+			private function showCityHeroList(e:MouseEvent):void{
+				//如果没有指挥官
+				if(model.cityHeroList==null || model.cityHeroList.length==0){
+					var noHeroWindow:NoHeroWindow=new NoHeroWindow();
+					WindowUtil.showModelWindow(noHeroWindow);
+					return;
+				}
+				var win:CityHeroInfoWindow=new CityHeroInfoWindow();
+				WindowUtil.showModelWindow(win);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetCityHeroListEvent(model.cityInfo.cityID));
+			}
+			/**任务*/
+			private function showTask(event:MouseEvent):void{
+				var taskDialog:TaskWindow = new com.hifong.war.view.task.TaskWindow();
+				WindowUtil.showWindow(taskDialog);
+			}
+			/** 报告  */
+			private function showReport(event:MouseEvent):void{
+				var reportWindow:ReportWindow = new ReportWindow();
+				WindowUtil.showWindow(reportWindow);
+			}
+			/**消息*/
+			private function showMessage(event:MouseEvent):void{
+				var messageWindow:MessageWindow = new MessageWindow();
+				WindowUtil.showWindow(messageWindow);
+			}
+			/**宝物*/
+			private function showTreasure(event:MouseEvent):void{
+				var treasureDialog:TreasureWindow = new com.hifong.war.view.treasure.TreasureWindow();
+				WindowUtil.showWindow(treasureDialog);
+			}
+			
+			private function showMilitary(event:MouseEvent):void{
+				var militaryWindow:MilitaryWindow = new MilitaryWindow();
+				WindowUtil.showWindow(militaryWindow);
+			}
+			
+			private function showRank():void{
+				var rankWindow:RankWindow = new RankWindow();
+				WindowUtil.showWindow(rankWindow);
+			}
+			
+			private function showShop():void{
+				var shopWindow:TreasureShopWindow = new TreasureShopWindow();
+				WindowUtil.showWindow(shopWindow);
+			}
+			
+			private function showColonizationWindow():void{
+				var colonizationManageWindow:ColonizationManageWindow = new ColonizationManageWindow();
+				WindowUtil.showModelWindow(colonizationManageWindow);
+			}
+			/**
+			 * 好友
+			 */
+			private function showFriendWindow():void{
+				var win:FriendWindow=new FriendWindow();
+				WindowUtil.showWindow(win);
+			}
+			/**
+			 * 格式化tooltip显示中数值的样式
+			 */ 
+			private function formatTooltipNum(num:Number):String{
+				if(num < 0){
+					return "<font color=\"#FF0000\">" + num + "</font>";
+				}
+				return "" + num;
+			}
+			
+			/**
+			 * 生成木材提示
+			 */
+			private function generateWoodTooltip(event:ToolTipEvent):void{
+				var tooltip:String = new String();
+				tooltip += "木材产出：" + formatTooltipNum(model.cityInfo.cityResource.woodOutput);
+				tooltip += "\n木材数量：" + formatTooltipNum(model.cityInfo.cityResource.woodNum);
+				tooltip += "\n仓库容量：" + formatTooltipNum(model.cityInfo.cityResource.resourceNumMax);
+				event.toolTip = new CommonTooltip(tooltip);
+			}
+			
+			/**
+			 * 生成钢铁提示
+			 */
+			private function generateSteelTooltip(event:ToolTipEvent):void{
+				var tooltip:String = new String();
+				tooltip += "钢铁产出：" + formatTooltipNum(model.cityInfo.cityResource.steelOutput);
+				tooltip += "\n钢铁数量：" + formatTooltipNum(model.cityInfo.cityResource.steelNum);
+				tooltip += "\n仓库容量：" + formatTooltipNum(model.cityInfo.cityResource.resourceNumMax);
+				event.toolTip = new CommonTooltip(tooltip);
+			}
+			
+			/**
+			 * 生成石油提示
+			 */
+			private function generateOilTooltip(event:ToolTipEvent):void{
+				var tooltip:String = new String();
+				tooltip += "石油产量：" + formatTooltipNum(model.cityInfo.cityResource.oilOutput);
+				tooltip += "\n石油消耗：" + formatTooltipNum(model.cityInfo.cityResource.oilConsume);
+				tooltip += "\n石油产出：" + formatTooltipNum(model.cityInfo.cityResource.oilOutput-model.cityInfo.cityResource.oilConsume);
+				tooltip += "\n石油数量：" + formatTooltipNum(model.cityInfo.cityResource.oilNum);
+				tooltip += "\n仓库容量：" + formatTooltipNum(model.cityInfo.cityResource.resourceNumMax);
+				event.toolTip = new CommonTooltip(tooltip);
+			}
+			
+			/**
+			 * 生成食物提示
+			 */
+			private function generateFoodTooltip(event:ToolTipEvent):void{
+				var tooltip:String = new String();
+			  /*tooltip += "食物产量：" + formatTooltipNum(model.cityInfo.cityResource.foodOutput);
+				tooltip += "\n食物消耗：" + formatTooltipNum(model.cityInfo.cityResource.foodConsume);
+				tooltip += "\n食物产出：" + formatTooltipNum(model.cityInfo.cityResource.foodOutput-model.cityInfo.cityResource.foodConsume);
+				tooltip += "\n食物数量：" + formatTooltipNum(model.cityInfo.cityResource.foodNum);
+				tooltip += "\n仓库容量：" + formatTooltipNum(model.cityInfo.cityResource.resourceNumMax);*/
+				tooltip="alskdfjalksdfjlasdf";
+				event.toolTip = new CommonTooltip(tooltip);
+			}
+			
+			private function showResourceProductionStatWindow():void{
+				var win:ResourceProductionStatWindow = new ResourceProductionStatWindow();
+				WindowUtil.showWindow(win);
+			}
+			
+			/**
+			 * 显示要塞
+			 */
+			private function showStronghold():void{
+				if(this.strongholdPanel.visible){
+					return;
+				}
+				
+				//TODO 仅供测试使用
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetStrongholdBuildingListByStrongholdIDEvent(1));
+				
+				this.cityCanvas.visible = false;
+				this.worldPanel.visible = false;
+				this.strongholdPanel.visible = true;
+			}
+			
+			private function showSecurityTooltip(event:ToolTipEvent):void{
+				if(model.cityInfo.security<20){
+					event.toolTip.text = "您的城市治安值低于20，每小时城市将会损失市民与军队，如果城市遭到攻击，将会被立即攻陷。请您及时调整。";
+				}else if(model.cityInfo.security<30){
+					event.toolTip.text = "您的城市治安值低于30，每小时城市将会损失市民与军队，请您及时调整。";
+				}else if(model.cityInfo.security<40){
+					event.toolTip.text = "您的城市治安值低于40，每小时城市将会损失市民与军队，请您及时调整。";
+				}
+			}
+			
+			private function showTaxTooltip(event:ToolTipEvent):void{
+				if(model.cityInfo.tax>60){
+					event.toolTip.text = "您的城市税率过高，不仅影响到了城市资源产出，同时导致您的城市治安值过低，请您及时调整。";
+				}
+			}
+			/**
+			 * 显示建筑等级
+			 */
+			private function flagControl():void {
+				if(_showFlag) {
+					worldPanel.hideWorldFlag();
+				}else{
+					worldPanel.showWorldFlag();
+				}
+				_showFlag=!_showFlag;
+			}
+			public function get showFlag():Boolean{
+				return _showFlag;
+			}
+			/**
+			 * 获取每日奖励
+			 */
+			private function receiveDailyReward():void{
+				dailyNews.visible=false;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ReceiveDailyRewardEvent(model.playerInfo.playerID));
+			}
+			/**
+			 *  道具 资源加速
+			 */
+			 private function showUpResource(type:int):void{
+			 	var param:Object={  };
+			 	var win:UseTreasureWindow=new UseTreasureWindow()
+			 	win.params=param;
+			 	win.treasureCategory=TreasureCategoryConstant.RESOURCE_PRODUCTION;
+			 	win.treasureType=type;
+			 	WindowUtil.showModelWindow(win);
+			 }
+		]]>
+	</mx:Script>
+	
+	<mx:Style source="css/styles.css"></mx:Style>
+	<mx:Script source="com/hifong/war/view/common/GameSocket.as"></mx:Script>
+	
+	<mx:Fade id="fadeOut" duration="1000" alphaFrom="1.0" alphaTo="0.0"/>
+	<mx:Fade id="fadeIn" duration="1000" alphaFrom="0.0" alphaTo="1.0"/>
+	
+	
+	<!--场景容器-->
+	<mx:Canvas x="0" y="0" width="1000" height="600" id="bodyCanvas" visible="true" showEffect="{fadeIn}">
+		<!--大面板容器-->
+		<mx:Canvas id="bigContainer"  width="1000" height="600" visible="true" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+			<!--城市面板-->
+			<city:CityPanel x="0" y="0" id="cityCanvas" />
+			<!--世界面板-->
+			<world:WorldPanel id="worldPanel" visible="false" width="100%" height="100%"    borderThickness="0" borderStyle="solid" cornerRadius="10" />
+			<!--要塞面板（ 待开发）-->
+			<stronghold:StrongholdPanel id="strongholdPanel" width="100%" height="100%" visible="false"  borderThickness="0" borderStyle="solid" cornerRadius="10" />
+			<!---->
+			<scrollcanvas:ScrollCanvas x="0" y="0" width="760" id="scrollCanvas" />
+			
+		</mx:Canvas>	
+		<!--上部分容器 end-->
+		 
+		<!--底部容器-->
+		<mx:Canvas id="bottomCanvas" width="1000" height="600"   x="0">
+			<mx:Image width="1000" height="156" y="444" source="@Embed('images/bg_bottom.png')" />
+			<mx:Canvas x="511" y="496" width="150" height="99">
+				<mx:Label x="10" y="10" toolTip="城市税率将会影响到城市金钱、治安与资源产出。税率越高，金钱产出越高，同时治安与资源产出越低，请您慎重调整。" toolTipShown="showTaxTooltip(event)" text="税率：{model.cityInfo.tax}" styleName="{model.cityInfo.tax&gt;60?'Red':'Normal'}" width="60"/>
+				<mx:Label x="80" y="10" toolTip="城市治安值表现了城市的安定情况。治安值过低将会引起城市暴动，损失市民与军队，甚至城市遭到攻击将会被立即攻陷。请您随时关注城市治安。" toolTipShown="showSecurityTooltip(event)" text="治安：{model.cityInfo.security}" styleName="{model.cityInfo.security&lt;40?'Red':'Normal'}" width="60" />
+				<mx:Label x="10" y="53" text="空闲人口：{model.cityInfo.populationFree}" toolTip="空闲人口" width="121"/>
+				<mx:Label x="10" y="32" text="总人口：{model.cityInfo.populationTotal}/{model.cityInfo.populationMax}" toolTip="当前人口/最大人口" width="121"/>
+				<mx:Label x="10" y="75" text="将领：" width="60" />
+				<mx:Label x="80" y="75" text="殖民：" width="60" /> 
+				
+			</mx:Canvas>
+			<mx:Canvas x="214" y="572" styleName="Sheer" width="288" height="27" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+				<!--label="指挥官"-->
+				<mx:Button id="buttonHero"   x="5" y="2" styleName="Control"  width="71" height="29" upSkin="@Embed('images/button/hero.png')"  overSkin=" @Embed('images/button/hero_over.png')"  downSkin="@Embed('images/button/hero_down.png')"/>
+				 <!--label="军 团" -->
+				<mx:Button id="buttonGuild"  x="146" y="2"  width="71" height="29"  upSkin="@Embed('images/button/guild.png')"  overSkin=" @Embed('images/button/guild_over.png')"  downSkin="@Embed('images/button/guild_down.png')"/>
+				<!--label="任 务"--> 
+				<mx:Button id="buttonTask"  x="214" y="2"   width="71" height="29" upSkin="@Embed('images/button/task.png')"  overSkin=" @Embed('images/button/task_over.png')"  downSkin="@Embed('images/button/task_down.png')"/>
+				<!--label="军 事" -->
+				<mx:Button id="buttonMilitary"    x="78" y="2" width="71" height="29"  upSkin="@Embed('images/button/army.png')"  overSkin=" @Embed('images/button/army_over.png')"  downSkin="@Embed('images/button/army_down.png')"/>
+				
+			</mx:Canvas>
+			<mx:Canvas x="805" y="495" width="192" height="104">
+				<!--帮助-->
+				<mx:Button x="40" y="75"   width="44" height="25"  click="ExternalInterface.call('window.open',ConfigUtil.getProperty('HELP_URL'),'_blank')"  upSkin="@Embed('images/button/help.png')" overSkin=" @Embed('images/button/help_over.png')"  downSkin="@Embed('images/button/help_down.png')" />
+				<!--道具-->
+				<mx:Button id="buttonTreasure" styleName="Menu"  x="40" y="23"  width="44" height="25" upSkin="@Embed('images/button/treasure.png')" overSkin=" @Embed('images/button/treasure_over.png')"  downSkin="@Embed('images/button/treasure_down.png')"/>
+				<!--报告-->
+				<mx:Button id="buttonReport"  styleName="Menu" x="0" y="49"  width="44" height="25"  upSkin="@Embed('images/button/report.png')" overSkin=" @Embed('images/button/report_over.png')"  downSkin="@Embed('images/button/report_down.png')"/>
+				<!-- {model.haveNewReport==true?'MenuNew':'Menu'} -->
+				<!--消息-->
+				<mx:Button id="buttonMessage" styleName="Menu" x="40" y="49"  width="44" height="25"  upSkin="@Embed('images/button/message.png')" overSkin=" @Embed('images/button/message_over.png')"  downSkin="@Embed('images/button/message_down.png')"/>
+				<!--  {model.haveNewMessage==true?'MenuNew':'Menu'}  -->
+				<!--殖民管理-->
+				<mx:Button x="0" y="23" width="44" height="25" styleName="Menu"  click="showColonizationWindow()" upSkin="@Embed('images/button/colonization.png')" overSkin=" @Embed('images/button/colonization_over.png')"  downSkin="@Embed('images/button/colonization_down.png')"/>
+				<!--排行-->
+				<mx:Button x="0" y="75"  width="44" height="25"  styleName="Menu"   click="showRank()" upSkin="@Embed('images/button/rank.png')" overSkin=" @Embed('images/button/rank_over.png')"  downSkin="@Embed('images/button/rank_down.png')"/>
+				<!--商城-->
+				<mx:Button x="144" y="43"  click="showShop()" width="46" height="29" styleName="Shop"/>
+				<!--充值-->
+				<mx:Button x="144" y="72"  width="46" height="28" click="pay()" styleName="Pay"/>
+			</mx:Canvas>
+			<mx:Canvas x="10" y="453"  width="196" height="137"> 
+				<mx:Image x="24" y="48" width="60" source="{model.playerInfo.headImg}" height="80"/>
+				<mx:Text x="56" y="18" text="{model.playerInfo.name}" width="87" height="18" fontWeight="bold"/>
+				<!--军衔：-->
+				<mx:Label x="117" y="48" text="{model.playerInfo.honorName}" width="60" height="18"/>
+				<!--排名：-->
+				<mx:Label x="117" y="91" text="{model.playerInfo.rank}" width="60" height="18"/>
+				<!--声望：-->
+				<mx:Label x="117" y="71" text="{model.playerInfo.renown}" width="60" height="18"/>
+				<!--<mx:Label x="10" y="120" text="军团：{model.playerInfo.guildName}" width="155"/>-->
+				<!--金币：-->
+				<mx:Label x="117" y="113" text="{model.playerInfo.money}" width="60" buttonMode="true" useHandCursor="true" click="pay()"/>
+				<!--<mx:Button x="218" y="137" label="充值" width="55" height="22"   click="pay()"/>-->
+			</mx:Canvas>
+			<!--头部个人信息（左下方）-->
+			<!--按钮工具栏-->
+			<!--资源生产情况-->
+			<!--资源生产情况 end-->
+			<!--道具充值-->
+			<!--道具充值end --> 
+			
+			<!--聊天-->
+			<!--聊天 end--> 
+			<mx:Canvas x="210" y="448" height="132" width="289" >
+				<chat:ChatToolbar x="8" y="103" id="chatToolbar" />
+				<chat:ChatPanel x="0" y="0" id="chatPanel" />
+				<chat:ChatTypeList x="6" y="30" id="chatTypeList" visible="false" />
+				<chat:ChatFacePanel x="130" y="40" id="chatFacePanel" visible="false" />
+			</mx:Canvas>
+			<mx:VBox x="668" y="496" id="canvasResource" verticalGap="0"    width="137" verticalScrollPolicy="off">
+				<!--木材-->
+				<mx:Canvas width="125" backgroundAlpha="0"   toolTipCreate="generateWoodTooltip(event)">
+					<mx:Image x="0"   width="20"  source="images/wood.png" toolTip="木材" height="21"/>
+					<mx:Label x="24" textAlign="right"   text="{model.cityInfo.cityResource.woodNum}/{model.cityInfo.cityResource.woodOutput}"  width="90" height="20" />
+					<mx:Button styleName="Up" x="110" click="showUpResource(TreasureTypeConstant.TREASURE_WOOD_ADD)"  toolTip="使用道具，提升木材产量"/>
+				</mx:Canvas>
+				<!--钢铁-->
+				<mx:Canvas width="125" backgroundAlpha="0"  toolTipCreate="generateSteelTooltip(event)">
+					<mx:Image x="0" width="20"  source="images/steel.png" toolTip="钢铁"/>
+					<mx:Label x="24"  textAlign="right"  text="{model.cityInfo.cityResource.steelNum}/{model.cityInfo.cityResource.steelOutput}" width="90" height="20" />
+					<mx:Button styleName="Up" x="110"  click="showUpResource(TreasureTypeConstant.TREASURE_STEEL_ADD)" toolTip="使用道具，提升钢铁产量"/>
+				</mx:Canvas>
+				<!--石油-->
+				<mx:Canvas  width="125" backgroundAlpha="0" toolTipCreate="generateOilTooltip(event)">
+					<mx:Image x="0"  width="20"   source="images/oil.png" toolTip="石油"/>
+					<mx:Label x="24" textAlign="right"   text="{model.cityInfo.cityResource.oilNum}/{model.cityInfo.cityResource.oilOutput-model.cityInfo.cityResource.oilConsume}" width="90" height="20" />
+					<mx:Button styleName="Up" x="110"  click="showUpResource(TreasureTypeConstant.TREASURE_OIL_ADD)"  toolTip="使用道具，提升石油产量"/>
+				</mx:Canvas> 
+				<!--食物-->
+				<mx:Canvas   width="125" backgroundAlpha="0"  toolTipCreate="generateFoodTooltip(event)">
+					<mx:Image x="0"  width="20"  source="images/food.png" toolTip="食物"/>
+					<mx:Label x="24" textAlign="right"   text="{model.cityInfo.cityResource.foodNum}/{model.cityInfo.cityResource.foodOutput-model.cityInfo.cityResource.foodConsume}" width="90" height="20" />
+					<mx:Button styleName="Up" x="110"   click="showUpResource(TreasureTypeConstant.TREASURE_FOOD_ADD)" toolTip="使用道具，提升食物产量"/>
+				</mx:Canvas>
+				<mx:Canvas width="125" backgroundAlpha="0" >
+					<mx:Label x="10" textAlign="right"    text="金钱：{model.cityInfo.cityResource.moneyNum}/{model.cityInfo.cityResource.moneyOutput-model.cityInfo.cityResource.moneyConsume}" width="114"/>
+					<mx:Button styleName="Up" x="110"   click="showUpResource(TreasureTypeConstant.TREASURE_MONEY_ADD)" />
+				</mx:Canvas>
+				<!--<mx:Button x="741" y="5" toolTip="资源生产统计" click="showResourceProductionStatWindow()" styleName="ResourceStat" width="22" height="22"/>-->
+			</mx:VBox>
+			<mx:TitleWindow id="dailyNews" width="400" height="300" x="300" y="75"  backgroundColor="0" backgroundAlpha=".7" borderStyle="solid" visible="{!model.playerInfo.haveReceiveDailyreward}"   layout="absolute">
+					<mx:Button x="583" y="25" styleName="closeWindow" click="{dailyNews.visible=!dailyNews.visible;}" right="10" top="6"/>
+					<mx:Label x="31" y="40" text="玩家军衔：{model.playerInfo.honorName}"/>
+					<mx:Text x="31" y="111" text="资源奖励：{DailyRewardConstant.getReward(model.playerInfo.honorID,1)}"/>
+					<mx:Text x="31" y="139" text="部队支援：{DailyRewardConstant.getReward(model.playerInfo.honorID,2)}"/>
+					<mx:Text x="31" y="167" text="礼金奖励：{DailyRewardConstant.getReward(model.playerInfo.honorID,3)}"/>
+					<mx:Button id="receiveDailyRewardBtn" label="领取每日奖励" click="receiveDailyReward();" enabled="{!model.playerInfo.haveReceiveDailyreward}"  x="31" y="216"/>
+			</mx:TitleWindow>
+		</mx:Canvas>
+		<!--顶部容器-->
+		<mx:Canvas >
+			<mx:HBox x="360">
+				<mx:Button id="buttonCity"  x="10" y="10" label="城 市"/>
+				<mx:Button id="buttonMap"  x="78" y="10" label="地 图"/>
+				<mx:Button id="buttonShowFlag"  x="146" y="10" label="显示等级" click="flagControl()" />
+				<mx:Button id="buttonFriend" label="好友"  click="showFriendWindow()"/>
+			</mx:HBox>
+			<mx:Canvas width="286" styleName="TopLeft" height="24">
+				<mx:Label text="{model.cityInfo.name+'    (X:'+model.cityInfo.posX+',Y:'+model.cityInfo.posY+')'}" x="10"  width="144" y="2"/>
+				<mx:Label text="{model.playerInfo.guildName}" x="170"  width="82" y="2" color="0x00fcea"/>
+			</mx:Canvas>
+			<mx:Canvas x="714" width="286" styleName="TopRight"  height="24">
+				
+			</mx:Canvas>
+		</mx:Canvas>
+		<!--每日奖励-->
+	</mx:Canvas>
+</mx:Application> 
+<!--to do -->
+<!--logo-->
+<!--<mx:Image x="41" y="17" source="images/logo.png" useHandCursor="true" buttonMode="true" mouseChildren="false" click="ExternalInterface.call('window.open','http://jd.52wyyx.com','_blank')"/>-->
+<!--要塞（待做功能）-->
+<!--<mx:Button x="22.5" y="565" label="要塞" width="57" click="showStronghold()" visible="false"/>-->
+<!--城市坐标下拉-->
+<!--<mx:ComboBox x="13" y="257" width="175" dataProvider="{model.cityInfo.name+'('+model.cityInfo.posX+','+model.cityInfo.posY+')'}"></mx:ComboBox>-->
+<!--<mx:Canvas x="0" y="0" height="600" width="1000" backgroundColor="#000000" backgroundAlpha="0.3" id="canvasMask" visible="false"/>-->

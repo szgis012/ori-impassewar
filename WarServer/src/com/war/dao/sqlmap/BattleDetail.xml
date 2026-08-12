@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BattleDetail">
+	<typeAlias alias="BattleDetail" type="com.war.domain.BattleDetail" />
+
+	<insert id="createBattleDetail" parameterClass="BattleDetail">
+		INSERT INTO T_BATTLE_DETAIL(BATTLE_LOG_ID, ROUND, ATTACKER_OPERATION, DEFENDER_OPERATION, STATE) VALUES(#battleLogID#, #round#, #attackerOperation#, #defenderOperation#, #state#)
+	</insert>
+
+	<update id="updateBattleDetail" parameterClass="BattleDetail">
+		UPDATE T_BATTLE_DETAIL SET ATTACKER_OPERATION=#attackerOperation#, DEFENDER_OPERATION=#defenderOperation#, STATE=#state# WHERE ROUND=#round# and BATTLE_LOG_ID=#battleLogID#
+	</update>
+
+	<delete id="deleteBattleDetailByID" parameterClass="java.util.Map">
+		DELETE FROM T_BATTLE_DETAIL WHERE ROUND=#round# and BATTLE_LOG_ID=#battleLogID#
+	</delete> 
+
+	<select id="getBattleDetailByID" parameterClass="java.util.Map" resultClass="BattleDetail">
+		SELECT BATTLE_LOG_ID AS battleLogID, ROUND AS round, ATTACKER_OPERATION AS attackerOperation, DEFENDER_OPERATION AS defenderOperation, STATE AS state FROM T_BATTLE_DETAIL WHERE ROUND=#round# and BATTLE_LOG_ID=#battleLogID#
+	</select>
+	
+	<select id="getBattleDetailList" resultClass="BattleDetail">
+		SELECT BATTLE_LOG_ID AS battleLogID, ROUND AS round, ATTACKER_OPERATION AS attackerOperation, DEFENDER_OPERATION AS defenderOperation, STATE AS state FROM T_BATTLE_DETAIL
+	</select>
+	
+	<select id="getBattleDetailListByBattleLogID" parameterClass="java.lang.Integer" resultClass="BattleDetail" >
+		SELECT BATTLE_LOG_ID AS battleLogID, ROUND AS round, ATTACKER_OPERATION AS attackerOperation, DEFENDER_OPERATION AS defenderOperation, STATE AS state FROM T_BATTLE_DETAIL WHERE BATTLE_LOG_ID=#battleLogID#
+	</select>
+ 
+</sqlMap>

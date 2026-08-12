@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Treasure">
+	<typeAlias alias="Treasure" type="com.war.domain.Treasure" />
+	
+	<insert id="createTreasure" parameterClass="Treasure">
+		INSERT INTO T_TREASURE(TREASURE_ID, NAME, DESCRIPTION, CATEGORY, TYPE, COST, IMGSRC, CODESRC, CAN_BUY, CAN_GIFT_CERTIFICATE_BUY, DIRECT_USE_TOOLTIP, STATE) VALUES(#treasureID#, #name#, #description#, #category#, #type#, #cost#, #imgSrc#, #codeSrc#, #canBuy#, #canGiftCertificateBuy#, #directUseTooltip#, #state#)
+		<selectKey resultClass="Integer" keyProperty="treasureID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+	
+	<update id="updateTreasure" parameterClass="Treasure">
+		UPDATE T_TREASURE SET TREASURE_ID=#treasureID#, NAME=#name#, DESCRIPTION=#description#, CATEGORY=#category#, TYPE=#type#, COST=#cost#, IMGSRC=#imgSrc#, CODESRC=#codeSrc#, CAN_BUY=#canBuy#, CAN_GIFT_CERTIFICATE_BUY=#canGiftCertificateBuy#, DIRECT_USE_TOOLTIP=#directUseTooltip#, STATE=#state# WHERE TREASURE_ID=#treasureID#
+	</update>
+	
+	<delete id="deleteTreasureByID" parameterClass="Integer">
+		DELETE FROM T_TREASURE WHERE TREASURE_ID=#treasureID#
+	</delete>
+	
+	<select id="getTreasureByID" parameterClass="Integer" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE WHERE TREASURE_ID=#treasureID#
+	</select>
+	
+	<select id="getTreasureList" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE
+	</select>
+	
+	<select id="getTreasureListByCategory" parameterClass="Integer" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE WHERE CAN_BUY=1 AND CATEGORY=#category# 
+	</select>
+	
+	<select id="getTreasureListByType" parameterClass="java.util.Map" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE WHERE CAN_BUY=1 AND CATEGORY=#category# AND TYPE=#type#
+	</select>
+
+	<select id="getTreasureListByState" parameterClass="Integer" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE WHERE CAN_BUY=1 AND STATE=#state#
+	</select>
+	
+	<select id="getRecommendTreasureList" parameterClass="Integer" resultClass="Treasure">
+		SELECT TREASURE_ID AS treasureID, NAME AS name, DESCRIPTION AS description, CATEGORY AS category, TYPE AS type, COST AS cost, IMGSRC AS imgSrc, CODESRC AS codeSrc, CAN_BUY AS canBuy, CAN_GIFT_CERTIFICATE_BUY AS canGiftCertificateBuy, DIRECT_USE_TOOLTIP AS directUseTooltip, STATE AS state FROM T_TREASURE WHERE CAN_BUY=1 AND (STATE=1 OR STATE=2)
+	</select>
+	
+</sqlMap>

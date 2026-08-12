@@ -1,0 +1,11 @@
+/**
+ * 宝物编号:215
+ * 
+ * 名称：建筑师
+ * 描述：缩减建筑时间4小时。
+ * 类型：加速
+ */
+
+def params = context.getParams();
+
+context.reduceBuildCostTime(params["queueID"], 4*60*60);

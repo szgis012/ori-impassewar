@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MapFavourite">
+	<typeAlias alias="MapFavourite" type="com.war.domain.MapFavourite" />
+
+	<insert id="createMapFavourite" parameterClass="MapFavourite">
+		INSERT INTO T_MAP_FAVOURITE(PLAYER_ID, MAP_ID, CREATE_TIME) VALUES(#playerID#, #mapID#, #createTime#)
+		<selectKey resultClass="Integer" keyProperty="mapFavouriteID" >
+			SELECT @@IDENTITY AS ID
+		</selectKey> 
+	</insert>
+
+	<update id="updateMapFavourite" parameterClass="MapFavourite">
+		UPDATE T_MAP_FAVOURITE SET PLAYER_ID=#playerID#, MAP_ID=#mapID#, CREATE_TIME=#createTime# WHERE MAP_FAVOURITE_ID=#mapFavouriteID#
+	</update>
+
+	<delete id="deleteMapFavouriteByID" parameterClass="Integer">
+		DELETE FROM T_MAP_FAVOURITE WHERE MAP_FAVOURITE_ID=#mapFavouriteID#
+	</delete>
+
+	<select id="getMapFavouriteByID" parameterClass="Integer" resultClass="MapFavourite">
+		SELECT MAP_FAVOURITE_ID AS mapFavouriteID, PLAYER_ID AS playerID, MAP_ID AS mapID, CREATE_TIME AS createTime FROM T_MAP_FAVOURITE WHERE MAP_FAVOURITE_ID=#mapFavouriteID#
+	</select>
+
+	<select id="getMapFavouriteList" resultClass="MapFavourite">
+		SELECT MAP_FAVOURITE_ID AS mapFavouriteID, PLAYER_ID AS playerID, MAP_ID AS mapID, CREATE_TIME AS createTime FROM T_MAP_FAVOURITE
+	</select>
+
+	<select id="getMapPagingFavouriteListByPlayerID" parameterClass="java.util.Map" resultClass="MapFavourite">
+		SELECT MAP_FAVOURITE_ID AS mapFavouriteID, PLAYER_ID AS playerID, MAP_ID AS mapID, CREATE_TIME AS createTime FROM T_MAP_FAVOURITE WHERE PLAYER_ID=#playerID# ORDER BY CREATE_TIME DESC LIMIT #start#, #offset#
+	</select>
+	
+	<select id="getMapFavouriteNumByPlayerID" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM T_MAP_FAVOURITE WHERE PLAYER_ID=#playerID#
+	</select>
+	
+	<select id="getMapFavouriteByPosXAndPosYAndPlayerID" parameterClass="java.util.Map" resultClass="MapFavourite">
+		SELECT MAP_FAVOURITE_ID AS mapFavouriteID, PLAYER_ID AS playerID, MAP_ID AS mapID, CREATE_TIME AS createTime FROM T_MAP_FAVOURITE WHERE MAP_ID=(SELECT MAP_ID FROM T_MAP WHERE POSX=#posX# AND POSY=#posY# ) AND PLAYER_ID=#playerID#
+	</select>
+
+</sqlMap>
