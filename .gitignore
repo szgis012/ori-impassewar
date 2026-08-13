@@ -1,43 +1,50 @@
-# ============ IDE 配置 ============
-.metadata/
-.settings/
-.project
-.classpath
-.jupiter
-.mymetadata
-.myumldata
-.springBeans
-.flexProperties
-.actionScriptProperties
-.cairngen/
-configuration/
-
-# ============ 旧版本控制 ============
-.svn/
-
-# ============ 编译/构建产物 ============
-bin-debug/
-bin-release/
+```
+# Compiled and build artifacts
 *.class
-*.swf
+*.o
+*.obj
+*.out
+target/
 
-# ============ 依赖库（改用Maven/npm） ============
-WEB-INF/lib/
-*.jar
-*.swc
-libs/
+# Dependencies
+node_modules/
+.mypy_cache/
+.pytest_cache/
+.gradle/
+**/node_modules/
 
-# ============ 嵌套旧版本（只保留 WarServer/src） ============
-# WarServer/War/ 及所有更深层的 War/War/War... 都是旧版本
-WarServer/War/
+# Logs and temp files
+*.log
+*.tmp
 
-# ============ 备份 ============
-bak/
-backup/
-*.rar
-*.zip
-review/
+# Environment
+.env
+.env.local
+*.env.*
 
-# ============ 操作系统 ============
-Thumbs.db
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
 .DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Java specific
+*.jar
+*.war
+*.ear
+!pom.xml
+
+# TypeScript/Vue specific
+dist/
+build/
+*.tsbuildinfo
+```
